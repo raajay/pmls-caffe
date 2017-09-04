@@ -17,25 +17,30 @@ if len(sys.argv) != 3 and len(sys.argv) != 4:
   sys.exit(1)
 
 # Please set the FULL app dir path here
-app_dir = "/media/raajay/pmls-caffe"
+#app_dir = "/media/raajay/pmls-caffe"
+
+script_dir = dirname(os.path.realpath(__file__))
+script_root_dir = join(script_dir, "..", "..")
+app_dir = os.getenv('PMLS_CAFFE_ROOT_DIR', script_root_dir)
+
 dataset = "cifar10"
 # set the GPU devices you are going to use here
 devices = [0]
 
 client_id = sys.argv[1]
 hostfile = sys.argv[2]
-proj_dir = dirname(dirname(app_dir))
+
 if len(sys.argv) == 4 and sys.argv[3] == "false":
   use_yarn = False
 else:
   use_yarn = True
 
-output_dir = app_dir + "/output/" + dataset
+output_dir = script_root_dir + "/output/" + dataset
 log_dir = output_dir + "/logs." + client_id
 net_outputs_prefix = output_dir + "/" + dataset
 
 params = {
-    "solver": app_dir + "/examples/cifar10/cifar10_quick_solver.prototxt"
+    "solver": script_root_dir + "/examples/cifar10/cifar10_quick_solver.prototxt"
     , "table_staleness": 0
     , "svb": "false"
     , "net_outputs": net_outputs_prefix

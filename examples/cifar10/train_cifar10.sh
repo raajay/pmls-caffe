@@ -1,14 +1,20 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 # Figure out the paths.
 script_path=`readlink -f $0`
 script_dir=`dirname $script_path`
-example_dir=`dirname $script_dir`
-app_dir=`dirname $example_dir`
+
+script_root_dir="$script_dir/../.."
+if [ -f "$script_root_dir/pmls-caffe-env.sh" ]; then
+    source $script_root_dir/pmls-caffe-env.sh
+fi
+
+app_dir="${PMLS_CAFFE_ROOT_DIR:-${script_root_dir}}"
+
 progname=caffe_main
 prog_path=${app_dir}/build/tools/${progname}
 
-host_filename="${app_dir}/machinefiles/localserver"
+host_filename="${script_root_dir}/machinefiles/localserver"
 host_file=$(readlink -f $host_filename)
 
 dataset=cifar10
@@ -18,7 +24,7 @@ dataset=cifar10
 ##=====================================
 
 # Input files:
-solver_filename="${app_dir}/examples/cifar10/cifar10_quick_solver.prototxt"
+solver_filename="${script_root_dir}/examples/cifar10/cifar10_quick_solver.prototxt"
  # Uncomment this and line-93 if (re-)start training from a snapshot
 #snapshot_filename="${app_dir}/examples/cifar10/cifar10_quick_iter_4000.solverstate"
 
@@ -44,7 +50,7 @@ num_unique_hosts=`cat $host_file | awk '{ print $2 }' | uniq | wc -l`
 # User please specify device_id for multi GPUs here.
 devices="0"
 
-output_dir=$app_dir/output
+output_dir=$script_root_dir/output
 output_dir="${output_dir}/caffe.${dataset}.S${param_table_staleness}"
 output_dir="${output_dir}.M${num_unique_hosts}"
 output_dir="${output_dir}.T${num_app_threads}"
@@ -100,6 +106,7 @@ for ip in $unique_host_list; do
     echo $cmd   # echo the cmd for just the first machine.
     echo "Waiting for name node to set up..."
     sleep 3
+    echo "Done."
   fi
   client_id=$(( client_id+1 ))
 done
