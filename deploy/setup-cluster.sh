@@ -10,6 +10,16 @@ SCRIPT_DIR="$( cd "$(dirname "$0")" ; pwd -P )"
 HOST_FILE="$1/hosts"
 ETC_HOST_FILE="$1/etc-hosts"
 
+if [ ! -e "$HOST_FILE" ]; then
+    echo "$HOST_FILE does not exist."
+    exit 1
+fi
+
+if [ ! -e "$ETC_HOST_FILE" ]; then
+    echo "$ETC_HOST_FILE does not exist."
+    exit 1
+fi
+
 pdsh -R ssh -w \^${HOST_FILE} 'sudo apt-get update'
 
 # install required software
