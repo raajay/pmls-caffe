@@ -10,6 +10,7 @@ SCRIPT_DIR="$( cd "$(dirname "$0")" ; pwd -P )"
 SCRIPT_ROOT="${SCRIPT_DIR}/../.."
 DEPLOY_DIR="${SCRIPT_ROOT}/deploy/$1"
 HOST_FILE="${DEPLOY_DIR}/hosts"
+PRIVATE_IP_FILE="${DEPLOY_DIR}/private-ips"
 
 if [ ! -e "$HOST_FILE" ]; then
     echo "${HOST_FILE} not found."
@@ -26,9 +27,14 @@ MACHINE_FILE="${SCRIPT_DIR}/machinefiles"
 IFS=$'\r\n' GLOBIGNORE='*' HOSTS=($(cat ${HOST_FILE}))
 NUM_HOSTS=${#HOSTS[@]}
 
+WORKER_FILE="${SCRIPT_DIR}/workerfiles"
+IFS=$'\r\n' GLOBIGNORE='*' PRIVATE_IPS=($(cat ${PRIVATE_IP_FILE}))
+
 rm -f ${MACHINE_FILE}
+rm -f ${WORKER_FILE}
 for host_id in `seq 0 $(( $NUM_HOSTS - 1 ))`; do
-    echo "${host_id} ${HOSTS[host_id]} 9999" >> ${MACHINE_FILE}
+    echo "${host_id} ${PRIVATE_IPS[host_id]} 9999" >> ${MACHINE_FILE}
+    echo "${host_id} ${HOSTS[host_id]} 0" >> ${WORKER_FILE}
 done
 
 # create a tar file out of the experiment directory

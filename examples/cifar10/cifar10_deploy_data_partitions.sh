@@ -53,8 +53,30 @@ for host_id in `seq 0 $(( $NUM_HOSTS - 1 ))`; do
     # untar the file
     pdsh -R ssh -w ${HOSTS[host_id]} "tar --absolute-names -x -z -v -f ${REMOTE_TEMP_DIR}/${TEMP_TAR_FILE_NAME}"
 
-    # rename the directory
-    pdsh -R ssh -w ${HOSTS[host_id]} "mv ${PARTITION_DIR} ${SCRIPT_DIR}/${TRAIN_DATA_PREFIX}"
+done
+
+TEST_DATA_PREFIX="cifar10_test_leveldb"
+for host_id in `seq 0 $(( $NUM_HOSTS - 1 ))`; do
+#for host_id in `seq 0 0`; do
+    echo $host_id
+    echo ${HOSTS[host_id]}
+    PARTITION_DIR_NAME=${TEST_DATA_PREFIX}_${host_id}
+    PARTITION_DIR=${SCRIPT_DIR}/${PARTITION_DIR_NAME}
+
+    TEMP_TAR_FILE_NAME="${TEST_DATA_PREFIX}_${host_id}.tar.gz"
+    TEMP_TAR_FILE="${TEMP_DIR}/${TEMP_TAR_FILE_NAME}"
+
+    tar --absolute-names -c -z -v -f $TEMP_TAR_FILE $PARTITION_DIR
+    # transfer the tar file
+    pdsh -R ssh -w ${HOSTS[host_id]} "mkdir -p ${REMOTE_TEMP_DIR}"
+    scp -r $TEMP_TAR_FILE ${HOSTS[host_id]}:${REMOTE_TEMP_DIR}
+
+    # clean existing data
+    pdsh -R ssh -w ${HOSTS[host_id]} "rm -rf ${SCRIPT_DIR}/${TEST_DATA_PREFIX}"
+    pdsh -R ssh -w ${HOSTS[host_id]} "rm -rf ${PARTITION_DIR}"
+
+    # untar the file
+    pdsh -R ssh -w ${HOSTS[host_id]} "tar --absolute-names -x -z -v -f ${REMOTE_TEMP_DIR}/${TEMP_TAR_FILE_NAME}"
 
 done
 

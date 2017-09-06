@@ -10,14 +10,24 @@ fi
 CAFFE_ROOT="${PMLS_CAFFE_ROOT_DIR:-${SCRIPT_ROOT}}"
 TOOLS=$CAFFE_ROOT/build/tools
 
-DB_PATH=$SCRIPT_ROOT/examples/cifar10/cifar10_train_leveldb
+TRAIN_DB_PATH=$SCRIPT_ROOT/examples/cifar10/cifar10_train_leveldb
+TEST_DB_PATH=$SCRIPT_ROOT/examples/cifar10/cifar10_test_leveldb
+
 BACKEND=leveldb
 NUM_PARTITIONS=10
 
-echo "Partitioning '$DB_PATH'"
+echo "Partitioning '$TRAIN_DB_PATH'"
 GLOG_logtostderr=1 $TOOLS/partition_data \
     --backend=$BACKEND \
     --num_partitions=$NUM_PARTITIONS \
-    $DB_PATH
+    $TRAIN_DB_PATH
 echo "Done."
+
+echo "Partitioning '$TEST_DB_PATH'"
+GLOG_logtostderr=1 $TOOLS/partition_data \
+    --backend=$BACKEND \
+    --num_partitions=$NUM_PARTITIONS \
+    $TEST_DB_PATH
+echo "Done."
+
 cd $CURRENT_DIR
