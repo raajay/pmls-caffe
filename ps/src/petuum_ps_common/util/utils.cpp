@@ -123,7 +123,7 @@ ProcessStorageType GetProcessStroageType(
 }
   
 float RestoreInf(float x) {
-  if (isinf(x)) { 
+  if (std::isinf(x)) { 
     if (x > 0) {
       return FLT_MAX;
     } else {
@@ -135,7 +135,7 @@ float RestoreInf(float x) {
 }
   
 float RestoreInfNaN(float x) {
-  if (isinf(x)) { 
+  if (std::isinf(x)) { 
     if (x > 0) {
       return FLT_MAX;
     } else {
