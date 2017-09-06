@@ -26,7 +26,10 @@ TAR_FILE_NAME="pmls-caffe.tar.gz"
 TAR_FILE=$SCRIPT_DIR/$TAR_FILE_NAME
 
 rm -f $TAR_FILE
-tar --absolute-names -czvf $TAR_FILE --exclude '*.o' --exclude '*.o.warnings.txt' $BUILD_DIR
+tar --absolute-names -czvf $TAR_FILE \
+    --exclude '*.o' \
+    --exclude '*.o.warnings.txt' \
+    $BUILD_DIR ${CAFFE_ROOT}/build
 
 pdsh -R ssh -w \^${HOST_FILE} "rm -f ~/${TAR_FILE_NAME}"
 pdcp -R ssh -w \^${HOST_FILE} $TAR_FILE ~/${TAR_FILE_NAME}
