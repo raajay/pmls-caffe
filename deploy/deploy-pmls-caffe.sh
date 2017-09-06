@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [ -z "$1" ]; then
-    echo "usage: ./setup-cluster <directory>"
+    echo "usage: ./setup-cluster <clsuter_spec_directory>"
     echo "The dir should contain 'hosts', 'etc-hosts' files"
     exit 1
 fi
