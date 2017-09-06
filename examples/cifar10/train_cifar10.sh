@@ -10,12 +10,16 @@ if [ -f "$script_root_dir/pmls-caffe-env.sh" ]; then
 fi
 
 app_dir="${PMLS_CAFFE_ROOT_DIR:-${script_root_dir}}"
+third_party_libs="${app_dir}/third_party/lib"
 
 progname=caffe_main
 prog_path=${app_dir}/build/tools/${progname}
 
 host_filename="${script_dir}/machinefiles"
 host_file=$(readlink -f $host_filename)
+
+worker_filename="${script_dir}/workerfiles"
+worker_file=$(readlink -f $worker_filename)
 
 dataset=cifar10
 
@@ -44,9 +48,9 @@ ssh_options="-oStrictHostKeyChecking=no \
 -oLogLevel=quiet"
 
 # Parse hostfile
-host_list=`cat $host_file | awk '{ print $2 }'`
-unique_host_list=`cat $host_file | awk '{ print $2 }' | uniq`
-num_unique_hosts=`cat $host_file | awk '{ print $2 }' | uniq | wc -l`
+host_list=`cat $worker_file | awk '{ print $2 }'`
+unique_host_list=`cat $worker_file | awk '{ print $2 }' | uniq`
+num_unique_hosts=`cat $worker_file | awk '{ print $2 }' | uniq | wc -l`
 # User please specify device_id for multi GPUs here.
 devices="0"
 
@@ -74,7 +78,7 @@ for ip in $unique_host_list; do
   cmd="'mkdir -p ${output_dir}; \
       mkdir -p ${log_path}; \
       ulimit -c unlimited; \
-      export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda/lib64; \
+      export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${third_party_libs}:/usr/local/cuda/lib64; \
       GLOG_logtostderr=false \
       GLOG_stderrthreshold=0 \
       GLOG_log_dir=$log_path \

@@ -22,6 +22,7 @@ if len(sys.argv) != 3 and len(sys.argv) != 4:
 script_dir = dirname(os.path.realpath(__file__))
 script_root_dir = join(script_dir, "..", "..")
 app_dir = os.getenv('PMLS_CAFFE_ROOT_DIR', script_root_dir)
+third_party_libs = os.path.join(app_dir, "third_party/lib")
 
 dataset = "cifar10"
 # set the GPU devices you are going to use here
@@ -62,7 +63,7 @@ prog_name = "caffe_main"
 prog_path = app_dir + "/build/tools/" + prog_name + " train "
 
 env_params = (
-  "export LD_LIBRARY_PATH=/usr/local/cuda/lib64; "
+  "export LD_LIBRARY_PATH=%s:/usr/local/cuda/lib64; " % (third_party_libs)
   "GLOG_logtostderr=false "
   "GLOG_stderrthreshold=0 "
   "GLOG_v=-1 "

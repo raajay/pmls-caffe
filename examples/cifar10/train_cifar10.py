@@ -5,12 +5,14 @@ from os.path import dirname, join
 import time
 
 hostfile_name = "machinefiles"
+workerfile_name = "workerfiles"
 script_dir = dirname(os.path.realpath(__file__))
 script_root_dir = join(script_dir, "..", "..")
 
 env_file = join(script_root_dir, "pmls-caffe-env.sh")
 
 hostfile = join(script_dir, hostfile_name)
+workerfile = join(script_dir, workerfile_name)
 
 ssh_cmd = (
     "ssh "
@@ -19,7 +21,7 @@ ssh_cmd = (
     )
 
 # Get host IPs
-with open(hostfile, "r") as f:
+with open(workerfile, "r") as f:
   hostlines = f.read().splitlines()
 host_ips = [line.split()[1] for line in hostlines]
 
