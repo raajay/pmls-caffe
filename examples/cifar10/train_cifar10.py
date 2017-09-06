@@ -4,16 +4,13 @@ import os
 from os.path import dirname, join
 import time
 
-hostfile_name = "machinefiles/localserver"
-
+hostfile_name = "machinefiles"
 script_dir = dirname(os.path.realpath(__file__))
 script_root_dir = join(script_dir, "..", "..")
 
 env_file = join(script_root_dir, "pmls-caffe-env.sh")
 
-caffe_root_dir = os.getenv('PMLS_CAFFE_ROOT_DIR', script_root_dir)
-
-hostfile = join(script_root_dir, hostfile_name)
+hostfile = join(script_dir, hostfile_name)
 
 ssh_cmd = (
     "ssh "
@@ -28,7 +25,9 @@ host_ips = [line.split()[1] for line in hostlines]
 
 for client_id, ip in enumerate(host_ips):
   cmd = ssh_cmd + ip + " "
-  cmd += "\'python " + join(script_root_dir, "examples/cifar10/run_local.py")
+  cmd += "\'"
+  cmd += "source %d;" % (env_file)
+  cmd += " python " + join(script_root_dir, "examples/cifar10/run_local.py")
   cmd += " %d %s %r\'" % (client_id, hostfile, "false")
   cmd += " &"
   print cmd

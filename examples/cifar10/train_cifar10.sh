@@ -14,7 +14,7 @@ app_dir="${PMLS_CAFFE_ROOT_DIR:-${script_root_dir}}"
 progname=caffe_main
 prog_path=${app_dir}/build/tools/${progname}
 
-host_filename="${script_root_dir}/machinefiles/localserver"
+host_filename="${script_dir}/machinefiles"
 host_file=$(readlink -f $host_filename)
 
 dataset=cifar10
