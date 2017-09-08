@@ -6,7 +6,12 @@ include $(CONFIG_FILE)
 
 # Petuum
 CAFFE_DIR := $(shell readlink $(dir $(lastword $(MAKEFILE_LIST))) -f)
-PETUUM_ROOT = $(CAFFE_DIR)/ps
+ifeq ($(USE_PS_THIN), 1)
+    PETUUM_ROOT = $(CAFFE_DIR)/ps-thin
+	COMMON_FLAGS += -DUSE_PS_THIN
+else
+    PETUUM_ROOT = $(CAFFE_DIR)/ps
+endif
 include $(CAFFE_DIR)/defns-poseidon.mk
 
 BUILD_DIR_LINK := $(BUILD_DIR)

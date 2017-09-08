@@ -5,7 +5,12 @@
 #include <vector>
 #include <fstream>
 #include <boost/algorithm/string/predicate.hpp>
+
+#ifdef USE_PS_THIN
+#include <petuum_ps/include/petuum_ps.hpp>
+#else
 #include <petuum_ps_common/include/petuum_ps.hpp>
+#endif
 
 #include "caffe/net.hpp"
 #include "caffe/proto/caffe.pb.h"

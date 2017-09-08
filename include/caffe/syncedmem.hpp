@@ -3,7 +3,12 @@
 
 #include <cstdlib>
 #include <cstdio>
+
+#ifdef USE_PS_THIN
+#include <petuum_ps/include/petuum_ps.hpp>
+#else
 #include <petuum_ps_common/include/petuum_ps.hpp>
+#endif
 
 #include "caffe/common.hpp"
 #include "caffe/util/math_functions.hpp"

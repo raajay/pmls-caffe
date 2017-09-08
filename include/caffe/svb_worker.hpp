@@ -5,10 +5,15 @@
 
 #include "caffe/proto/caffe.pb.h"
 
+#ifdef USE_PS_THIN
+#include <petuum_ps/include/host_info.hpp>
+#include <petuum_ps/util/utils.hpp>
+#include <petuum_ps/include/petuum_ps.hpp>
+#else
 #include <petuum_ps_common/include/host_info.hpp>
 #include <petuum_ps_common/util/utils.hpp>
 #include <petuum_ps_common/include/petuum_ps.hpp>
-
+#endif
 
 namespace caffe {
 

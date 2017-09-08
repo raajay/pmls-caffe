@@ -14,9 +14,15 @@
 #include "caffe/caffe.hpp"
 #include "caffe/feature_extractor.hpp"
 
+#ifdef USE_PS_THIN
+#include <petuum_ps/include/petuum_ps.hpp>
+#include <petuum_ps/include/table_gflags_declare.hpp>
+#include <petuum_ps/include/init_table_config.hpp>
+#else
 #include <petuum_ps_common/include/petuum_ps.hpp>
 #include <petuum_ps_common/include/table_gflags_declare.hpp>
 #include <petuum_ps_common/include/init_table_config.hpp>
+#endif
 
 namespace caffe {
 

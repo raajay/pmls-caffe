@@ -4,7 +4,13 @@
 #include <string>
 #include <vector>
 #include <fstream>
+
+#ifdef USE_PS_THIN
+#include <petuum_ps/include/petuum_ps.hpp>
+#else
 #include <petuum_ps_common/include/petuum_ps.hpp>
+#endif
+
 #include "boost/algorithm/string.hpp"
 #include "leveldb/db.h"
 #include "leveldb/write_batch.h"

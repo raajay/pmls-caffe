@@ -15,9 +15,15 @@
 #include "caffe/util/upgrade_proto.hpp"
 #include "caffe/context.hpp"
 
+#ifdef USE_PS_THIN
+#include <petuum_ps/include/petuum_ps.hpp>
+#include <petuum_ps/include/system_gflags_declare.hpp>
+#include <petuum_ps/include/init_table_group_config.hpp>
+#else
 #include <petuum_ps_common/include/petuum_ps.hpp>
 #include <petuum_ps_common/include/system_gflags_declare.hpp>
 #include <petuum_ps_common/include/init_table_group_config.hpp>
+#endif
 
 namespace caffe {
 
