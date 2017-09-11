@@ -24,7 +24,7 @@ GLOG_logtostderr=1 $TOOLS/partition_data \
 echo "Done."
 
 echo "Copying test data to all partitions '$TEST_DB_PATH'"
-for i in `seq 1 $NUM_PARTITIONS`; do
+for i in `seq 0 $(( $NUM_PARTITIONS - 1 ))`; do
     cp -r ${TEST_DB_PATH} ${TEST_DB_PATH}_${i}
 done
 #GLOG_logtostderr=1 $TOOLS/partition_data \
