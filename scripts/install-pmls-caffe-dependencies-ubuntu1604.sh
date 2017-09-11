@@ -10,3 +10,22 @@ sudo apt-get install -y libnuma-dev uuid-dev
 
 # build requirements
 sudo apt-get install -y libhdf5-10 libhdf5-serial-dev libhdf5-dev libhdf5-cpp-11
+
+# deps for CMake
+sudo apt-get install -y libgoogle-glog-dev \
+    libzmq3-dev \
+    libyaml-cpp-dev \
+    libgoogle-perftools-dev \
+    libsnappy-dev \
+    libsparsehash-dev \
+    libgflags-dev \
+    libboost-filesystem-dev \
+    libboost-system-dev \
+    libboost-thread-dev \
+    libleveldb-dev \
+    libconfig++-dev \
+    libghc-hashtables-dev \
+    libtcmalloc-minimal4 \
+    libevent-pthreads-2.0-5 \
+    libeigen3-dev \
+    liblmdb-dev
