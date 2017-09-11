@@ -23,11 +23,14 @@ GLOG_logtostderr=1 $TOOLS/partition_data \
     $TRAIN_DB_PATH
 echo "Done."
 
-echo "Partitioning '$TEST_DB_PATH'"
-GLOG_logtostderr=1 $TOOLS/partition_data \
-    --backend=$BACKEND \
-    --num_partitions=$NUM_PARTITIONS \
-    $TEST_DB_PATH
+echo "Copying test data to all partitions '$TEST_DB_PATH'"
+for i in `seq 1 $NUM_PARTITIONS`; do
+    cp -r ${TEST_DB_PATH} ${TEST_DB_PATH}_${i}
+done
+#GLOG_logtostderr=1 $TOOLS/partition_data \
+#    --backend=$BACKEND \
+#    --num_partitions=$NUM_PARTITIONS \
+#    $TEST_DB_PATH
 echo "Done."
 
 cd $CURRENT_DIR
