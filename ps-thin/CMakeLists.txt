@@ -15,7 +15,10 @@ add_subdirectory(src)
 # ps library
 add_library(petuum_ps ${Bosen_SOURCE_FILES})
 target_include_directories(petuum_ps PUBLIC ${Bosen_INCLUDE_DIRS} ${third_INCLUDE_DIRS})
-target_link_libraries(petuum_ps PUBLC ${Bosen_LIBRARIES})
+target_link_libraries(petuum_ps PUBLIC ${Bosen_LIBRARIES})
+
+# set headers for parents
+set(PS_INCLUDE_DIRS ${PS_INCLUDE_DIRS} ${Bosen_INCLUDE_DIRS} ${third_INCLUDE_DIRS} PARENT_SCOPE)
 
 #add_subdirectory(app/dml)
 #add_subdirectory(app/dnn)
