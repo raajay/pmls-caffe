@@ -5,12 +5,13 @@ set(Caffe_DEFINITIONS "")
 set(Caffe_COMPILE_OPTIONS "")
 
 # ---[ Petuum
+list(APPEND Caffe_COMPILE_OPTIONS PUBLIC "-std=c++11")
 if(USE_PS_THIN)
     add_subdirectory(ps-thin)
     list(APPEND Caffe_INCLUDE_DIRS PUBLIC ${PS_INCLUDE_DIRS})
     list(APPEND Caffe_COMPILE_OPTIONS PUBLIC "-DUSE_PS_THIN")
-    list(APPEND Caffe_COMPILE_OPTIONS PUBLIC "-std=c++11")
 else()
+    add_subdirectory(ps)
     list(APPEND Caffe_INCLUDE_DIRS PUBLIC ${PS_INCLUDE_DIRS})
 endif()
 

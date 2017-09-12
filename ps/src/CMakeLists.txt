@@ -1,6 +1,6 @@
 #file(GLOB_RECURSE Bosen_SOURCE_FILES *.[ch]pp)
 file(GLOB_RECURSE petuum_ps_files "petuum_ps/*.[ch]pp")
-file(GLOB_RECURSE petuum_ps_common_files "petuum_ps/*.[ch]pp")
+file(GLOB_RECURSE petuum_ps_common_files "petuum_ps_common/*.[ch]pp")
 set(Bosen_SOURCE_FILES ${petuum_ps_files} ${petuum_ps_common_files} PARENT_SCOPE)
 
 # uncomment to enable HDFS.
