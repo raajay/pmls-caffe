@@ -5,6 +5,7 @@
 
 #include <petuum_ps/util/lockable.hpp>
 #include <pthread.h>
+#include <petuum_ps/util/pthread_barrier.hpp>
 #include <atomic>
 #include <mutex>
 #include <boost/utility.hpp>

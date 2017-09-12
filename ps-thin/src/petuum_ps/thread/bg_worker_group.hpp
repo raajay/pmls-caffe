@@ -2,6 +2,7 @@
 #pragma once
 
 #include <pthread.h>
+#include <petuum_ps/util/pthread_barrier.hpp>
 #include <petuum_ps/thread/abstract_bg_worker.hpp>
 
 namespace petuum {

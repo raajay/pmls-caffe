@@ -2,6 +2,7 @@
 #include <cassert>
 #include <boost/thread.hpp>   // pthread status code
 #include <pthread.h>
+#include <petuum_ps/util/pthread_barrier.hpp>
 
 namespace petuum {
 

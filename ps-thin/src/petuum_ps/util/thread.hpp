@@ -1,6 +1,7 @@
 #pragma once
 
 #include <pthread.h>
+#include <petuum_ps/util/pthread_barrier.hpp>
 
 namespace petuum {
   class Thread {

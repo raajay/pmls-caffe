@@ -2,6 +2,7 @@
 
 #include <petuum_ps/namenode/name_node_thread.hpp>
 #include <pthread.h>
+#include <petuum_ps/util/pthread_barrier.hpp>
 
 namespace petuum {
 

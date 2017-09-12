@@ -5,6 +5,7 @@
 #include <petuum_ps/thread/context.hpp>
 #include <petuum_ps/thread/ps_msgs.hpp>
 #include <pthread.h>
+#include <petuum_ps/util/pthread_barrier.hpp>
 #include <utility>
 #include <iostream>
 

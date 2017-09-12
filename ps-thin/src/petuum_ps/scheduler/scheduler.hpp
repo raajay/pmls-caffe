@@ -2,6 +2,7 @@
 
 #include <petuum_ps/scheduler/scheduler_thread.hpp>
 #include <pthread.h>
+#include <petuum_ps/util/pthread_barrier.hpp>
 
 namespace petuum {
   class Scheduler {

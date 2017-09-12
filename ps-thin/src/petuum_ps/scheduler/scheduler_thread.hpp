@@ -4,6 +4,7 @@
 #pragma once
 
 #include <pthread.h>
+#include <petuum_ps/util/pthread_barrier.hpp>
 
 #include <petuum_ps/util/thread.hpp>
 #include <petuum_ps/scheduler/scheduler_utils.hpp>

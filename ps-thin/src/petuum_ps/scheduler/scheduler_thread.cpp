@@ -1,9 +1,11 @@
 // scheduler_thread.cpp
 // author: raajay
 
+#include <iostream>
 #include <petuum_ps/scheduler/scheduler_thread.hpp>
 #include <petuum_ps/thread/context.hpp>
 #include <pthread.h>
+#include <petuum_ps/util/pthread_barrier.hpp>
 #include <petuum_ps/thread/ps_msgs.hpp>
 
 namespace petuum {

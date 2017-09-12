@@ -4,6 +4,7 @@
 #include <vector>
 #include <stdint.h>
 #include <pthread.h>
+#include <petuum_ps/util/pthread_barrier.hpp>
 
 #include <petuum_ps/server/server.hpp>
 #include <petuum_ps/util/thread.hpp>

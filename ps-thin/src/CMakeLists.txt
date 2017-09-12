@@ -45,8 +45,13 @@ set(Bosen_INCLUDE_DIRS ${Bosen_INCLUDE_DIRS}
         ${Tcmalloc_INCLUDE_DIR}
         ${EIGEN3_INCLUDE_DIR} PARENT_SCOPE)
 
+if(UNIX AND NOT APPLE)
+    list(APPEND UNIX_ONLY_LIBS rt nsl)
+else()
+    list(APPEND UNIX_ONLY_LIBS "")
+endif()
 
-set(Bosen_LIBRARIES ${Bosen_LIBRARIES} rt nsl
+set(Bosen_LIBRARIES ${Bosen_LIBRARIES} ${UNIX_ONLY_LIBS}
         ${ZeroMQ_LIBRARIES}
         ${Boost_LIBRARIES}
         ${CMAKE_THREAD_LIBS_INIT}

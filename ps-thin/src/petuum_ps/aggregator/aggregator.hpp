@@ -4,6 +4,7 @@
 
 #include <vector>
 #include <pthread.h>
+#include <petuum_ps/util/pthread_barrier.hpp>
 #include <boost/unordered_map.hpp>
 #include <petuum_ps/include/table.hpp>
 #include <petuum_ps/include/configs.hpp>

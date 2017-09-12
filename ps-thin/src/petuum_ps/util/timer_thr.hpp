@@ -4,6 +4,7 @@
 #include <time.h>
 #include <zmq.hpp>
 #include <pthread.h>
+#include <petuum_ps/util/pthread_barrier.hpp>
 
 namespace petuum {
 
