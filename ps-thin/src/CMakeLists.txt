@@ -32,14 +32,15 @@ endif(${USE_HDFS})
 #MESSAGE(STATUS "Bosen Include Dir: ${Bosen_INCLUDE_DIRS}")
 #MESSAGE(STATUS "ZMQ Test Dir: ${cppzmq_INCLUDE_DIRS}")
 #MESSAGE(STATUS "HDFS and JVM: ${HDFS_LIBRARIES}, ${JVM_LIBRARIES}")
+MESSAGE(STATUS "MY SNAPPY: ${Snappy_LIBRARIES}, ${Snappy_INCLUDE_DIR}")
 
 set(Bosen_INCLUDE_DIRS ${Bosen_INCLUDE_DIRS}
         ${ZeroMQ_INCLUDE_DIRS}
         ${GLOG_INCLUDE_DIRS}
         ${YAML_INCLUDE_DIRS}
-        ${SNAPPY_INCLUDE_DIRS}
-        ${SPARSEHASH_INCLUDE_DIR}
         ${LevelDB_INCLUDE_PATH}
+        ${Snappy_INCLUDE_DIR}
+        ${SPARSEHASH_INCLUDE_DIR}
         ${GFLAGS_INCLUDE_DIRS}
         ${LIBCONFIG_INCLUDE_DIR}
         ${Tcmalloc_INCLUDE_DIR}
@@ -58,8 +59,8 @@ set(Bosen_LIBRARIES ${Bosen_LIBRARIES} ${UNIX_ONLY_LIBS}
         ${GLOG_LIBRARIES}
         ${Tcmalloc_LIBRARIES}
         ${LIBCONFIG_LIBRARIES}
-        ${SNAPPY_LIBRARIES}
+        ${LevelDB_LIBRARY}
+        ${Snappy_LIBRARIES}
         ${Boost_LIBRARIES}
         ${YAML_LIBRARIES}
-        ${LevelDB_LIBRARY}
         ${GFLAGS_LIBRARIES} PARENT_SCOPE)
