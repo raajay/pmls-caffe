@@ -46,7 +46,7 @@ void SVBWorker<Dtype>::Connect() {
   comm_bus_->ThreadRegister(config);
 
   /* This part of the code represents the handshake process to establish
-     conenctions to all other clients. After this part, one client can send msgs
+     connections to all other clients. After this part, one client can send msgs
      to any other. */
 
   // client i connects to client [0, ..., i - 1]
@@ -95,7 +95,7 @@ void SVBWorker<Dtype>::Connect() {
     comm_bus_->SendInterProc(dst, &non_conn_msg, sizeof(non_conn_msg));
   }
 
-  LOG(INFO) << client_id_ << " send out all msgs, receive my remaininy msgs now";
+  LOG(INFO) << client_id_ << " send out all msgs, receive my remaining msgs now";
   while (num_other_msgs < host_map_.size() - 1) {
     zmq::message_t msg;
     int32_t sender_id;
