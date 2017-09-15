@@ -35,9 +35,10 @@ solver_filename="${script_root_dir}/examples/cifar10/cifar10_quick_solver.protot
 # System parameters:
 num_app_threads=1
 num_table_threads=$(( num_app_threads + 1 ))
-param_table_staleness=0
-num_comm_channels_per_client=1
-num_rows_per_table=1
+num_openblas_threads=16
+param_table_staleness=1
+num_comm_channels_per_client=4
+num_rows_per_table=100
 consistency_model="SSPPush"
 svb=false
 
@@ -85,6 +86,7 @@ for ip in $unique_host_list; do
       GLOG_v=-1 \
       GLOG_minloglevel=0 \
       GLOG_vmodule="" \
+      OPENBLAS_NUM_THREADS=${num_openblas_threads} \
       $prog_path train \
       --consistency_model $consistency_model \
       --init_thread_access_table=true \

@@ -30,6 +30,7 @@ pdsh -R ssh -w \^${HOST_FILE} 'sudo apt-get -y install pdsh'
 pdsh -R ssh -w \^${HOST_FILE} 'sudo apt-get install -y g++ make python-dev libxml2-dev libxslt-dev git zlibc zlib1g zlib1g-dev libbz2-1.0 libbz2-dev'
 pdsh -R ssh -w \^${HOST_FILE} 'sudo apt-get install -y libatlas-base-dev libprotobuf-dev libsnappy-dev libopencv-dev libhdf5-serial-dev'
 pdsh -R ssh -w \^${HOST_FILE} 'sudo apt-get install -y libnuma-dev uuid-dev'
+pdsh -R ssh -w \^${HOST_FILE} 'sudo apt-get install -y libopenblas-dev'
 
 # setup hard disk
 remotehost=$( head -1 ${HOST_FILE} | xargs ping -c 1 | grep "icmp_seq=1" | awk -F' ' '{print $4}' )
