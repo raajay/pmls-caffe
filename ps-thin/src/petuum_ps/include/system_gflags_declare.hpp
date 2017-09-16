@@ -33,10 +33,3 @@ DECLARE_int32(snapshot_clock);
 DECLARE_int32(resume_clock);
 DECLARE_string(snapshot_dir);
 DECLARE_string(resume_dir);
-
-namespace petuum {
-
-void InitTableGroupConfig(TableGroupConfig *config, int32_t *client_id,
-                          int32_t num_tables);
-}
-
