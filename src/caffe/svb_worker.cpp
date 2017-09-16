@@ -127,7 +127,7 @@ void SVBWorker<Dtype>::Send() {
     int send_cnt = 0;
     while (send_cnt++ < max_send_cnt_per_layer_) {
       SVProto* vp = new SVProto();
-      bool succ = svq->Get<Dtype>(vp);
+      bool succ = svq->template Get<Dtype>(vp);
       if (!succ) {
         delete vp;
         continue;

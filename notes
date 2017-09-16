@@ -1,1 +1,5 @@
 * thirdpart does not build at times; for the first time only glog gets built. A second invocation of make builds all the third party libs
+
+Remote Dev
+
+https://github.com/facebook/nuclide/issues/130
