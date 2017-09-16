@@ -30,16 +30,16 @@ float Sigmoid(float x) {
 
 float LogSum(float log_a, float log_b) {
   return (log_a < log_b) ? log_b + fastlog(1 + fastexp(log_a - log_b)) :
-    log_a + fastlog(1 + fastexp(log_b-log_a));
+      log_a + fastlog(1 + fastexp(log_b-log_a));
 }
 
 float LogSumVec(const std::vector<float>& logvec) {
-	float sum = 0.;
-	sum = logvec[0];
-	for (int i = 1; i < logvec.size(); ++i) {
-		sum = LogSum(sum, logvec[i]);
-	}
-	return sum;
+  float sum = 0.;
+  sum = logvec[0];
+  for (int i = 1; i < logvec.size(); ++i) {
+    sum = LogSum(sum, logvec[i]);
+  }
+  return sum;
 }
 
 void Softmax(std::vector<float>* vec) {
@@ -106,7 +106,6 @@ float SparseSparseFeatureDotProduct(const AbstractFeature<float>& f1,
 
 void FeatureScaleAndAdd(float alpha, const DenseFeature<float>& f1,
     DenseFeature<float>* f2) {
-  CHECK_EQ(f1.GetFeatureDim(), f2->GetFeatureDim());
   const std::vector<float>& f1_vec = f1.GetVector();
   std::vector<float>& f2_vec = f2->GetVector();
   for (int i = 0; i < f1_vec.size(); ++i) {

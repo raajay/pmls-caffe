@@ -34,15 +34,26 @@ public:
     int num_data = config.num_data;
     int num_data_per_thread;
     if (global_data) {
-      num_data_per_thread = num_data / (num_clients * num_threads);
-      data_idx_begin_ = num_data_per_thread *
-        (client_id * num_threads + thread_id);
-      // The last thread takes the rest of the data.
-      if (client_id == num_clients - 1 && thread_id == num_threads - 1) {
-        data_idx_end_ = num_data;
-      } else {
+      size_t num_total_threads = num_clients * num_threads;
+      num_data_per_thread = (num_data + num_total_threads - 1) / num_total_threads;
+
+      size_t total_data_assigned = num_data_per_thread * num_total_threads;
+      int32_t cutoff_id = num_total_threads - 1 - (total_data_assigned - num_data);
+
+      int32_t my_id = client_id *num_threads + thread_id;
+
+      if (my_id <= cutoff_id) {
+        data_idx_begin_ = num_data_per_thread * my_id;
         data_idx_end_ = data_idx_begin_ + num_data_per_thread;
+      } else if (my_id == cutoff_id + 1) {
+        data_idx_begin_ = num_data_per_thread * my_id;
+        data_idx_end_ = data_idx_begin_ + num_data_per_thread - 1;
+      } else {
+        data_idx_begin_ = num_data_per_thread * cutoff_id
+                          + (num_data_per_thread - 1) * (my_id - cutoff_id);
+        data_idx_end_ = data_idx_begin_ + num_data_per_thread - 1;
       }
+
     } else {
       num_data_per_thread = num_data / num_threads;
       data_idx_begin_ = num_data_per_thread * thread_id;
@@ -56,11 +67,14 @@ public:
 
     // We will allow wrap-around on [data_idx_begin_, data_idx_end_)  when
     // data points aren't divisible.
-    batch_size_ = std::ceil(static_cast<float>(data_idx_end_ - data_idx_begin_)
+    batch_size_ = std::ceil(
+        static_cast<float>(data_idx_end_ - data_idx_begin_)
         / num_batches_per_epoch);
-    CHECK_LT(0, batch_size_) << "Batch size cannot be 0. # data this thread: "
-      << (data_idx_end_ - data_idx_begin_) << " num_batches_per_epoch: "
-      << num_batches_per_epoch;
+    CHECK_LT(0, batch_size_)
+        << "Batch size cannot be 0. # data this thread: "
+        << (data_idx_end_ - data_idx_begin_)
+        << " num_batches_per_epoch: "
+        << num_batches_per_epoch;
     num_data_per_epoch_ = batch_size_ * num_batches_per_epoch;
     Restart();
   }
