@@ -64,6 +64,8 @@ size_t GlobalContext::server_push_row_threshold_;
 
 long GlobalContext::server_idle_milli_;
 
+int32_t GlobalContext::server_row_candidate_factor_;
+
   // (raajay) new variables
   bool GlobalContext::is_asynchronous_mode_;
 
