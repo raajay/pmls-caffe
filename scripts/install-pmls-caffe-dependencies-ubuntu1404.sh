@@ -26,3 +26,6 @@ sudo apt-get install -y libgoogle-glog-dev \
     libevent-pthreads-2.0-5 \
     libeigen3-dev \
     liblmdb-dev
+
+# multi-threaded CPU support
+sudo apt-get install -y libopenblas-dev
