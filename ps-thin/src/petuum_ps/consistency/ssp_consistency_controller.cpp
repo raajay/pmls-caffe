@@ -48,12 +48,13 @@ namespace petuum {
 
 
   ClientRow *SSPConsistencyController::Get(int32_t row_id,
-                                           RowAccessor* row_accessor) {
+                                           RowAccessor* row_accessor,
+                                           int32_t clock) {
 
     STATS_APP_SAMPLE_SSP_GET_BEGIN(table_id_);
 
     // Look for row_id in process_storage_.
-    int32_t stalest_clock = std::max(0, ThreadContext::get_clock() - staleness_);
+    int32_t stalest_clock = clock > 0 ? clock : 0;
 
     ClientRow *client_row = process_storage_.Find(row_id, row_accessor);
 

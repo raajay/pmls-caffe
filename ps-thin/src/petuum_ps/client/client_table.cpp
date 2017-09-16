@@ -175,10 +175,11 @@ namespace petuum {
 
 
   ClientRow *ClientTable::Get(int32_t row_id,
-                              RowAccessor *row_accessor) {
+                              RowAccessor *row_accessor,
+                              int32_t clock) {
 
     return consistency_controller_->Get(row_id,
-                                        row_accessor);
+                                        row_accessor, clock);
   }
 
   // GET functions END

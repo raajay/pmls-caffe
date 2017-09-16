@@ -35,7 +35,7 @@ public:
 
   void FlushThreadCache();
 
-  ClientRow *Get(int32_t row_id, RowAccessor *row_accessor);
+  ClientRow *Get(int32_t row_id, RowAccessor *row_accessor, int32_t clock);
   void Inc(int32_t row_id, int32_t column_id, const void *update);
   void BatchInc(int32_t row_id,
                 const int32_t* column_ids,
