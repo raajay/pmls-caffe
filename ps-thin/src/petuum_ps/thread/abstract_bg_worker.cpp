@@ -15,8 +15,8 @@ namespace petuum {
     my_id_(id),
     my_comm_channel_idx_(comm_channel_idx),
     tables_(tables),
-    version_(0),
-    client_clock_(0),
+    per_worker_update_version_(0),
+    worker_clock_(0),
     clock_has_pushed_(-1),
     comm_bus_(GlobalContext::comm_bus),
     init_barrier_(init_barrier),
@@ -384,7 +384,7 @@ namespace petuum {
     CreateOpLogMsgs(bg_oplog);
     STATS_BG_ACCUM_CLOCK_END_OPLOG_SERIALIZE_END();
 
-    clock_has_pushed_ = client_clock_;
+    clock_has_pushed_ = worker_clock_;
     // send the information to the server with info on whether the clock has
     // advanced (or) if the client is just pushing updates aggressively.
     SendOpLogMsgs(clock_advanced);
@@ -394,9 +394,9 @@ namespace petuum {
     TrackBgOpLog(bg_oplog);
 
     VLOG(20) << "Handle clock message (prepare, create, send) took "
-             << begin_clock.elapsed() << " s at clock=" << client_clock_;
+             << begin_clock.elapsed() << " s at clock=" << worker_clock_;
     return 0;
-    // the clock (client_clock_) is immediately incremented after this function completes
+    // the clock (worker_clock_) is immediately incremented after this function completes
 
   }
 
@@ -543,13 +543,13 @@ namespace petuum {
   size_t AbstractBgWorker::SendOpLogMsgs(bool clock_advanced) {
     size_t accum_size = 0;
 
-    STATS_MLFABRIC_CLIENT_PUSH_BEGIN(0, version_);
+    STATS_MLFABRIC_CLIENT_PUSH_BEGIN(0, per_worker_update_version_);
 
     for (const auto &server_id : server_ids_) {
 
       // server_oplog_msg_msp will be populated in Create Op Log Msgs
       auto oplog_msg_iter = server_oplog_msg_map_.find(server_id);
-      STATS_MLFABRIC_CLIENT_PUSH_BEGIN(server_id, version_);
+      STATS_MLFABRIC_CLIENT_PUSH_BEGIN(server_id, per_worker_update_version_);
 
       if (oplog_msg_iter != server_oplog_msg_map_.end()) {
 
@@ -557,7 +557,7 @@ namespace petuum {
         // with clock information.
         oplog_msg_iter->second->get_is_clock() = clock_advanced;
         oplog_msg_iter->second->get_client_id() = GlobalContext::get_client_id();
-        oplog_msg_iter->second->get_version() = version_;
+        oplog_msg_iter->second->get_version() = per_worker_update_version_;
         oplog_msg_iter->second->get_bg_clock() = clock_has_pushed_ + 1;
 
         accum_size += oplog_msg_iter->second->get_size();
@@ -566,9 +566,9 @@ namespace petuum {
         delete oplog_msg_iter->second;
         oplog_msg_iter->second = 0;
 
-        VLOG(2) << "Oplog sent: client_clock=" << client_clock_
+        VLOG(2) << "Oplog sent: client_clock=" << worker_clock_
                 <<" server=" << server_id
-                <<" clientversion=" << version_
+                <<" clientversion=" << per_worker_update_version_
                 << " size=" << accum_size
                 << " time=" << GetElapsedTime();
 
@@ -580,7 +580,7 @@ namespace petuum {
         ClientSendOpLogMsg clock_oplog_msg(0); // create a message with zero data size
         clock_oplog_msg.get_is_clock() = clock_advanced;
         clock_oplog_msg.get_client_id() = GlobalContext::get_client_id();
-        clock_oplog_msg.get_version() = version_;
+        clock_oplog_msg.get_version() = per_worker_update_version_;
         clock_oplog_msg.get_bg_clock() = clock_has_pushed_ + 1;
 
         accum_size += clock_oplog_msg.get_size();
@@ -589,7 +589,7 @@ namespace petuum {
       }
     } // end for -- over server ids
 
-    STATS_MLFABRIC_CLIENT_PUSH_END(0, version_);
+    STATS_MLFABRIC_CLIENT_PUSH_END(0, per_worker_update_version_);
 
     STATS_BG_ADD_PER_CLOCK_OPLOG_SIZE(accum_size);
     return accum_size;
@@ -667,7 +667,7 @@ namespace petuum {
 
     // Version in request denotes the update version that the row on server can
     // see. Which should be 1 less than the current version number.
-    // raajay: version_ is the latest version that is pushed to the server from this client.
+    // raajay: per_worker_update_version_ is the latest version that is pushed to the server from this client.
     // which means the request can be for one less than that?
 
     // (raajay) when ever an app thread requests for a row and it is not found
@@ -676,7 +676,7 @@ namespace petuum {
     // remember that the app thread made a request for the row when the current
     // version of the model was blah.
 
-    row_request.version = version_ - 1;
+    row_request.version = per_worker_update_version_ - 1;
 
     bool should_be_sent = row_request_oplog_mgr_->AddRowRequest(row_request, table_id, row_id);
 
@@ -691,7 +691,7 @@ namespace petuum {
 
       CHECK_EQ(sent_size, row_request_msg.get_size());
     }
-  } // end function -- check and forward row request
+  } // end function -- CheckForwardRowRequestToServer
 
 
 
@@ -785,7 +785,7 @@ namespace petuum {
     int32_t clock_to_request = row_request_oplog_mgr_->InformReply(table_id,
                                                                    row_id,
                                                                    clock,
-                                                                   version_,
+                                                                   per_worker_update_version_,
                                                                    &app_thread_ids);
 
     if (clock_to_request >= 0) {
@@ -961,7 +961,7 @@ namespace petuum {
           }
         }
         break;
-      case kRowRequest:
+      case kApplicationThreadRowRequest:
         {
           // app thread typically sends a row request, your job is to forward it to the server.
           RowRequestMsg row_request_msg(msg_mem);
@@ -979,8 +979,8 @@ namespace petuum {
         {
           // clock message is sent from the app thread using the static function defined in bgworkers.
           timeout_milli = HandleClockMsg(true);
-          ++client_clock_;
-          VLOG(5) << "Increment client clock in bgworker:" << my_id_ << " to " << client_clock_;
+          ++worker_clock_;
+          VLOG(5) << "Increment client clock in bgworker:" << my_id_ << " to " << worker_clock_;
           STATS_BG_CLOCK();
         }
         break;

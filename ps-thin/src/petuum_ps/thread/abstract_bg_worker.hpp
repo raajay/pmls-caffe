@@ -140,8 +140,8 @@ namespace petuum {
     std::map<int32_t, ClientTable* > *tables_;
     std::vector<int32_t> server_ids_;
 
-    uint32_t version_;
-    int32_t client_clock_;
+    uint32_t per_worker_update_version_;
+    int32_t worker_clock_;
     int32_t clock_has_pushed_;
     RowRequestOpLogMgr *row_request_oplog_mgr_;
     CommBus* const comm_bus_;

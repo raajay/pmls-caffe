@@ -430,7 +430,7 @@ namespace petuum {
           HandleCreateTable(sender_id, create_table_msg);
           break;
         }
-      case kRowRequest:
+      case kApplicationThreadRowRequest:
         {
           // here, handle a clients request for new data
           RowRequestMsg row_request_msg(msg_mem);

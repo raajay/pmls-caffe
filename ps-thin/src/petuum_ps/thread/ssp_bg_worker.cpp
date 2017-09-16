@@ -209,9 +209,9 @@ namespace petuum {
 
 
   void SSPBgWorker::TrackBgOpLog(BgOpLog *bg_oplog) {
-    bool tracked = row_request_oplog_mgr_->AddOpLog(version_, bg_oplog);
-    ++version_;
-    VLOG(5) << "Increment version of bgworker:" << my_id_ << " to " << version_;
+    bool tracked = row_request_oplog_mgr_->AddOpLog(per_worker_update_version_, bg_oplog);
+    ++per_worker_update_version_;
+    VLOG(5) << "Increment version of bgworker:" << my_id_ << " to " << per_worker_update_version_;
 
     // the below function does nothing.
     row_request_oplog_mgr_->InformVersionInc();

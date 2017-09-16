@@ -444,7 +444,7 @@ namespace petuum {
   protected:
     void InitMsg() {
       NumberedMsg::InitMsg();
-      get_msg_type() = kRowRequest;
+      get_msg_type() = kApplicationThreadRowRequest;
     }
   };
 

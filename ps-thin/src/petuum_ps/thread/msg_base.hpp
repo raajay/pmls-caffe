@@ -19,7 +19,7 @@ enum MsgType {
   kCreateTable = 4,
   kCreateTableReply = 5,
   kCreatedAllTables = 6,
-  kRowRequest = 7,
+  kApplicationThreadRowRequest = 7,
   kRowRequestReply = 8,
   kServerRowRequestReply = 9,
   kBgClock = 10,
