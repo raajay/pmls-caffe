@@ -756,18 +756,21 @@ namespace petuum {
 
         if (client_row != nullptr) {
             // internal private function defined in this class.
-            UpdateExistingRow(table_id, row_id, client_row, client_table, data, row_size, version);
+            VLOG(20) << "Update ClientRow " << petuum::GetTableRowStringId(table_id, row_id)
+                     << " clock=" << client_row->GetClock() << " new clock=" << clock;
+
             CHECK_GT(clock, client_row->GetClock())
                 << "Latest clock is not greater than prior clock for "
                 << petuum::GetTableRowStringId(table_id, row_id) << ". "
                 << "latest clock=" << clock << " prior clock=" << client_row->GetClock();
+
+            UpdateExistingRow(table_id, row_id, client_row, client_table, data, row_size, version);
             client_row->SetClock(clock);
             client_row->SetGlobalVersion(global_model_version);
         } else { // not found
+            VLOG(20) << "New ClientRow " << petuum::GetTableRowStringId(table_id, row_id) << " new clock=" << clock;
             InsertNonexistentRow(table_id, row_id, client_table, data, row_size, version, clock, global_model_version);
         }
-        VLOG(20) << "ClientRow Updated/Created. "
-                 << petuum::GetTableRowStringId(table_id, row_id) << " clock=" << client_row->GetClock();
 
 
         // populate app_thread_ids with the list of app threads whose request can be
