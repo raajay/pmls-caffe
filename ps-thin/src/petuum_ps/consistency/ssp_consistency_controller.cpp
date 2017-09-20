@@ -70,8 +70,6 @@ namespace petuum {
         return client_row;
       }
     }
-    VLOG(20) << "RR App Thread >>> Bg Thread "
-             << petuum::GetTableRowStringId(table_id_, row_id);
 
     // Didn't find row_id that's fresh enough in process_storage_.
     // Fetch from server.
@@ -96,7 +94,7 @@ namespace petuum {
 
     CHECK_GE(client_row->GetClock(), stalest_clock)
       << petuum::GetTableRowStringId(table_id_, row_id)
-      << "row clock=" << client_row->GetClock() << " stalest_clock=" << stalest_clock;
+      << " row clock=" << client_row->GetClock() << " stalest_clock=" << stalest_clock;
 
     STATS_APP_SAMPLE_SSP_GET_END(table_id_, false);
 
