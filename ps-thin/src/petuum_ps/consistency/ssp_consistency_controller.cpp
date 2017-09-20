@@ -2,6 +2,7 @@
 #include <petuum_ps/consistency/ssp_consistency_controller.hpp>
 #include <petuum_ps/thread/context.hpp>
 #include <petuum_ps/thread/bg_workers.hpp>
+#include <petuum_ps/util/utils.hpp>
 #include <petuum_ps/util/stats.hpp>
 #include <glog/logging.h>
 #include <algorithm>
@@ -69,7 +70,8 @@ namespace petuum {
         return client_row;
       }
     }
-    VLOG(20) << "Issue Request Row row_id=" << row_id << " for table=" << this->table_id_;
+    VLOG(20) << "RR App Thread >>> Bg Thread "
+             << petuum::GetTableRowStringId(table_id_, row_id);
 
     // Didn't find row_id that's fresh enough in process_storage_.
     // Fetch from server.
@@ -88,9 +90,14 @@ namespace petuum {
       ++num_fetches;
       CHECK_LE(num_fetches, 3); // to prevent infinite loop
     } while(client_row == 0);
-    VLOG(20) << "Received row. row_id=" << row_id << " for table=" << this->table_id_;
 
-    CHECK_GE(client_row->GetClock(), stalest_clock);
+    VLOG(20) << "RRR BgThread >>> App Thread "
+             << petuum::GetTableRowStringId(table_id_, row_id);
+
+    CHECK_GE(client_row->GetClock(), stalest_clock)
+      << petuum::GetTableRowStringId(table_id_, row_id)
+      << "row clock=" << client_row->GetClock() << " stalest_clock=" << stalest_clock;
+
     STATS_APP_SAMPLE_SSP_GET_END(table_id_, false);
 
     return client_row;
