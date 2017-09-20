@@ -123,6 +123,8 @@ namespace petuum {
                                           int32_t global_version) {
 
     STATS_APP_SAMPLE_BATCH_INC_OPLOG_BEGIN();
+    VLOG(20) << "Updating row=" << row_id << " for table="
+             << table_id_ << " with model version=" << global_version;
 
     // update the thread index saying that row id is updated
     thread_cache_->IndexUpdate(row_id);
@@ -150,7 +152,7 @@ namespace petuum {
     STATS_APP_SAMPLE_BATCH_INC_OPLOG_END();
 
 
-    // TODO (Raajay) these updates are also synced into the process_storage_.
+    // These updates were also synced into the process_storage_.
     // This enables other app threads to read it when needed. Process storage
     // has the local view of the Table so updating it makes sense. However, is
     // the version count incremented? If not, how do we avoid double counting?

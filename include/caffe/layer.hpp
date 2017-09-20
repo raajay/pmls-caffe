@@ -468,6 +468,8 @@ void Layer<Dtype>::SetUpBlobGlobalTable(
     switch (type) {
     case LayerParameter_LayerType_CONVOLUTION:
       // weight table
+      LOG(INFO) << "Layer " << param.name() << " of type " << type
+            << " initializing PS tables";
       weight_filler.reset(GetFiller<Dtype>(
           param.convolution_param().weight_filler()));
       weight_filler->FillPSTable(this->blobs_[0].get());
@@ -479,6 +481,8 @@ void Layer<Dtype>::SetUpBlobGlobalTable(
       } 
       break;
     case LayerParameter_LayerType_INNER_PRODUCT:
+      LOG(INFO) << "Layer " << param.name() << " of type " << type
+                << " initializing PS tables";
       // weight table
       weight_filler.reset(GetFiller<Dtype>(
           param.inner_product_param().weight_filler()));
