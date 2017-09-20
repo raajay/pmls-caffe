@@ -119,6 +119,7 @@ void Solver<Dtype>::InitTrainNet() {
       != layer_blobs_global_idx_ptr_->end());
   net_->set_table(
       layer_blobs_global_idx_ptr_->at(train_net_output_name)[0]);
+    VLOG(20) << "set_table successfully";
   // layer parameter blobs
   map<string, vector<int> >::const_iterator it 
       = layer_blobs_global_idx_ptr_->begin();
@@ -130,8 +131,10 @@ void Solver<Dtype>::InitTrainNet() {
     const shared_ptr<Layer<Dtype> > layer = net_->layer_by_name(it->first);
     if (client_id_ == 0 && thread_id_ == 0) {
       // initialize the PS tables
+      VLOG(20) << "Initializing the PS tables";
       layer->SetUpBlobGlobalTable(it->second, true, reg);
     } else {
+      VLOG(20) << "Setup blob global table from non-zero thread";
       layer->SetUpBlobGlobalTable(it->second, false, reg);
     }
   }
