@@ -7,8 +7,8 @@ layers {
   data_param {
     source: "/media/raajay/scripts-pmls-caffe/examples/cifar10/cifar10_train_leveldb"
     backend: LEVELDB
-    batch_size: 50
-    shared_file_system: true
+    batch_size: 100
+    shared_file_system: false
   }
   transform_param {
     mean_file: "/media/raajay/scripts-pmls-caffe/examples/cifar10/mean.binaryproto"
@@ -24,7 +24,7 @@ layers {
     source: "/media/raajay/scripts-pmls-caffe/examples/cifar10/cifar10_test_leveldb"
     backend: LEVELDB
     batch_size: 100
-    shared_file_system: true
+    shared_file_system: false
   }
   transform_param {
     mean_file: "/media/raajay/scripts-pmls-caffe/examples/cifar10/mean.binaryproto"
