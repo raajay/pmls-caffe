@@ -62,6 +62,8 @@ function build_pmls_caffe() {
   # rename files (link some and copy some)
   mv $BASE_BUILD_DIR/build/tools/caffe_main.bin $BASE_BUILD_DIR/build/tools/caffe_main
   cp ${build_info} $BASE_BUILD_DIR/build/${build_id}_build.info
+  cp $BASE_BUILD_DIR/build/${PSVERSION}/libpetuum_ps.so ${BASE_BUILD_DIR}/build/lib/libpetuum_ps.so
+
   cp ${build_info} $BUILD_META_DATA_DIR/${build_id}_build.info
 }
 
@@ -73,10 +75,13 @@ function tar_and_store() {
   tar_file=$BUILD_STORAGE_DIR/$build_id.tar.gz
   tar -c -z -v -f $tar_file -C ${BASE_BUILD_DIR} \
     build/tools/caffe_main \
-    build/tools/caffe_main.bin \
     build/build.info \
     build/makeout.log \
-    build/cmakeout.log
+    build/cmakeout.log \
+    build/lib/libcaffeproto.a \
+    build/lib/libcaffe.so \
+    build/lib/libcaffe.so.1.0.0 \
+    build/lib/libpetuum_ps.so
 }
 
 build_id=$(get_uuid)

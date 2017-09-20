@@ -31,6 +31,7 @@ pdsh -R ssh -w \^${HOST_FILE} 'sudo apt-get install -y g++ make python-dev libxm
 pdsh -R ssh -w \^${HOST_FILE} 'sudo apt-get install -y libatlas-base-dev libprotobuf-dev libsnappy-dev libopencv-dev libhdf5-serial-dev'
 pdsh -R ssh -w \^${HOST_FILE} 'sudo apt-get install -y libnuma-dev uuid-dev'
 pdsh -R ssh -w \^${HOST_FILE} 'sudo apt-get install -y libopenblas-dev'
+pdsh -R ssh -w \^${HOST_FILE} 'sudo apt-get install -y libtcmalloc-minimal4'
 
 # setup hard disk
 remotehost=$( head -1 ${HOST_FILE} | xargs ping -c 1 | grep "icmp_seq=1" | awk -F' ' '{print $4}' )
