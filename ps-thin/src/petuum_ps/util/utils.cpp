@@ -47,5 +47,11 @@ void GetServerIDsFromHostMap(std::vector<int32_t> *server_ids,
   }
 }
 
+    std::string GetTableRowStringId(int32_t table_id, int32_t row_id) {
+      std::stringstream retstream;
+      retstream << "Table=" << table_id << " " << "Row=" << row_id;
+      return retstream.str();
+    }
+
 
 }   // namespace petuum
