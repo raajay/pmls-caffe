@@ -96,7 +96,7 @@ namespace petuum {
       size_t sent_size = SendMsg(
                                  reinterpret_cast<MsgBase*>(&bg_create_table_msg));
       CHECK_EQ((int32_t) sent_size, bg_create_table_msg.get_size());
-      VLOG(5) << "Send CREATE_TABLE request from bgworker=" << this->my_id_
+      VLOG(5) << "THREAD-" << my_id_ << ": Send CREATE_TABLE request from bgworker=" << this->my_id_
               << " for table=" << table_id;
     }
     // waiting for response
@@ -106,7 +106,7 @@ namespace petuum {
       comm_bus_->RecvInProc(&sender_id, &zmq_msg);
       MsgType msg_type = MsgBase::get_msg_type(zmq_msg.data());
       CHECK_EQ(msg_type, kCreateTableReply);
-      VLOG(5) << "Received reply for CREATE_TABLE from sender=" << sender_id;
+      VLOG(5) << "THREAD-" << my_id_ << ": Received reply for CREATE_TABLE from sender=" << sender_id;
     }
     return true;
   }
@@ -120,7 +120,7 @@ namespace petuum {
       request_row_msg.get_clock() = clock;
       request_row_msg.get_forced_request() = false;
 
-      VLOG(20) << "Send row request msg from app thread id to bg thread. row_id=" << row_id
+      VLOG(20) << "THREAD-" << my_id_ << ": Send row request msg from app thread id to bg thread. row_id=" << row_id
                << " table_id=" << table_id;
       size_t sent_size = SendMsg(reinterpret_cast<MsgBase*>(&request_row_msg));
       CHECK_EQ(sent_size, request_row_msg.get_size());
@@ -130,7 +130,7 @@ namespace petuum {
       zmq::message_t zmq_msg;
       int32_t sender_id;
       comm_bus_->RecvInProc(&sender_id, &zmq_msg);
-      VLOG(20) << "Row request (table=" << table_id << ", rowid=" << row_id
+      VLOG(20) << "THREAD-" << my_id_ << ": Row request (table=" << table_id << ", rowid=" << row_id
                << ") blocked for " << rr_send.elapsed() << " seconds. "
                << "sender_id=" << sender_id;
 
@@ -271,7 +271,7 @@ namespace petuum {
         MsgType msg_type = MsgBase::get_msg_type(zmq_msg.data());
 
         CHECK_EQ(msg_type, kClientStart);
-        VLOG(5) << "Received client start from server:" << sender_id;
+        VLOG(5) << "THREAD-" << my_id_ << ": Received client start from server:" << sender_id;
       }
     }
 
@@ -328,7 +328,7 @@ namespace petuum {
                                                                create_table_msg.get_mem(),
                                                                create_table_msg.get_size());
         CHECK_EQ(sent_size, create_table_msg.get_size());
-        VLOG(5) << "Send CREATE_TABLE request from bgworker=" << my_id_ << " to namenode=" << name_node_id;
+        VLOG(5) << "THREAD-" << my_id_ << ": Send CREATE_TABLE request from bgworker=" << my_id_ << " to namenode=" << name_node_id;
       }
 
       // wait for response from name node
@@ -344,7 +344,7 @@ namespace petuum {
 
         ClientTable *client_table;
         try {
-          VLOG(5) << "Creating an instance of a ClientTable(id=" << table_id << ", address:" << &client_table << ") in bgworker=" << my_id_;
+          VLOG(5) << "THREAD-" << my_id_ << ": Creating an instance of a ClientTable(id=" << table_id << ", address:" << &client_table << ") in bgworker=" << my_id_;
           client_table  = new ClientTable(table_id, client_table_config);
         } catch (std::bad_alloc &e) {
           LOG(FATAL) << "Bad alloc exception";
@@ -363,7 +363,7 @@ namespace petuum {
       (comm_bus_->*(comm_bus_->RecvAny_))(&sender_id, &zmq_msg);
       MsgType msg_type = MsgBase::get_msg_type(zmq_msg.data());
       CHECK_EQ(msg_type, kCreatedAllTables);
-      VLOG(5) << "Received a kCreatedAllTables message from sender=" << sender_id;
+      VLOG(5) << "THREAD-" << my_id_ << ": Received a kCreatedAllTables message from sender=" << sender_id;
     }
   }
 
@@ -393,7 +393,7 @@ namespace petuum {
     // note that the version number is incremented even if the clock has not advanced.
     TrackBgOpLog(bg_oplog);
 
-    VLOG(20) << "Handle clock message (prepare, create, send) took "
+    VLOG(20) << "THREAD-" << my_id_ << ": Handle clock message (prepare, create, send) took "
              << begin_clock.elapsed() << " s at clock=" << worker_clock_;
     return 0;
     // the clock (worker_clock_) is immediately incremented after this function completes
@@ -403,7 +403,7 @@ namespace petuum {
 
 
   void AbstractBgWorker::HandleServerPushRow(int32_t sender_id, void *msg_mem) {
-    LOG(FATAL) << "Consistency model = "
+    LOG(FATAL) << "THREAD-" << my_id_ << ": Consistency model = "
                << GlobalContext::get_consistency_model()
                << " does not support HandleServerPushRow";
   }
@@ -566,7 +566,7 @@ namespace petuum {
         delete oplog_msg_iter->second;
         oplog_msg_iter->second = 0;
 
-        VLOG(2) << "Oplog sent: client_clock=" << worker_clock_
+        VLOG(2) << "THREAD-" << my_id_ << ": Oplog sent: client_clock=" << worker_clock_
                 <<" server=" << server_id
                 <<" clientversion=" << per_worker_update_version_
                 << " size=" << accum_size
@@ -682,7 +682,7 @@ namespace petuum {
 
     if (should_be_sent) {
       int32_t server_id = GlobalContext::GetPartitionServerID(row_id, my_comm_channel_idx_);
-      VLOG(20) << "Sending a row request (received) from app thread=" << app_thread_id
+      VLOG(20) << "THREAD-" << my_id_ << ": Sending a row request received from app thread=" << app_thread_id
                << " to server=" << server_id << " for table=" << table_id
                << " and row_id=" << row_id << " with version=" << row_request.version;
 
@@ -805,7 +805,7 @@ namespace petuum {
       CHECK_EQ(sent_size, row_request_msg.get_size());
     }
 
-    VLOG(20) << "Received a row request from server thread=" << server_id
+    VLOG(20) << "THREAD-" << my_id_ << ": Received a row request reply from server thread=" << server_id
              << " for table=" << table_id << " and row_id=" << row_id;
 
     // respond to each satisfied application row request
@@ -875,9 +875,9 @@ namespace petuum {
     int32_t num_deregistered_app_threads = 0;
     int32_t num_shutdown_acked_servers = 0;
 
-    VLOG(5) << "Prepare to connect with app threads";
+    VLOG(5) << "THREAD-" << my_id_ << ": Prepare to connect with app threads";
     RecvAppInitThreadConnection(&num_connected_app_threads);
-    VLOG(5) << "Bg Worker thread:" << my_id_ << " connected with "
+    VLOG(5) << "THREAD-" << my_id_ << ": Bg Worker thread:" << my_id_ << " connected with "
             << num_connected_app_threads << " app threads.";
     from_start_timer_.restart();
 
@@ -980,7 +980,7 @@ namespace petuum {
           // clock message is sent from the app thread using the static function defined in bgworkers.
           timeout_milli = HandleClockMsg(true);
           ++worker_clock_;
-          VLOG(5) << "Increment client clock in bgworker:" << my_id_ << " to " << worker_clock_;
+          VLOG(5) << "THREAD-" << my_id_ << ": Increment client clock in bgworker:" << my_id_ << " to " << worker_clock_;
           STATS_BG_CLOCK();
         }
         break;

@@ -232,6 +232,8 @@ namespace petuum {
         VLOG(15) << "Buffering row request";
         return;
       }
+    } else {
+      VLOG(20) << ": Responsing the row request immediately; since server is in asynchronous mode";
     }
 
     // uint32_t version = server_obj_.GetBgVersion(sender_id);
