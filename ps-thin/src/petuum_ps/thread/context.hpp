@@ -466,10 +466,10 @@ namespace petuum {
     static const int32_t kReplicaThreadIDStartOffset = 500; // 500 - 600
 
     static const int32_t kNameNodeClientId = 0;
-    static const int32_t kServerClientMinId = 1;
-    static const int32_t kServerClientMaxId = 100;
-    static const int32_t kWorkerClientMinId = 101;
-    static const int32_t kWorkerClientMaxId = 200;
+    static const int32_t kServerClientMinId = 0;
+    static const int32_t kServerClientMaxId = 1000;
+    static const int32_t kWorkerClientMinId = 0;
+    static const int32_t kWorkerClientMaxId = 1000;
     static const int32_t kAggregatorClientMinId = 201;
     static const int32_t kAggregatorClientMaxId = 300;
     static const int32_t kReplicaClientMinId = 301;
