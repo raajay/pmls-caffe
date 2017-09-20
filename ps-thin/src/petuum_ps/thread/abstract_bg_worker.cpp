@@ -120,8 +120,8 @@ namespace petuum {
             request_row_msg.get_row_id() = row_id;
             request_row_msg.get_clock() = clock;
             request_row_msg.get_forced_request() = false;
-            VLOG(20) << "RR App Thread >>> Bg Thread " << petuum::GetTableRowStringId(table_id, row_id)
-                     << " clock=" << clock;
+            VLOG(20) << "RR App Thread >>> Bg Thread (" << my_id_ << ") "
+                     << petuum::GetTableRowStringId(table_id, row_id) << " clock=" << clock;
             size_t sent_size = SendMsg(reinterpret_cast<MsgBase *>(&request_row_msg));
             CHECK_EQ(sent_size, request_row_msg.get_size());
         }
@@ -651,8 +651,11 @@ namespace petuum {
                 AbstractProcessStorage &table_storage = table->get_process_storage();
                 RowAccessor row_accessor;
                 ClientRow *client_row = table_storage.Find(row_id, &row_accessor);
-                if (client_row != 0) {
+                if (client_row != nullptr) {
                     if (GlobalContext::get_consistency_model() == SSP && client_row->GetClock() >= clock) {
+                        VLOG(20) << "RRR-cache hit BgThread (" << my_id_ << ") >>> App Thread (" << app_thread_id << ") "
+                                 << petuum::GetTableRowStringId(table_id, row_id)
+                                 << " request clock=" << clock << " row clock=" << client_row->GetClock();
                         RowRequestReplyMsg row_request_reply_msg;
                         size_t sent_size = comm_bus_->SendInProc(app_thread_id, row_request_reply_msg.get_mem(),
                                                                  row_request_reply_msg.get_size());
@@ -804,7 +807,7 @@ namespace petuum {
         RowRequestReplyMsg row_request_reply_msg;
         for (int app_thread_id : app_thread_ids) {
             VLOG(20) << "RRR BgThread (" << my_id_ << ") >>> App Thread (" << app_thread_id << ") "
-                     << petuum::GetTableRowStringId(table_id, row_id);
+                     << petuum::GetTableRowStringId(table_id, row_id) << " clock=" << clock;
             size_t sent_size = comm_bus_->SendInProc(app_thread_id, row_request_reply_msg.get_mem(),
                                                      row_request_reply_msg.get_size());
             CHECK_EQ(sent_size, row_request_reply_msg.get_size());

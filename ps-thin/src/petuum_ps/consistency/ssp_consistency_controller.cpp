@@ -62,10 +62,10 @@ namespace petuum {
 
     ClientRow *client_row = process_storage_.Find(row_id, row_accessor);
 
-    if (client_row != 0) {
+    if (client_row != nullptr) {
       // Found it! Check staleness.
-      int32_t clock = client_row->GetClock();
-      if (clock >= stalest_clock) {
+      int32_t current_row_clock = client_row->GetClock();
+      if (current_row_clock >= stalest_clock) {
         STATS_APP_SAMPLE_SSP_GET_END(table_id_, true);
         return client_row;
       }
@@ -87,10 +87,7 @@ namespace petuum {
       // We'll fix it if it turns out there are too many misses.
       ++num_fetches;
       CHECK_LE(num_fetches, 3); // to prevent infinite loop
-    } while(client_row == 0);
-
-    VLOG(20) << "RRR BgThread >>> App Thread "
-             << petuum::GetTableRowStringId(table_id_, row_id);
+    } while(client_row == nullptr);
 
     CHECK_GE(client_row->GetClock(), stalest_clock)
       << petuum::GetTableRowStringId(table_id_, row_id)
@@ -117,7 +114,7 @@ namespace petuum {
 
     RowAccessor row_accessor;
     ClientRow *client_row = process_storage_.Find(row_id, &row_accessor);
-    if (client_row != 0) {
+    if (client_row != nullptr) {
       client_row->GetRowDataPtr()->ApplyInc(column_id, delta);
     }
   } // end function -- Inc
