@@ -120,8 +120,8 @@ namespace petuum {
             request_row_msg.get_row_id() = row_id;
             request_row_msg.get_clock() = clock;
             request_row_msg.get_forced_request() = false;
-            VLOG(20) << "RR App Thread >>> Bg Thread "
-                     << petuum::GetTableRowStringId(table_id, row_id);
+            VLOG(20) << "RR App Thread >>> Bg Thread " << petuum::GetTableRowStringId(table_id, row_id)
+                     << " clock=" << clock;
             size_t sent_size = SendMsg(reinterpret_cast<MsgBase *>(&request_row_msg));
             CHECK_EQ(sent_size, request_row_msg.get_size());
         }
@@ -131,7 +131,7 @@ namespace petuum {
             int32_t sender_id;
             comm_bus_->RecvInProc(&sender_id, &zmq_msg);
             VLOG(20) << "RR Latency@App Thread for "
-                     << petuum::GetTableRowStringId(table_id, row_id) << " equals "
+                     << petuum::GetTableRowStringId(table_id, row_id) << " clock=" << clock << " equals "
                      << rr_send.elapsed() << " s";
             MsgType msg_type = MsgBase::get_msg_type(zmq_msg.data());
             CHECK_EQ(msg_type, kRowRequestReply);
@@ -146,6 +146,9 @@ namespace petuum {
         request_row_msg.get_row_id() = row_id;
         request_row_msg.get_clock() = clock;
         request_row_msg.get_forced_request() = forced;
+
+        VLOG(20) << "RR-Async App Thread >>> Bg Thread " << petuum::GetTableRowStringId(table_id, row_id)
+                 << " clock=" << clock;
 
         size_t sent_size = SendMsg(reinterpret_cast<MsgBase *>(&request_row_msg));
         CHECK_EQ(sent_size, request_row_msg.get_size());

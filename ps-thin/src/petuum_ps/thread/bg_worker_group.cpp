@@ -1,6 +1,7 @@
 #include <petuum_ps/thread/bg_worker_group.hpp>
 #include <petuum_ps/thread/ssp_bg_worker.hpp>
 #include <petuum_ps/thread/context.hpp>
+#include <petuum_ps/util/utils.hpp>
 
 namespace petuum {
 
@@ -86,6 +87,7 @@ void BgWorkerGroup::GetAsyncRowRequestReply() {
   zmq::message_t zmq_msg;
   int32_t sender_id;
   GlobalContext::comm_bus->RecvInProc(&sender_id, &zmq_msg);
+  VLOG(20) << "RRR-Async " << petuum::GetTableRowStringId(-1, -1);
   MsgType msg_type = MsgBase::get_msg_type(zmq_msg.data());
   CHECK_EQ(msg_type, kRowRequestReply);
 }
