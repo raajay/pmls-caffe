@@ -54,6 +54,7 @@ function build_pmls_caffe() {
   echo "time=$(date)" >> ${build_info}
   echo "git_branch=$(git_branch)" >> ${build_info}
   echo "git_commit=$( git rev-parse HEAD )" >> ${build_info}
+  echo "ps_version=${PSVERSION}" >> ${build_info}
 
   cmake -DPS_VERSION:STRING=${PSVERSION} -DCMAKE_EXPORT_COMPILE_COMMANDS=1 $BASE_BUILD_DIR 2>&1 | tee  $BASE_BUILD_DIR/build/cmakeout.log
   make -j20 2>&1 | tee $BASE_BUILD_DIR/build/makeout.log
