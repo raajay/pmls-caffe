@@ -60,7 +60,7 @@ function build_pmls_caffe() {
   make -j20 2>&1 | tee $BASE_BUILD_DIR/build/makeout.log
 
   # rename files (link some and copy some)
-  ln -s $BASE_BUILD_DIR/build/tools/caffe_main.bin $BASE_BUILD_DIR/build/tools/caffe_main
+  mv $BASE_BUILD_DIR/build/tools/caffe_main.bin $BASE_BUILD_DIR/build/tools/caffe_main
   cp ${build_info} $BASE_BUILD_DIR/build/${build_id}_build.info
   cp ${build_info} $BUILD_META_DATA_DIR/${build_id}_build.info
 }
