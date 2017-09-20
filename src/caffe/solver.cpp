@@ -127,7 +127,9 @@ void Solver<Dtype>::InitTrainNet() {
   for (; it != layer_blobs_global_idx_ptr_->end(); ++it) {
     string name_temp = it->first;
     if (boost::starts_with(name_temp, "test_net_outputs_") 
-        || !name_temp.compare(train_net_output_name)) { continue; }
+        || !name_temp.compare(train_net_output_name)) {
+      continue;
+    }
     const shared_ptr<Layer<Dtype> > layer = net_->layer_by_name(it->first);
     if (client_id_ == 0 && thread_id_ == 0) {
       // initialize the PS tables

@@ -36,6 +36,9 @@ namespace petuum {
     }
   }
 
+    void SSPConsistencyController::GetAsyncForced(int32_t row_id) {
+      BgWorkers::RequestRowAsync(table_id_, row_id, ThreadContext::get_clock(), true);
+    }
 
   void SSPConsistencyController::GetAsync(int32_t row_id) {
     BgWorkers::RequestRowAsync(table_id_, row_id, ThreadContext::get_clock(), false);

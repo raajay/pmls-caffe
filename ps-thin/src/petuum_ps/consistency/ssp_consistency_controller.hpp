@@ -28,12 +28,12 @@ namespace petuum {
     // We don't need GetAsync because in SSP we reply on the clock count of each
     // client row to check whether the row is too stale and fetch it from server
     // when it is too stale.
-    virtual void GetAsyncForced(int32_t row_id) { }
+    virtual void GetAsyncForced(int32_t row_id);
     virtual void GetAsync(int32_t row_id);
     virtual void WaitPendingAsnycGet();
 
     // Check freshness; make request and block if too stale or row_id not found
-    // in storage.
+    // in storage. This call is blocking.
     virtual ClientRow *Get(int32_t row_id, RowAccessor* row_accessor, int32_t clock);
 
 
