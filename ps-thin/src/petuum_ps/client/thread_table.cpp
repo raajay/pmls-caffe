@@ -49,6 +49,10 @@ namespace petuum {
 
   void ThreadTable::IndexUpdate(int32_t row_id) {
     int32_t partition_num = GlobalContext::GetPartitionCommChannelIndex(row_id);
+    VLOG(20) << "Partition Num=" << partition_num;
+    VLOG(20) << "Num Comm channels=" << GlobalContext::get_num_comm_channels_per_client();
+    VLOG(20) << "Size of oplog_index_" << oplog_index_.size();
+    VLOG(20) << "Size of ordered set=" << oplog_index_[partition_num].size();
     oplog_index_[partition_num].insert(row_id);
   }
 

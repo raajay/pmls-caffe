@@ -1032,6 +1032,7 @@ void Net<Dtype>::RegisterNetOutputPSTable(const int num_rows) {
   for (int ridx = 0; ridx < num_rows; ++ridx) {
     outputs_global_table_.GetAsyncForced(ridx);
   }   
+  outputs_global_table_.WaitPendingAsyncGet();
 }
 
 template <typename Dtype>

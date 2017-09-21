@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 2.8.7)
-include_directories(BEFORE SYSTEM "/usr/include/c++/4.8" "/usr/lib/llvm-3.8/lib/clang/3.8.0/include")
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    include_directories(BEFORE SYSTEM "/usr/include/c++/4.8" "/usr/lib/llvm-3.8/lib/clang/3.8.0/include")
+endif()
 if(POLICY CMP0046)
   cmake_policy(SET CMP0046 NEW)
 endif()
@@ -44,13 +46,13 @@ caffe_option(USE_LMDB "Build with lmdb" ON)
 caffe_option(ALLOW_LMDB_NOLOCK "Allow MDB_NOLOCK when reading LMDB files (only if necessary)" OFF)
 caffe_option(USE_OPENMP "Link with OpenMP (when your BLAS wants OpenMP and you get linker errors)" OFF)
 
-# ---[ Dependencies
-include(cmake/Dependencies.cmake)
-
 # ---[ Flags
 if(UNIX OR APPLE)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -Wall")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fPIC -Wall")
 endif()
+
+# ---[ Dependencies
+include(cmake/Dependencies.cmake)
 
 caffe_set_caffe_link()
 
