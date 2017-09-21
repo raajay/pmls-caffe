@@ -266,8 +266,7 @@ Dtype* Blob<Dtype>::ReadPSTable(const int clock) const {
     row_caches[r_idx].resize(global_table_row_capacity_);
     petuum::RowAccessor row_acc;
     //LOG(INFO) << "get clock " << clock << " count " << count_ << " height " << height_ << " width " << width_ << " channel " << channels_ << " num " << num_;
-    const auto& r = global_table_ptr_->template Get<petuum::DenseRow<Dtype> >(
-        r_idx, &row_acc, clock);
+    const auto& r = global_table_ptr_->template Get<petuum::DenseRow<Dtype> >(r_idx, &row_acc, clock);
     r.CopyToVector(&row_caches[r_idx]);
     //LOG(INFO) << "get done";
   }

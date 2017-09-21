@@ -14,11 +14,11 @@
 namespace petuum {
 
 /*
- * This class resembles a shared bus among all local theads and remote
+ * This class resembles a shared bus among all local threads and remote
  * threads.  The goal is to simplify communication handling and unify
  * in-process and network communication under the same interface. Each thread
  * is treated as an unique entity and has its unique global (among all hosts)
- * ID. The ID is the concatnation of the thread's host ID and the thread's
+ * ID. The ID is the concatenation of the thread's host ID and the thread's
  * local ID.  As it is meant to be simple, it is not doing much error checking
  * and recovery. If something goes wrong, it fails (aborts) quickly to allow
  * debugging to happen immediately.

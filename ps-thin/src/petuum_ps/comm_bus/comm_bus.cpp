@@ -92,7 +92,7 @@ void CommBus::SetUpRouterSocket(zmq::socket_t *sock, int32_t id,
 }
 
 void CommBus::ThreadRegister(const Config &config) {
-  CHECK(NULL == thr_info_.get()) << "This thread has been initialized";
+  CHECK(nullptr == thr_info_.get()) << "This thread has been initialized";
 
   thr_info_.reset(new ThreadCommInfo());
   thr_info_->entity_id_ = config.entity_id_;
@@ -101,10 +101,8 @@ void CommBus::ThreadRegister(const Config &config) {
   thr_info_->num_bytes_inproc_send_buff_ = config.num_bytes_inproc_send_buff_;
   thr_info_->num_bytes_inproc_recv_buff_ = config.num_bytes_inproc_recv_buff_;
 
-  thr_info_->num_bytes_interproc_send_buff_ =
-    config.num_bytes_interproc_send_buff_;
-  thr_info_->num_bytes_interproc_recv_buff_ =
-    config.num_bytes_interproc_recv_buff_;
+  thr_info_->num_bytes_interproc_send_buff_ = config.num_bytes_interproc_send_buff_;
+  thr_info_->num_bytes_interproc_recv_buff_ = config.num_bytes_interproc_recv_buff_;
 
   if (config.ltype_ & kInProc) {
     // in-proc socket is created to allow threads with in the same process
@@ -119,9 +117,7 @@ void CommBus::ThreadRegister(const Config &config) {
 
     zmq::socket_t *sock = thr_info_->inproc_sock_.get();
 
-    SetUpRouterSocket(sock, config.entity_id_,
-        config.num_bytes_inproc_send_buff_,
-        config.num_bytes_inproc_recv_buff_);
+    SetUpRouterSocket(sock, config.entity_id_, config.num_bytes_inproc_send_buff_, config.num_bytes_inproc_recv_buff_);
 
     std::string bind_addr;
     MakeInProcAddr(config.entity_id_, &bind_addr);
@@ -162,7 +158,7 @@ void CommBus::ConnectTo(int32_t entity_id, void *connect_msg, size_t size) {
   CHECK(IsLocalEntity(entity_id)) << "Not local entity " << entity_id;
 
   zmq::socket_t *sock = thr_info_->inproc_sock_.get();
-  if (sock == NULL) {
+  if (sock == nullptr) {
     try {
       thr_info_->inproc_sock_.reset(new zmq::socket_t(*zmq_ctx_, ZMQ_ROUTER));
     } catch (...) {
@@ -266,7 +262,7 @@ size_t CommBus::SendInProc(int32_t entity_id, zmq::message_t &msg) {
 
 
 void CommBus::Recv(int32_t *entity_id, zmq::message_t *msg) {
-  if (thr_info_->pollitems_.get() == NULL) {
+  if (thr_info_->pollitems_.get() == nullptr) {
     thr_info_->pollitems_.reset(new zmq::pollitem_t[2]);
     thr_info_->pollitems_[0].socket = *(thr_info_->inproc_sock_);
     thr_info_->pollitems_[0].events = ZMQ_POLLIN;
