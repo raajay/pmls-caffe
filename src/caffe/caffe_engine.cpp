@@ -1,5 +1,6 @@
 #include <cstdio>
 
+#include <iostream>
 #include <algorithm>
 #include <string>
 #include <vector>
@@ -41,7 +42,7 @@ CaffeEngine<Dtype>::CaffeEngine(const string& param_file)
 }
 
 template <typename Dtype>
-CaffeEngine<Dtype>::CaffeEngine(const NetParameter& net_param) : 
+CaffeEngine<Dtype>::CaffeEngine(const NetParameter& net_param) :
     net_(), num_tables_(0), thread_counter_(0) {
   util::Context& context = util::Context::get_instance();
   const int num_threads = context.num_app_threads();
@@ -50,7 +51,7 @@ CaffeEngine<Dtype>::CaffeEngine(const NetParameter& net_param) :
   net_param_ = net_param;
   net_.reset(new Net<Dtype>(0, 0));
   // create ps tables for train net parameter blobs
-  num_tables_ += net_->InitPS(net_param, true, 0, 
+  num_tables_ += net_->InitPS(net_param, true, 0,
                               &layer_blobs_global_idx_);
 
   // delete net_
@@ -114,7 +115,7 @@ void CaffeEngine<Dtype>::InitPSForTrainNet(const int num_additional_tables) {
   // set as train net
   net_.reset(new Net<Dtype>(0, -1));
   // create ps tables for train net parameter blobs
-  num_tables_ += net_->InitPS(net_param, true, num_additional_tables, 
+  num_tables_ += net_->InitPS(net_param, true, num_additional_tables,
                               &layer_blobs_global_idx_);
   // create ps table for train net outputs
   string train_net_output_name("train_net_outputs");
@@ -125,7 +126,7 @@ void CaffeEngine<Dtype>::InitPSForTrainNet(const int num_additional_tables) {
         num_rows_train_net_outputs);
   }
 
-  // Init SVB 
+  // Init SVB
   util::Context& context = util::Context::get_instance();
   context.InitSVB(net_->layers().size());
 
@@ -144,7 +145,7 @@ void CaffeEngine<Dtype>::InitPSForTestNets(const int num_test_net_instances) {
         << "Set test_interval > 0 in solver prototxt file.";
   }
   util::Context& context = util::Context::get_instance();
-  context.test_dbs().resize(num_test_net_instances); 
+  context.test_dbs().resize(num_test_net_instances);
   int test_net_id = 0;
   vector<NetParameter> net_params(num_test_net_instances);
   for (int i = 0; i < param_.test_net_param_size(); ++i, ++test_net_id) {
@@ -176,8 +177,8 @@ void CaffeEngine<Dtype>::InitPSForTestNets(const int num_test_net_instances) {
     // set test net id
     net_.reset(new Net<Dtype>(0, i));
     num_tables_ += net_->InitPS(net_params[i], false, 0, NULL);
-   
-    // create ps tables for test nets outputs  
+
+    // create ps tables for test nets outputs
     ostringstream test_net_output_name;
     test_net_output_name << "test_net_outputs_" << i;
     if (param_.test_interval()) {
@@ -206,7 +207,7 @@ void CaffeEngine<Dtype>::CreatePSTableForNetOutputs(
 
   table_config.table_info.row_type = caffe::kDenseRowDtypeID;
   table_config.table_info.row_oplog_type = row_oplog_type;
-  table_config.table_info.oplog_dense_serialized 
+  table_config.table_info.oplog_dense_serialized
       = oplog_dense_serialized;
   table_config.table_info.table_staleness = loss_table_staleness_;
   table_config.process_cache_capacity = num_rows;
@@ -214,7 +215,7 @@ void CaffeEngine<Dtype>::CreatePSTableForNetOutputs(
   //table_config.process_storage_type = petuum::BoundedDense;
   table_config.no_oplog_replay = true;
 
-  int count = 0; 
+  int count = 0;
   if (display) {
     const vector<Blob<Dtype>*>& output = net->output_blobs();
     for (int j = 0; j < output.size(); ++j) {
@@ -256,7 +257,7 @@ const int CaffeEngine<Dtype>::GetNumTestNets() {
 template <typename Dtype>
 void CaffeEngine<Dtype>::Start() {
   petuum::PSTableGroup::RegisterThread();
-  
+
   // Initialize local thread data structures.
   int thread_id = thread_counter_++;
 
@@ -272,8 +273,8 @@ void CaffeEngine<Dtype>::Start() {
   string net_outputs_prefix = context.get_string("net_outputs");
 
   shared_ptr<caffe::Solver<Dtype> >
-    solver(caffe::GetSolver<Dtype>(param_, &layer_blobs_global_idx_, 
-           thread_id)); 
+    solver(caffe::GetSolver<Dtype>(param_, &layer_blobs_global_idx_,
+           thread_id));
 
   if (snapshot_path.size()) {
     if (client_id == 0 && thread_id == 0) {
@@ -289,7 +290,7 @@ void CaffeEngine<Dtype>::Start() {
   } else {
     solver->Solve();
   }
-  
+
   petuum::PSTableGroup::GlobalBarrier();
   if (client_id == 0 && thread_id == 0) {
     solver->PrintNetOutputs(net_outputs_prefix + ".netoutputs");
@@ -303,10 +304,10 @@ void CaffeEngine<Dtype>::StartExtractingFeature() {
   petuum::PSTableGroup::RegisterThread();
 
   int thread_id = thread_counter_++;
-  
+
   FeatureExtractor<float> extractor(&layer_blobs_global_idx_, thread_id);
   extractor.ExtractFeatures(net_param_);
-  
+
   petuum::PSTableGroup::DeregisterThread();
 }
 

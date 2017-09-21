@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 2.8.7)
+include_directories(BEFORE SYSTEM "/usr/include/c++/4.8" "/usr/lib/llvm-3.8/lib/clang/3.8.0/include")
 if(POLICY CMP0046)
   cmake_policy(SET CMP0046 NEW)
 endif()
@@ -116,4 +117,3 @@ caffe_print_configuration_summary()
 
 # ---[ Export configs generation
 caffe_generate_export_configs()
-

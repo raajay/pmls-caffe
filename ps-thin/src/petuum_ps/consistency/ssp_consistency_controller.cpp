@@ -47,6 +47,7 @@ namespace petuum {
 
 
   void SSPConsistencyController::WaitPendingAsnycGet() {
+    // TODO wait for GAsync row request reply many times.
     BgWorkers::GetAsyncRowRequestReply();
   }
 
