@@ -22,30 +22,30 @@ public:
   // Instantiate AbstractRow, TableOpLog, and ProcessStorage using config.
   ClientTable(int32_t table_id, const ClientTableConfig& config);
 
-  ~ClientTable();
+  ~ClientTable() override;
 
-  void RegisterThread();
+  void RegisterThread() override;
   void DeregisterThread();
 
-  void GetAsyncForced(int32_t row_id);
+  void GetAsyncForced(int32_t row_id) override;
 
-  void GetAsync(int32_t row_id);
+  void GetAsync(int32_t row_id) override;
 
-  void WaitPendingAsyncGet();
+  void WaitPendingAsyncGet() override;
 
-  void FlushThreadCache();
+  void FlushThreadCache() override;
 
-  ClientRow *Get(int32_t row_id, RowAccessor *row_accessor, int32_t clock);
-  void Inc(int32_t row_id, int32_t column_id, const void *update);
+  ClientRow *Get(int32_t row_id, RowAccessor *row_accessor, int32_t clock) override;
+  void Inc(int32_t row_id, int32_t column_id, const void *update) override;
   void BatchInc(int32_t row_id,
                 const int32_t* column_ids,
                 const void* updates,
                 int32_t num_updates,
                 int32_t global_version = -1);
   void DenseBatchInc(int32_t row_id, const void *updates, int32_t index_st,
-                     int32_t num_updates);
+                     int32_t num_updates) override;
 
-  void Clock();
+  void Clock() override;
   cuckoohash_map<int32_t, bool> *GetAndResetOpLogIndex(int32_t partition_num);
   size_t GetNumRowOpLogs(int32_t partition_num);
 

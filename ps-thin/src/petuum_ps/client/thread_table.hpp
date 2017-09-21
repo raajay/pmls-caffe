@@ -28,33 +28,19 @@ namespace petuum {
 
     AbstractRow *GetRow(int32_t row_id);
 
-    void InsertRow(int32_t row_id,
-                   const AbstractRow *to_insert);
+    void InsertRow(int32_t row_id, const AbstractRow *to_insert);
 
-    void Inc(int32_t row_id,
-             int32_t column_id,
-             const void *delta);
+    void Inc(int32_t row_id, int32_t column_id, const void *delta);
 
-    void BatchInc(int32_t row_id,
-                  const int32_t *column_ids,
-                  const void *deltas,
-                  int32_t num_updates);
+    void BatchInc(int32_t row_id, const int32_t *column_ids, const void *deltas, int32_t num_updates);
 
-    void DenseBatchInc(int32_t row_id,
-                       const void *updates,
-                       int32_t index_st,
-                       int32_t num_updates);
+    void DenseBatchInc(int32_t row_id, const void *updates, int32_t index_st, int32_t num_updates);
 
-    void FlushCache(AbstractProcessStorage &process_storage,
-                    AbstractOpLog &table_oplog,
-                    const AbstractRow *sample_row);
+    void FlushCache(AbstractProcessStorage &process_storage, AbstractOpLog &table_oplog, const AbstractRow *sample_row);
 
-    void FlushCacheOpLog(AbstractProcessStorage &process_storage,
-                         AbstractOpLog &table_oplog,
-                         const AbstractRow *sample_row);
+    void FlushCacheOpLog(AbstractProcessStorage &process_storage, AbstractOpLog &table_oplog, const AbstractRow *sample_row);
 
-    size_t IndexUpdateAndGetCount(int32_t row_id,
-                                  size_t num_updates = 1);
+    size_t IndexUpdateAndGetCount(int32_t row_id, size_t num_updates = 1);
 
     void ResetUpdateCount();
 
@@ -87,23 +73,14 @@ namespace petuum {
 
     CreateRowOpLog::CreateRowOpLogFunc CreateRowOpLog_;
 
-    void ApplyThreadOpLogSSP(OpLogAccessor *oplog_accessor,
-                             RowAccessor *row_accessor,
-                             bool row_found,
-                             AbstractRowOpLog *row_oplog,
-                             int32_t row_id);
+    void ApplyThreadOpLogSSP(OpLogAccessor *oplog_accessor, RowAccessor *row_accessor, bool row_found,
+                             AbstractRowOpLog *row_oplog, int32_t row_id);
 
-    void ApplyThreadOpLogGetImportance(OpLogAccessor *oplog_accessor,
-                                       RowAccessor *row_accessor,
-                                       bool row_found,
-                                       AbstractRowOpLog *row_oplog,
-                                       int32_t row_id);
+    void ApplyThreadOpLogGetImportance(OpLogAccessor *oplog_accessor, RowAccessor *row_accessor, bool row_found,
+                                       AbstractRowOpLog *row_oplog, int32_t row_id);
 
-    typedef void (ThreadTable::*ApplyThreadOpLogFunc)(OpLogAccessor *oplog_accessor,
-                                                      RowAccessor *row_accessor,
-                                                      bool row_found,
-                                                      AbstractRowOpLog *row_oplog,
-                                                      int32_t row_id);
+    typedef void (ThreadTable::*ApplyThreadOpLogFunc)(OpLogAccessor *oplog_accessor, RowAccessor *row_accessor,
+                                                      bool row_found, AbstractRowOpLog *row_oplog, int32_t row_id);
 
     ThreadTable::ApplyThreadOpLogFunc ApplyThreadOpLog_;
   }; // end class -- ThreadTable

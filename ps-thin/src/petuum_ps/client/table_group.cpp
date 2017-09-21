@@ -201,11 +201,11 @@ namespace petuum {
     // Clocking the table, flushes the values in the thread_cache_ to
     // process_storage_ and, dumps the per thread oplog_index_ into a
     // table_oplog_index_ data structure that is visible from all the threads.
-    for (auto table_iter = tables_.cbegin(); table_iter != tables_.cend(); table_iter++) {
+    for (const auto &table : tables_) {
       // clock each table, this in turn clocks the consistency controller (only does that), which
       // flushes the per thread oplog values to process_storage_ and also flushes the oplog_index_
       // to the per table (per process) op log index.
-      table_iter->second->Clock();
+        table.second->Clock();
     }
     // vector_clock_ used is a clock with locking support (enabled through
     // mutexes). Tick increments a thread specific clock. The return value is zero
@@ -225,15 +225,15 @@ namespace petuum {
 
   void TableGroup::ClockConservative() {
     CHECK_EQ(true, GlobalContext::am_i_worker_client()) << "Only (application threads on) worker clients can create tables.";
-    for (auto table_iter = tables_.cbegin(); table_iter != tables_.cend(); table_iter++) {
-      table_iter->second->Clock();
+    for (const auto &table : tables_) {
+        table.second->Clock();
     }
     int clock = vector_clock_.Tick(ThreadContext::get_id());
     // If Clock is Conservative, oplogs are send to the server only when all the
     // threads have finished an iteration.
     if (clock != 0) {
       // ClockAllTables will make the current thread invoke ClockAllTables in all bg threads.
-      // Note that the bg_threads_ are accessible from worker groups. They inturn send a bg_clock_msg with
+      // Note that the bg_threads_ are accessible from worker groups. They in turn send a bg_clock_msg with
       // through SendInProc to themselves..
       BgWorkers::ClockAllTables();
     }

@@ -155,7 +155,7 @@ namespace petuum {
     }
 
     template<typename ROW>
-    const ROW &Get(int32_t row_id, RowAccessor *row_accessor = 0, int32_t clock = 0) {
+    const ROW &Get(int32_t row_id, RowAccessor *row_accessor = nullptr, int32_t clock = 0) {
       return *(dynamic_cast<ROW*>(system_table_->Get(row_id, row_accessor, clock)->GetRowDataPtr()));
     }
 
@@ -163,9 +163,7 @@ namespace petuum {
       system_table_->Inc(row_id, column_id, &update);
     }
 
-    void BatchInc(int32_t row_id,
-                  const UpdateBatch<UPDATE>& update_batch,
-                  int32_t global_version = -1) {
+    void BatchInc(int32_t row_id, const UpdateBatch<UPDATE>& update_batch, int32_t global_version = -1) {
       system_table_->BatchInc(row_id,
                               update_batch.GetColIDs().data(),
                               update_batch.GetUpdates(),
@@ -173,8 +171,7 @@ namespace petuum {
                               global_version);
     }
 
-    void DenseBatchInc(int32_t row_id,
-                       const DenseUpdateBatch<UPDATE> &update_batch) {
+    void DenseBatchInc(int32_t row_id, const DenseUpdateBatch<UPDATE> &update_batch) {
       system_table_->DenseBatchInc(row_id, update_batch.get_mem_const(),
                                    update_batch.get_index_st(),
                                    update_batch.get_num_updates());

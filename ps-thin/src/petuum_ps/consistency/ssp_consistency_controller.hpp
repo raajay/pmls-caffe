@@ -18,21 +18,15 @@ namespace petuum {
 
   protected:
 
-    void DenseBatchIncDenseOpLog(OpLogAccessor *oplog_accessor,
-                                 const uint8_t *updates,
-                                 int32_t index_st,
-                                 int32_t num_updates);
+    void DenseBatchIncDenseOpLog(OpLogAccessor *oplog_accessor, const uint8_t *updates, int32_t index_st, int32_t num_updates);
 
-    void DenseBatchIncNonDenseOpLog(OpLogAccessor *oplog_accessor,
-                                    const uint8_t *updates,
-                                    int32_t index_st,
-                                    int32_t num_updates);
+    void DenseBatchIncNonDenseOpLog(OpLogAccessor *oplog_accessor, const uint8_t *updates, int32_t index_st, int32_t num_updates);
 
     typedef void (SSPConsistencyController::*DenseBatchIncOpLogFunc)
-        (OpLogAccessor *oplog_accessor,
-         const uint8_t *updates,
-         int32_t index_st,
-         int32_t num_updates);
+            (OpLogAccessor *oplog_accessor,
+             const uint8_t *updates,
+             int32_t index_st,
+             int32_t num_updates);
 
     // SSP staleness parameter.
     int32_t staleness_;
@@ -67,7 +61,7 @@ namespace petuum {
     // client row to check whether the row is too stale and fetch it from server
     // when it is too stale.
     //
-    // (raajay) We have modfied these interfaces. All async functions do
+    // (raajay) We have modified these interfaces. All async functions do
     // non-blocking row requests.
     virtual void GetAsyncForced(int32_t row_id);
     virtual void GetAsync(int32_t row_id);
@@ -79,26 +73,18 @@ namespace petuum {
 
 
     // Return immediately.
-    virtual void Inc(int32_t row_id,
-                     int32_t column_id,
-                     const void* delta);
+    virtual void Inc(int32_t row_id, int32_t column_id, const void* delta);
 
-    virtual void BatchInc(int32_t row_id,
-                          const int32_t* column_ids,
-                          const void* updates,
-                          int32_t num_updates,
-                          int32_t global_version = -1);
+    virtual void BatchInc(int32_t row_id, const int32_t* column_ids, const void* updates,
+                          int32_t num_updates, int32_t global_version = -1);
 
-    virtual void DenseBatchInc(int32_t row_id,
-                               const void *updates,
-                               int32_t index_st,
-                               int32_t num_updates);
+    virtual void DenseBatchInc(int32_t row_id, const void *updates, int32_t index_st, int32_t num_updates);
 
     virtual void FlushThreadCache();
 
     virtual void Clock();
 
-    void incrementPendingCounter();
+    void incrementPendingAsyncCounter();
 
   }; // end class - SSPConsistencyController
 

@@ -30,14 +30,11 @@ namespace petuum {
   }
 
   ThreadTable::~ThreadTable() {
-    for (auto iter = row_storage_.begin(); iter != row_storage_.end(); iter++) {
-      if (iter->second != 0)
-        delete iter->second;
+    for (auto &iter : row_storage_) {
+      delete iter.second;
     }
-
-    for (auto iter = oplog_map_.begin(); iter != oplog_map_.end(); iter++) {
-      if (iter->second != 0)
-        delete iter->second;
+    for (auto &iter : oplog_map_) {
+      delete iter.second;
     }
   }
 
@@ -85,7 +82,7 @@ namespace petuum {
     boost::unordered_map<int32_t, AbstractRow* >::iterator row_iter
       = row_storage_.find(row_id);
     if (row_iter == row_storage_.end()) {
-      return 0;
+      return nullptr;
     }
     return row_iter->second;
   }
@@ -152,19 +149,17 @@ namespace petuum {
 
     AbstractRowOpLog *row_oplog;
     if (oplog_iter == oplog_map_.end()) {
-      row_oplog = CreateRowOpLog_(sample_row_->get_update_size(), sample_row_,
-                                  dense_row_oplog_capacity_);
+      row_oplog = CreateRowOpLog_(sample_row_->get_update_size(), sample_row_, dense_row_oplog_capacity_);
       oplog_map_[row_id] = row_oplog;
     } else {
       row_oplog = oplog_iter->second;
     }
 
-    const uint8_t* deltas_uint8 = reinterpret_cast<const uint8_t*>(deltas);
+    const auto * deltas_uint8 = reinterpret_cast<const uint8_t*>(deltas);
 
     for (int i = 0; i < num_updates; ++i) {
       void *oplog_delta = row_oplog->FindCreate(column_ids[i]);
-      sample_row_->AddUpdates(column_ids[i], oplog_delta, deltas_uint8
-                              + sample_row_->get_update_size()*i);
+      sample_row_->AddUpdates(column_ids[i], oplog_delta, deltas_uint8 + sample_row_->get_update_size()*i);
     }
 
     auto row_iter = row_storage_.find(row_id);
@@ -182,18 +177,16 @@ namespace petuum {
     auto oplog_iter = oplog_map_.find(row_id);
     AbstractRowOpLog *row_oplog;
     if (oplog_iter == oplog_map_.end()) {
-      row_oplog = CreateRowOpLog_(sample_row_->get_update_size(), sample_row_,
-                                  dense_row_oplog_capacity_);
+      row_oplog = CreateRowOpLog_(sample_row_->get_update_size(), sample_row_, dense_row_oplog_capacity_);
       oplog_map_[row_id] = row_oplog;
       row_oplog->OverwriteWithDenseUpdate(updates, index_st, num_updates);
     } else {
       row_oplog = oplog_iter->second;
-      const uint8_t* updates_uint8 = reinterpret_cast<const uint8_t*>(updates);
+      const auto * updates_uint8 = reinterpret_cast<const uint8_t*>(updates);
       for (int i = 0; i < num_updates; ++i) {
         int32_t col_id = i + index_st;
         void *oplog_update = row_oplog->FindCreate(col_id);
-        sample_row_->AddUpdates(col_id, oplog_update, updates_uint8
-                                + sample_row_->get_update_size()*i);
+        sample_row_->AddUpdates(col_id, oplog_update, updates_uint8 + sample_row_->get_update_size()*i);
       }
     }
 
@@ -204,38 +197,30 @@ namespace petuum {
   } // end function -- DenseBatchInc
 
 
-  void ThreadTable::FlushCache(AbstractProcessStorage &process_storage,
-                               AbstractOpLog &table_oplog,
-                               const AbstractRow *sample_row) {
-
+  void ThreadTable::FlushCache(AbstractProcessStorage &process_storage, AbstractOpLog &table_oplog, const AbstractRow *sample_row) {
     FlushCacheOpLog(process_storage, table_oplog, sample_row);
-
-    for (auto iter = row_storage_.begin(); iter != row_storage_.end(); iter++) {
-      if (iter->second != 0) {
-        delete iter->second;
-      }
+    for (auto &iter : row_storage_) {
+        delete iter.second;
     }
     row_storage_.clear();
   } // end function -- FlushCache
 
 
-  void ThreadTable::FlushCacheOpLog(AbstractProcessStorage &process_storage,
-                                    AbstractOpLog &table_oplog,
+  void ThreadTable::FlushCacheOpLog(AbstractProcessStorage &process_storage, AbstractOpLog &table_oplog,
                                     const AbstractRow *sample_row) {
-    for (auto oplog_iter = oplog_map_.begin(); oplog_iter != oplog_map_.end();
-         oplog_iter++) {
-      int32_t row_id = oplog_iter->first;
+    for (auto &oplog_iter : oplog_map_) {
+      int32_t row_id = oplog_iter.first;
 
       OpLogAccessor oplog_accessor;
       table_oplog.FindInsertOpLog(row_id, &oplog_accessor);
       UpdateOpLogClock_(oplog_accessor.get_row_oplog());
 
       RowAccessor row_accessor;
-      bool found = process_storage.Find(row_id, &row_accessor);
+      auto found = static_cast<bool>(process_storage.Find(row_id, &row_accessor));
 
-      (this->*ApplyThreadOpLog_)(&oplog_accessor, &row_accessor, found,
-                                 oplog_iter->second, row_id);
-      delete oplog_iter->second;
+      (this->*ApplyThreadOpLog_)(&oplog_accessor, &row_accessor, found, oplog_iter.second, row_id);
+
+      delete oplog_iter.second;
     }
     oplog_map_.clear();
   } // end function -- FlushCacheOpLog
@@ -251,7 +236,7 @@ namespace petuum {
 
     int32_t column_id;
     void *delta = row_oplog->BeginIterate(&column_id);
-    while (delta != 0) {
+    while (delta != nullptr) {
       void *oplog_delta = oplog_accessor->get_row_oplog()->FindCreate(column_id);
       sample_row_->AddUpdates(column_id, oplog_delta, delta);
 
@@ -276,7 +261,7 @@ namespace petuum {
     int32_t column_id;
     void *delta = row_oplog->BeginIterate(&column_id);
     double importance = 0.0;
-    while (delta != 0) {
+    while (delta != nullptr) {
       void *oplog_delta = oplog_accessor->get_row_oplog()->FindCreate(column_id);
       sample_row_->AddUpdates(column_id, oplog_delta, delta);
 
@@ -290,8 +275,7 @@ namespace petuum {
       delta = row_oplog->Next(&column_id);
     }
 
-    MetaRowOpLog *meta_row_oplog
-      = dynamic_cast<MetaRowOpLog*>(oplog_accessor->get_row_oplog());
+    auto *meta_row_oplog = dynamic_cast<MetaRowOpLog*>(oplog_accessor->get_row_oplog());
     meta_row_oplog->GetMeta().accum_importance(importance);
   } // end function -- ApplyThreadOpLogGetImportance
 

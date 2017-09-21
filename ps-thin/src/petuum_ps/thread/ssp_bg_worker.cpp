@@ -14,13 +14,9 @@ namespace petuum {
                      tables, init_barrier,
                      create_table_barrier) { }
 
-
-
   SSPBgWorker::~SSPBgWorker() {
     delete row_request_oplog_mgr_;
   }
-
-
 
   void SSPBgWorker::CreateRowRequestOpLogMgr() {
     row_request_oplog_mgr_ = new SSPRowRequestOpLogMgr;
@@ -28,21 +24,13 @@ namespace petuum {
             << ", comm_channel_idx=" << my_comm_channel_idx_ << ")";
   }
 
-
-
-  bool SSPBgWorker::GetRowOpLog(AbstractOpLog &table_oplog,
-                                int32_t row_id,
-                                AbstractRowOpLog **row_oplog_ptr) {
+  bool SSPBgWorker::GetRowOpLog(AbstractOpLog &table_oplog, int32_t row_id, AbstractRowOpLog **row_oplog_ptr) {
     return table_oplog.GetEraseOpLog(row_id, row_oplog_ptr);
   }
 
-
-
   void SSPBgWorker::PrepareBeforeInfiniteLoop() { }
 
-
   void SSPBgWorker::FinalizeTableStats() { }
-
 
   long SSPBgWorker::ResetBgIdleMilli() {
     return 0;
@@ -52,14 +40,12 @@ namespace petuum {
     return 0;
   }
 
-
   ClientRow *SSPBgWorker::CreateClientRow(int32_t clock, int32_t global_version, AbstractRow *row_data) {
     return reinterpret_cast<ClientRow*>(new SSPClientRow(clock, global_version, row_data, true));
   }
 
-
   BgOpLog *SSPBgWorker::PrepareOpLogsToSend() {
-    BgOpLog *bg_oplog = new BgOpLog;
+    auto *bg_oplog = new BgOpLog;
 
     // Prepare oplogs prepares each table separately.
     for (const auto &table_pair : (*tables_)) {
@@ -97,9 +83,7 @@ namespace petuum {
 
   } // end function -- prepare op logs to send
 
-
-  BgOpLogPartition *SSPBgWorker::PrepareOpLogsNormal(int32_t table_id,
-                                                     ClientTable *table) {
+  BgOpLogPartition *SSPBgWorker::PrepareOpLogsNormal(int32_t table_id, ClientTable *table) {
 
     AbstractOpLog &table_oplog = table->get_oplog();
 
@@ -121,9 +105,7 @@ namespace petuum {
 
     size_t table_update_size = table->get_sample_row()->get_update_size();
 
-    BgOpLogPartition *bg_table_oplog = new BgOpLogPartition(table_id,
-                                                            table_update_size,
-                                                            my_comm_channel_idx_);
+    auto *bg_table_oplog = new BgOpLogPartition(table_id, table_update_size, my_comm_channel_idx_);
 
     for (const auto &server_id : server_ids_) {
       // Reset size to 0
@@ -135,7 +117,8 @@ namespace petuum {
 
       int32_t row_id = oplog_index_iter->first;
 
-      AbstractRowOpLog *row_oplog = 0;
+      AbstractRowOpLog *row_oplog = nullptr;
+
       bool found = GetRowOpLog(table_oplog, row_id, &row_oplog);
 
       // if not found, row_id has not been modified in this table
@@ -144,18 +127,14 @@ namespace petuum {
       }
 
       // if row_oplog is null, nothing more to do
-      if (found && (row_oplog == 0)) {
+      if (row_oplog == nullptr) {
         continue;
       }
 
       // this function
       // 1. updates the bytes per server dict,
       // 2. adds the oplog to bg_table_oplog, indexed by row_id
-      CountRowOpLogToSend(row_id,
-                          row_oplog,
-                          &table_num_bytes_by_server_,
-                          bg_table_oplog,
-                          GetSerializedRowOpLogSize);
+      CountRowOpLogToSend(row_id, row_oplog, &table_num_bytes_by_server_, bg_table_oplog, GetSerializedRowOpLogSize);
 
     } // end for -- over all rows that have oplog (i.e., those which are modified; obtained from oplog index)
 
@@ -163,10 +142,10 @@ namespace petuum {
     return bg_table_oplog;
   }
 
-
-
-  BgOpLogPartition *SSPBgWorker::PrepareOpLogsAppendOnly(int32_t table_id,
-                                                         ClientTable *table) {
+    /**
+     * Each thread updates oplog without any locking; hence, the name.
+     */
+  BgOpLogPartition *SSPBgWorker::PrepareOpLogsAppendOnly(int32_t table_id, ClientTable *table) {
     VLOG(2) << "In PrepareOpLogsAppendOnly";
     GetSerializedRowOpLogSizeFunc GetSerializedRowOpLogSize;
 
@@ -176,11 +155,9 @@ namespace petuum {
       GetSerializedRowOpLogSize = GetSparseSerializedRowOpLogSize;
     }
 
-    size_t table_update_size
-      = table->get_sample_row()->get_update_size();
-    BgOpLogPartition *bg_table_oplog = new BgOpLogPartition(table_id,
-                                                            table_update_size,
-                                                            my_comm_channel_idx_);
+    size_t table_update_size = table->get_sample_row()->get_update_size();
+
+    auto *bg_table_oplog = new BgOpLogPartition(table_id, table_update_size, my_comm_channel_idx_);
 
     for (const auto &server_id : server_ids_) {
       // Reset size to 0
@@ -193,20 +170,14 @@ namespace petuum {
       append_only_row_oplog_buffer->MergeTmpOpLog();
 
       int32_t row_id;
-      AbstractRowOpLog *row_oplog
-        = append_only_row_oplog_buffer->InitReadRmOpLog(&row_id);
-      while (row_oplog != 0) {
-        CountRowOpLogToSend(row_id, row_oplog, &table_num_bytes_by_server_,
-                            bg_table_oplog, GetSerializedRowOpLogSize);
-
+      AbstractRowOpLog *row_oplog = append_only_row_oplog_buffer->InitReadRmOpLog(&row_id);
+      while (row_oplog != nullptr) {
+        CountRowOpLogToSend(row_id, row_oplog, &table_num_bytes_by_server_, bg_table_oplog, GetSerializedRowOpLogSize);
         row_oplog = append_only_row_oplog_buffer->NextReadRmOpLog(&row_id);
       }
     }
     return bg_table_oplog;
   }
-
-
-
 
   void SSPBgWorker::TrackBgOpLog(BgOpLog *bg_oplog) {
     bool tracked = row_request_oplog_mgr_->AddOpLog(per_worker_update_version_, bg_oplog);

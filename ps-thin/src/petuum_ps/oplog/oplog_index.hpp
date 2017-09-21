@@ -31,10 +31,10 @@ private:
 class TableOpLogIndex : boost::noncopyable{
 public:
   explicit TableOpLogIndex(size_t capacity);
-  void AddIndex(int32_t partition_num,
-                const std::unordered_set<int32_t> &oplog_index);
+  void AddIndex(int32_t partition_num, const std::unordered_set<int32_t> &oplog_index);
   cuckoohash_map<int32_t, bool> *ResetPartition(int32_t partition_num);
   size_t GetNumRowOpLogs(int32_t partition_num);
+    void AddRowIndex(int32_t row_id);
 private:
   std::vector<PartitionOpLogIndex> partition_oplog_index_;
 };

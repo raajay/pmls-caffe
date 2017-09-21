@@ -339,14 +339,11 @@ void Solver<Dtype>::Solve(const char* resume_file) {
 
     if (display) {
       if (client_id_ == 0 && thread_id_ == 0) {
-        float time_elapsed = total_timer_.elapsed();
+        auto time_elapsed = static_cast<float>(total_timer_.elapsed());
         /// Print the results of client 0 thread 0
-        LOG(INFO) << "Iteration " << iter_ << ", loss: " << loss 
-            << ", time: " << time_elapsed; 
-        net_->table()->Inc(display_counter_, caffe::kColIdxOutputTableIter, 
-            iter_);
-        net_->table()->Inc(display_counter_, caffe::kColIdxOutputTableTime, 
-            time_elapsed);
+        LOG(INFO) << "Iteration " << iter_ << ", loss: " << loss << ", time: " << time_elapsed;
+        net_->table()->Inc(display_counter_, caffe::kColIdxOutputTableIter, iter_);
+        net_->table()->Inc(display_counter_, caffe::kColIdxOutputTableTime, time_elapsed);
       }
 
       net_->table()->Inc(display_counter_, caffe::kColIdxOutputTableLoss, loss);
@@ -423,28 +420,29 @@ Dtype Solver<Dtype>::ForwardBackward(const vector<Blob<Dtype>* >& bottom) {
   const vector<shared_ptr<Layer<Dtype> > >& layers = net_->layers();
   const vector<bool>& layer_need_backward = net_->layer_need_backward();
   const vector<vector<Blob<Dtype>*> >& top_vecs = net_->top_vecs();
-  const vector<vector<bool> >& bottom_need_backward
-      = net_->bottom_need_backward();
+  const vector<vector<bool> >& bottom_need_backward = net_->bottom_need_backward();
   vector<vector<Blob<Dtype>*> >& bottom_vecs = net_->bottom_vecs();
-  for (int i = layers.size() - 1; i >= 0; --i) {
+
+  for (auto i = static_cast<int>(layers.size() - 1); i >= 0; --i) {
     if (layer_need_backward[i]) {
       layers[i]->Backward(top_vecs[i], bottom_need_backward[i], &bottom_vecs[i]);
-      if (net_->debug_info()) { net_->BackwardDebugInfo(i); }
+      if (net_->debug_info()) {
+        net_->BackwardDebugInfo(i);
+      }
 
       // Sync
       const LayerParameter_LayerType& type = layers[i]->layer_param().type();
-      if (type == LayerParameter_LayerType_INNER_PRODUCT ||
-          type == LayerParameter_LayerType_CONVOLUTION) {
+      if (type == LayerParameter_LayerType_INNER_PRODUCT || type == LayerParameter_LayerType_CONVOLUTION) {
         // Compute update values
         const vector<int>& layer_params_id = layers[i]->blob_params_id();
         for (int j = 0; j < layer_params_id.size(); ++j) {
+
           const int param_id = layer_params_id[j];
           const int param_owner = net_->param_owners()[param_id];
+
           std::thread* sync_thread;
-          if (util::Context::use_svb()
-              && type == LayerParameter_LayerType_INNER_PRODUCT
-              && j == 0) { // weights of a inner product layer
-            sync_thread = new std::thread(&Solver::ThreadSyncWithSVB, this, 
+          if (util::Context::use_svb() && type == LayerParameter_LayerType_INNER_PRODUCT && j == 0) { // weights of a inner product layer
+            sync_thread = new std::thread(&Solver::ThreadSyncWithSVB, this,
                 net_->params()[param_id], param_id, layers[i], i, top_vecs[i],
                 bottom_vecs[i]);
           } else {

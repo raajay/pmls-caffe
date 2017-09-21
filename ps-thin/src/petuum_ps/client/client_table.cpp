@@ -128,8 +128,6 @@ namespace petuum {
 
   } // end function - Client Table constructor
 
-
-
   ClientTable::~ClientTable() {
     delete consistency_controller_;
     delete sample_row_;
@@ -137,11 +135,10 @@ namespace petuum {
     delete process_storage_;
   }
 
-
   // each individual thread is responsible for invoking this function to get
   // access to the table.
   void ClientTable::RegisterThread() {
-    if (thread_cache_.get() == 0) {
+    if (thread_cache_.get() == nullptr) {
       thread_cache_.reset(new ThreadTable(sample_row_,
                                           client_table_config_.table_info.row_oplog_type,
                                           client_table_config_.table_info.row_capacity));
@@ -150,19 +147,14 @@ namespace petuum {
     oplog_->RegisterThread();
   }
 
-
   void ClientTable::DeregisterThread() {
-    thread_cache_.reset(0);
+    thread_cache_.reset(nullptr);
     oplog_->DeregisterThread();
   }
-
-
-  // GET function BEGIN
 
   void ClientTable::GetAsyncForced(int32_t row_id) {
     consistency_controller_->GetAsyncForced(row_id);
   }
-
 
   void ClientTable::GetAsync(int32_t row_id) {
     consistency_controller_->GetAsync(row_id);
@@ -173,70 +165,36 @@ namespace petuum {
     consistency_controller_->WaitPendingAsnycGet();
   }
 
-
-  ClientRow *ClientTable::Get(int32_t row_id,
-                              RowAccessor *row_accessor,
-                              int32_t clock) {
-
-    return consistency_controller_->Get(row_id,
-                                        row_accessor, clock);
+  ClientRow *ClientTable::Get(int32_t row_id, RowAccessor *row_accessor, int32_t clock) {
+    return consistency_controller_->Get(row_id, row_accessor, clock);
   }
-
-  // GET functions END
-
-
-  // UPDATE functions BEGIN
-
 
   void ClientTable::FlushThreadCache() {
     consistency_controller_->FlushThreadCache();
   }
 
-
-  void ClientTable::Inc(int32_t row_id,
-                        int32_t column_id,
-                        const void *update) {
+  void ClientTable::Inc(int32_t row_id, int32_t column_id, const void *update) {
 
     STATS_APP_SAMPLE_INC_BEGIN(table_id_);
-    consistency_controller_->Inc(row_id,
-                                 column_id,
-                                 update);
+    consistency_controller_->Inc(row_id, column_id, update);
     STATS_APP_SAMPLE_INC_END(table_id_);
   }
 
-
-  void ClientTable::BatchInc(int32_t row_id,
-                             const int32_t* column_ids,
-                             const void* updates,
-                             int32_t num_updates,
+  void ClientTable::BatchInc(int32_t row_id, const int32_t* column_ids, const void* updates, int32_t num_updates,
                              int32_t global_version) {
 
     STATS_APP_SAMPLE_BATCH_INC_BEGIN(table_id_);
-    consistency_controller_->BatchInc(row_id,
-                                      column_ids,
-                                      updates,
-                                      num_updates,
-                                      global_version);
+    consistency_controller_->BatchInc(row_id, column_ids, updates, num_updates, global_version);
     STATS_APP_SAMPLE_BATCH_INC_END(table_id_);
   }
 
 
-  void ClientTable::DenseBatchInc(int32_t row_id,
-                                  const void *updates,
-                                  int32_t index_st,
-                                  int32_t num_updates) {
+  void ClientTable::DenseBatchInc(int32_t row_id, const void *updates, int32_t index_st, int32_t num_updates) {
 
     STATS_APP_SAMPLE_BATCH_INC_BEGIN(table_id_);
-    consistency_controller_->DenseBatchInc(row_id,
-                                           updates,
-                                           index_st,
-                                           num_updates);
+    consistency_controller_->DenseBatchInc(row_id, updates, index_st, num_updates);
     STATS_APP_SAMPLE_BATCH_INC_END(table_id_);
   }
-
-
-  // UPDATE function END
-
 
   void ClientTable::Clock() {
     STATS_APP_SAMPLE_CLOCK_BEGIN(table_id_);
@@ -244,27 +202,23 @@ namespace petuum {
     STATS_APP_SAMPLE_CLOCK_END(table_id_);
   }
 
-
   cuckoohash_map<int32_t, bool> *ClientTable::GetAndResetOpLogIndex(int32_t partition_num) {
     return oplog_index_.ResetPartition(partition_num);
   }
-
 
   size_t ClientTable::GetNumRowOpLogs(int32_t partition_num) {
     return oplog_index_.GetNumRowOpLogs(partition_num);
   }
 
-
   ClientRow *ClientTable::CreateClientRow(int32_t clock) {
     AbstractRow *row_data = ClassRegistry<AbstractRow>::GetRegistry().CreateObject(row_type_);
-    row_data->Init(row_capacity_);
+    row_data->Init((int32_t) row_capacity_);
     return new ClientRow(clock, -1, row_data, false);
   }
 
-
   ClientRow *ClientTable::CreateSSPClientRow(int32_t clock) {
     AbstractRow *row_data = ClassRegistry<AbstractRow>::GetRegistry().CreateObject(row_type_);
-    row_data->Init(row_capacity_);
+    row_data->Init((int32_t) row_capacity_);
     return static_cast<ClientRow*>(new SSPClientRow(clock, -1, row_data, false));
   }
 

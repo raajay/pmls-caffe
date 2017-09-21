@@ -99,7 +99,7 @@ namespace petuum {
 
     AbstractRowOpLog *row_oplog = FindRowOpLog(row_id);
 
-    if (row_oplog == 0) {
+    if (row_oplog == nullptr) {
       row_oplog = CreateAndInsertRowOpLog(row_id);
       new_create = true;
     }
