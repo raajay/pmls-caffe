@@ -1,4 +1,3 @@
-// author: Jinliang
 #include <petuum_ps/consistency/ssp_consistency_controller.hpp>
 #include <petuum_ps/thread/context.hpp>
 #include <petuum_ps/thread/bg_workers.hpp>
@@ -37,20 +36,34 @@ namespace petuum {
     }
   }
 
-    void SSPConsistencyController::GetAsyncForced(int32_t row_id) {
+  void SSPConsistencyController::incrementPendingCounter() {
+        if(pending_async_get_cnt_.get() == 0) {
+            pending_async_get_cnt_.reset(new size_t);
+            *pending_async_get_cnt_ = 0;
+        }
+        *pending_async_get_cnt_ += 1;
+  }
+
+  void SSPConsistencyController::GetAsyncForced(int32_t row_id) {
       BgWorkers::RequestRowAsync(table_id_, row_id, ThreadContext::get_clock(), true);
-    }
+      incrementPendingCounter();
+  }
 
   void SSPConsistencyController::GetAsync(int32_t row_id) {
-    BgWorkers::RequestRowAsync(table_id_, row_id, ThreadContext::get_clock(), false);
+      BgWorkers::RequestRowAsync(table_id_, row_id, ThreadContext::get_clock(), false);
+      incrementPendingCounter();
   }
-
 
   void SSPConsistencyController::WaitPendingAsnycGet() {
-    // TODO wait for GAsync row request reply many times.
-    BgWorkers::GetAsyncRowRequestReply();
-  }
+      if (pending_async_get_cnt_.get() == 0) {
+          return;
+      }
 
+      while(*pending_async_get_cnt_ > 0) {
+          BgWorkers::GetAsyncRowRequestReply();
+          *pending_async_get_cnt_ -= 1;
+      }
+  }
 
   ClientRow *SSPConsistencyController::Get(int32_t row_id,
                                            RowAccessor* row_accessor,
