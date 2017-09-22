@@ -77,8 +77,7 @@ ClientRow *SSPPushConsistencyController::Get(
 
   int32_t system_clock = BgWorkers::GetSystemClock();
   if (system_clock < stalest_clock) {
-    //LOG(INFO) << "system_clock = " << system_clock
-    //        << " stalest_clock = " << stalest_clock;
+    LOG(INFO) << "system_clock = " << system_clock << " stalest_clock = " << stalest_clock;
     STATS_APP_ACCUM_SSPPUSH_GET_COMM_BLOCK_BEGIN(table_id_);
     BgWorkers::WaitSystemClock(stalest_clock);
     STATS_APP_ACCUM_SSPPUSH_GET_COMM_BLOCK_END(table_id_);
@@ -97,6 +96,7 @@ ClientRow *SSPPushConsistencyController::Get(
    int32_t num_fetches = 0;
   do {
     STATS_APP_ACCUM_SSP_GET_SERVER_FETCH_BEGIN(table_id_);
+    LOG(INFO) << "row request for table_id=" << table_id_ << " row_id=" << row_id;
     BgWorkers::RequestRow(table_id_, row_id, stalest_clock);
     STATS_APP_ACCUM_SSP_GET_SERVER_FETCH_END(table_id_);
 
