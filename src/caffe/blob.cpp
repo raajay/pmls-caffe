@@ -33,8 +33,8 @@ void Blob<Dtype>::Reshape(const int num, const int channels, const int height,
     data_.reset(new SyncedMemory(capacity_ * sizeof(Dtype)));
     diff_.reset(new SyncedMemory(capacity_ * sizeof(Dtype)));
   }
-  
-  CHECK(data_) << " count " << count_ << " "<< num_ << " " << channels_ 
+
+  CHECK(data_) << " count " << count_ << " "<< num_ << " " << channels_
                << " " << height_ << " " << width_ << " capacity " << capacity_;
   if(blob_mode_ == BlobProto_BlobMode_GLOBAL) {
     const int num_rows_per_table = util::Context::num_rows_per_table();
@@ -43,10 +43,10 @@ void Blob<Dtype>::Reshape(const int num, const int channels, const int height,
 }
 
 template <typename Dtype>
-void Blob<Dtype>::ReshapeWithoutAllocation(const int num, const int channels, 
+void Blob<Dtype>::ReshapeWithoutAllocation(const int num, const int channels,
     const int height, const int width) {
   // call Reshap() directly since SyncedMemory allocates memory lazily
-  Reshape(num, channels, height, width);    
+  Reshape(num, channels, height, width);
 }
 
 template <typename Dtype>
@@ -56,7 +56,7 @@ void Blob<Dtype>::ReshapeLike(const Blob<Dtype>& other) {
 
 template <typename Dtype>
 void Blob<Dtype>::ReshapeWithoutAllocationLike(const Blob<Dtype>& other) {
-  ReshapeWithoutAllocation(other.num(), other.channels(), other.height(), 
+  ReshapeWithoutAllocation(other.num(), other.channels(), other.height(),
       other.width());
 }
 
@@ -64,12 +64,12 @@ template <typename Dtype>
 void Blob<Dtype>::CreatePSTable() {
   CHECK_GE(global_id_, 0);
   CHECK_GE(count_, 0);
-  
+
   util::Context& context = util::Context::get_instance();
   int param_table_staleness = context.get_int32("table_staleness");
   int num_rows_per_table = context.num_rows_per_table();
 
-  // Creating PS tables 
+  // Creating PS tables
   petuum::ClientTableConfig table_config;
   petuum::InitTableConfig(&table_config);
 
@@ -102,7 +102,7 @@ Blob<Dtype>::Blob(const int num, const int channels, const int height,
 
 template <typename Dtype>
 const Dtype* Blob<Dtype>::cpu_data() const {
-  //if (blob_mode_ == BlobProto_BlobMode_GLOBAL 
+  //if (blob_mode_ == BlobProto_BlobMode_GLOBAL
   //    && data_->head() == SyncedMemory::UNINITIALIZED) {
   //  // load data from PS table
   //  Dtype* data_temp = ReadPSTable();
@@ -216,7 +216,7 @@ void Blob<Dtype>::UpdatePSTable() {
 
   // flush diff_
   const Dtype* update = static_cast<const Dtype*>(diff_->cpu_data());
-  int update_idx = 0;  
+  int update_idx = 0;
   for (int r = 0; r < util::Context::num_rows_per_table(); ++r) {
     petuum::UpdateBatch<Dtype> update_batch(global_table_row_capacity_);
     for (int i = 0; i < global_table_row_capacity_; ++i) {
@@ -256,7 +256,7 @@ void Blob<Dtype>::SyncWithPSTable(const int clock) {
 template <typename Dtype>
 Dtype* Blob<Dtype>::ReadPSTable(const int clock) const {
   CHECK(global_table_ptr_);
-  
+
   void* data_temp;
   CaffeMallocHost(&data_temp, capacity_ * sizeof(Dtype));
   Dtype* data = (Dtype*)data_temp;
@@ -279,7 +279,7 @@ Dtype* Blob<Dtype>::ReadPSTable(const int clock) const {
       if (data_idx >= count_) { break; }
     }
     if (data_idx >= count_) { break; }
-  } 
+  }
 
   // release memory
   for (int r_idx = 0; r_idx < util::Context::num_rows_per_table(); ++r_idx) {

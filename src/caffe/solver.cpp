@@ -24,10 +24,10 @@
 namespace caffe {
 
 template <typename Dtype>
-Solver<Dtype>::Solver(const SolverParameter& param, 
+Solver<Dtype>::Solver(const SolverParameter& param,
     const map<string, vector<int> >* layer_blobs_global_idx_ptr,
     const int thread_id) : net_(),
-    layer_blobs_global_idx_ptr_(layer_blobs_global_idx_ptr), 
+    layer_blobs_global_idx_ptr_(layer_blobs_global_idx_ptr),
     thread_id_(thread_id) {
   Init(param);
 }
@@ -36,7 +36,7 @@ template <typename Dtype>
 Solver<Dtype>::Solver(const string& param_file,
     const map<string, vector<int> >* layer_blobs_global_idx_ptr,
     const int thread_id) : net_(),
-    layer_blobs_global_idx_ptr_(layer_blobs_global_idx_ptr), 
+    layer_blobs_global_idx_ptr_(layer_blobs_global_idx_ptr),
     thread_id_(thread_id) {
   SolverParameter param;
   ReadProtoFromTextFile(param_file, &param);
@@ -64,7 +64,7 @@ void Solver<Dtype>::Init(const SolverParameter& param) {
   LOG(INFO) << "Init test nets done.";
   if (client_id_ == 0 && thread_id_ == 0) {
     LOG(INFO) << "Solver scaffolding done.";
-  }  
+  }
 }
 
 template <typename Dtype>
@@ -115,18 +115,18 @@ void Solver<Dtype>::InitTrainNet() {
   // Set up blobs' corresponding PS tables
   // output blobs
   string train_net_output_name("train_net_outputs");
-  CHECK(layer_blobs_global_idx_ptr_->find(train_net_output_name) 
+  CHECK(layer_blobs_global_idx_ptr_->find(train_net_output_name)
       != layer_blobs_global_idx_ptr_->end());
   net_->set_table(
       layer_blobs_global_idx_ptr_->at(train_net_output_name)[0]);
     VLOG(20) << "set_table successfully";
   // layer parameter blobs
-  map<string, vector<int> >::const_iterator it 
+  map<string, vector<int> >::const_iterator it
       = layer_blobs_global_idx_ptr_->begin();
   const bool reg = (thread_id_ == 0);
   for (; it != layer_blobs_global_idx_ptr_->end(); ++it) {
     string name_temp = it->first;
-    if (boost::starts_with(name_temp, "test_net_outputs_") 
+    if (boost::starts_with(name_temp, "test_net_outputs_")
         || !name_temp.compare(train_net_output_name)) {
       continue;
     }
@@ -227,13 +227,13 @@ void Solver<Dtype>::InitTestNets() {
     test_nets_[i]->set_table(
         layer_blobs_global_idx_ptr_->at(test_net_output_name.str())[0]);
     // layer parameter blobs
-    map<string, vector<int> >::const_iterator it 
+    map<string, vector<int> >::const_iterator it
       = layer_blobs_global_idx_ptr_->begin();
     for (; it != layer_blobs_global_idx_ptr_->end(); ++it) {
       string name_temp = it->first;
-      if (boost::starts_with(name_temp, "test_net_outputs_") 
+      if (boost::starts_with(name_temp, "test_net_outputs_")
           || name_temp == "train_net_outputs") { continue; }
-      const shared_ptr<Layer<Dtype> > layer 
+      const shared_ptr<Layer<Dtype> > layer
         = test_nets_[i]->layer_by_name(name_temp);
       layer->SetUpBlobGlobalTable(it->second, false, false);
     }
@@ -262,7 +262,7 @@ void Solver<Dtype>::Solve(const char* resume_file) {
 
   util::Context& context = util::Context::get_instance();
 
-  // Register net output tables  
+  // Register net output tables
   if (thread_id_ == 0) {
     if (param_.display()) {
       const int num_rows_train_net_outputs
@@ -280,8 +280,8 @@ void Solver<Dtype>::Solve(const char* resume_file) {
   }
   // Init SVB
   if (context.use_svb()) {
-    InitSVB(); 
-  } 
+    InitSVB();
+  }
 
   iter_ = 0;
   // Restore if necessary
@@ -298,7 +298,7 @@ void Solver<Dtype>::Solve(const char* resume_file) {
   // Remember the initial iter_ value; will be non-zero if we loaded from a
   // resume_file above.
   const int start_iter = iter_;
-  
+
   display_counter_ = 0;
   test_counter_ = 0;
   clock_counter_ = 0;
@@ -326,7 +326,7 @@ void Solver<Dtype>::Solve(const char* resume_file) {
         iter_ % param_.snapshot() == 0) {
       Snapshot();
     }
-    
+
     if (param_.test_interval() && iter_ % param_.test_interval() == 0
         && (iter_ > 0 || param_.test_initialization())) {
       TestAll();
@@ -361,9 +361,9 @@ void Solver<Dtype>::Solve(const char* resume_file) {
             if (loss_weight) {
               loss_msg_stream << " (* " << loss_weight
                               << " = " << loss_weight * result_vec[k] << " loss)";
-            }   
+            }
             LOG(INFO) << "    Train net output #"
-                << (score_idx - caffe::kNumFixedCols) << ": " << output_name 
+                << (score_idx - caffe::kNumFixedCols) << ": " << output_name
                 << " = " << result_vec[k] << loss_msg_stream.str();
           }
 
@@ -396,10 +396,10 @@ void Solver<Dtype>::Solve(const char* resume_file) {
     if (client_id_ == 0 && thread_id_ == 0) {
       float time_elapsed = total_timer_.elapsed();
       net_->table()->Inc(display_counter_, caffe::kColIdxOutputTableIter, iter_);
-      net_->table()->Inc(display_counter_, caffe::kColIdxOutputTableTime, 
+      net_->table()->Inc(display_counter_, caffe::kColIdxOutputTableTime,
           time_elapsed);
-      LOG(INFO) << "Iteration " << iter_ << ", loss = " << loss 
-                << ", time: " << time_elapsed; 
+      LOG(INFO) << "Iteration " << iter_ << ", loss = " << loss
+                << ", time: " << time_elapsed;
     }
     ++display_counter_;
   }
@@ -415,7 +415,7 @@ Dtype Solver<Dtype>::ForwardBackward(const vector<Blob<Dtype>* >& bottom) {
 
   /// Forward
   net_->Forward(bottom, &loss);
-  
+
   /// Backward
   const vector<shared_ptr<Layer<Dtype> > >& layers = net_->layers();
   const vector<bool>& layer_need_backward = net_->layer_need_backward();
@@ -446,7 +446,7 @@ Dtype Solver<Dtype>::ForwardBackward(const vector<Blob<Dtype>* >& bottom) {
                 net_->params()[param_id], param_id, layers[i], i, top_vecs[i],
                 bottom_vecs[i]);
           } else {
-            sync_thread = new std::thread(&Solver::ThreadSyncWithPS, this, 
+            sync_thread = new std::thread(&Solver::ThreadSyncWithPS, this,
                 net_->params()[param_id], param_id, param_owner,
                 clock_counter_ - param_table_staleness_);
           }
@@ -461,7 +461,10 @@ Dtype Solver<Dtype>::ForwardBackward(const vector<Blob<Dtype>* >& bottom) {
 /// This function is used for created thread to sync one (conv) layer with the PS
 template <typename Dtype>
 void Solver<Dtype>::ThreadSyncWithPS(const shared_ptr<Blob<Dtype> >& param,
-    const int param_id, const int param_owner, const int clock) {
+                                     const int param_id,
+                                     const int param_owner,
+                                     const int clock) {
+    petuum::PSTableGroup::RegisterCaffeSyncThread();
 #ifndef CPU_ONLY
   //bind the communication thread with the same device binded to thread_id_
   Caffe::SetDevice(Caffe::GetDeviceId(thread_id_));
@@ -478,12 +481,13 @@ void Solver<Dtype>::ThreadSyncWithPS(const shared_ptr<Blob<Dtype> >& param,
     // Read fresh values from PS
     net_->params()[param_owner]->SyncWithPSTable(clock + 1);
   }
+  petuum::PSTableGroup::DeregisterCaffeSyncThread();
 }
 
 /// This function is used for created thread to sync one (ip) layer through SVB
 template <typename Dtype>
 void Solver<Dtype>::ThreadSyncWithSVB(
-    const shared_ptr<Blob<Dtype> >& param, const int param_id, 
+    const shared_ptr<Blob<Dtype> >& param, const int param_id,
     const shared_ptr<Layer<Dtype> >& layer, const int layer_id,
     const vector<Blob<Dtype>*>& top, const vector<Blob<Dtype>*>& bottom) {
 #ifndef CPU_ONLY
@@ -512,8 +516,8 @@ void Solver<Dtype>::ThreadSyncWithSVB(
   default:
     LOG(FATAL) << "Unknown caffe mode: " << Caffe::mode();
   }
-  
-  local_svq->Add(sv); 
+
+  local_svq->Add(sv);
 
   // Sync
   int local_updates = 0;
@@ -533,7 +537,7 @@ void Solver<Dtype>::ThreadSyncWithSVB(
     if (!succ) break;
     layer->ComputeGradientFromSV(v);
     ComputeUpdateValue(param_id);
-    param->Update(); 
+    param->Update();
     delete v;
   }
 }
@@ -568,9 +572,9 @@ void Solver<Dtype>::Test(const int test_net_id) {
   const shared_ptr<Net<Dtype> >& test_net = test_nets_[test_net_id];
   Dtype loss = 0;
   const int avg = param_.test_iter(test_net_id) / num_clients_;
-  const int num_test_iters 
+  const int num_test_iters
 	= (avg + num_threads_ - 1) / num_threads_;
-  //const int num_test_iters 
+  //const int num_test_iters
   //    = (param_.test_iter(test_net_id) + num_threads_ - 1) / num_threads_;
   //const int num_test_iters = param_.test_iter(test_net_id);
   for (int i = 0; i < num_test_iters; ++i) {
@@ -602,7 +606,7 @@ void Solver<Dtype>::Test(const int test_net_id) {
     LOG(INFO) << "Iteration " << iter_
               << ", Testing net (#" << test_net_id << ")";
     test_net->table()->Inc(test_counter_, caffe::kColIdxOutputTableIter, iter_);
-    test_net->table()->Inc(test_counter_, caffe::kColIdxOutputTableTime, 
+    test_net->table()->Inc(test_counter_, caffe::kColIdxOutputTableTime,
         total_timer_.elapsed());
   }
   if (param_.test_compute_loss()) {
@@ -681,11 +685,11 @@ void Solver<Dtype>::Restore(const char* state_file) {
   char thread_id_str_buffer[kBufferSize];
   snprintf(client_id_str_buffer, kBufferSize, ".%d", client_id_);
   snprintf(thread_id_str_buffer, kBufferSize, ".%d", thread_id_);
-  string s_state_file = string(state_file) + string(client_id_str_buffer) 
+  string s_state_file = string(state_file) + string(client_id_str_buffer)
       + thread_id_str_buffer;
   if (!CheckFileExistence(s_state_file)) {
     // use the state snapshot of thread 0
-    s_state_file = string(state_file) + string(client_id_str_buffer) + ".0"; 
+    s_state_file = string(state_file) + string(client_id_str_buffer) + ".0";
   }
   SolverState state;
   ReadProtoFromBinaryFile(s_state_file, &state);
@@ -721,7 +725,7 @@ void Solver<Dtype>::PrintNetOutputs(const string& filename) {
 }
 
 template <typename Dtype>
-void Solver<Dtype>::PrintOutputBlobs(shared_ptr<Net<Dtype> >& net, 
+void Solver<Dtype>::PrintOutputBlobs(shared_ptr<Net<Dtype> >& net,
     const bool train, std::ofstream& outfile) {
   // cache
   int count_temp = 0;
@@ -742,13 +746,13 @@ void Solver<Dtype>::PrintOutputBlobs(shared_ptr<Net<Dtype> >& net,
   int num_lines = train ? display_counter_ : test_counter_;
   for (int display_iter = 0; display_iter < num_lines; ++display_iter) {
     petuum::RowAccessor row_acc;
-    const auto& output_row = net->table()->template 
+    const auto& output_row = net->table()->template
         Get<petuum::DenseRow<Dtype> >(display_iter, &row_acc);
     output_row.CopyToVector(&output_cache);
-    outfile 
+    outfile
         << output_cache[caffe::kColIdxOutputTableIter]
         << "," << output_cache[caffe::kColIdxOutputTableTime]
-        << ","<< output_cache[caffe::kColIdxOutputTableLoss] 
+        << ","<< output_cache[caffe::kColIdxOutputTableLoss]
         / (num_clients_ * num_threads_) << ",";
     int score_idx = caffe::kNumFixedCols;
     for (int j = 0; j < output_blobs.size(); ++j) {
@@ -1007,7 +1011,7 @@ void SGDSolver<Dtype>::SnapshotSolverState(SolverState* state) {
 template <typename Dtype>
 void SGDSolver<Dtype>::RestoreSolverState(const SolverState& state) {
   CHECK_EQ(state.history_size(), history_.size())
-      << "Incorrect length of history blobs. client " << this->client_id_ 
+      << "Incorrect length of history blobs. client " << this->client_id_
       << " thread " << this->thread_id_;
   if (this->client_id_ == 0 && this->thread_id_ == 0) {
     LOG(INFO) << "SGDSolver: restoring history";
