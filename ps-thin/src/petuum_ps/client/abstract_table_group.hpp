@@ -38,7 +38,7 @@ public:
 
   virtual void DeregisterThread() = 0;
 
-  virtual int32_t RegisterCaffeSyncThread() = 0;
+  virtual int32_t RegisterCaffeSyncThread(int32_t thread_offset) = 0;
 
   virtual void DeregisterCaffeSyncThread() = 0;
 

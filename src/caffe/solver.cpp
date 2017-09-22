@@ -423,6 +423,7 @@ Dtype Solver<Dtype>::ForwardBackward(const vector<Blob<Dtype>* >& bottom) {
   const vector<vector<bool> >& bottom_need_backward = net_->bottom_need_backward();
   vector<vector<Blob<Dtype>*> >& bottom_vecs = net_->bottom_vecs();
 
+  int32_t sync_thread_offset = 0;
   for (auto i = static_cast<int>(layers.size() - 1); i >= 0; --i) {
     if (layer_need_backward[i]) {
       layers[i]->Backward(top_vecs[i], bottom_need_backward[i], &bottom_vecs[i]);
@@ -448,23 +449,33 @@ Dtype Solver<Dtype>::ForwardBackward(const vector<Blob<Dtype>* >& bottom) {
           } else {
             sync_thread = new std::thread(&Solver::ThreadSyncWithPS, this,
                 net_->params()[param_id], param_id, param_owner,
-                clock_counter_ - param_table_staleness_);
+                clock_counter_ - param_table_staleness_
+#ifdef USE_PS_THIN
+                , sync_thread_offset
+#endif
+                );
           }
           sync_threads_.push_back(sync_thread);
+          sync_thread_offset++;
         }
       }
     }
   } // end of layers
   return loss;
 }
-
 /// This function is used for created thread to sync one (conv) layer with the PS
 template <typename Dtype>
 void Solver<Dtype>::ThreadSyncWithPS(const shared_ptr<Blob<Dtype> >& param,
                                      const int param_id,
                                      const int param_owner,
-                                     const int clock) {
-    petuum::PSTableGroup::RegisterCaffeSyncThread();
+                                     const int clock
+#ifdef USE_PS_THIN
+                                     , const int32_t thread_offset
+#endif
+                                     ) {
+#ifdef USE_PS_THIN
+  petuum::PSTableGroup::RegisterCaffeSyncThread(thread_offset);
+#endif
 #ifndef CPU_ONLY
   //bind the communication thread with the same device binded to thread_id_
   Caffe::SetDevice(Caffe::GetDeviceId(thread_id_));
@@ -481,7 +492,9 @@ void Solver<Dtype>::ThreadSyncWithPS(const shared_ptr<Blob<Dtype> >& param,
     // Read fresh values from PS
     net_->params()[param_owner]->SyncWithPSTable(clock + 1);
   }
+#ifdef USE_PS_THIN
   petuum::PSTableGroup::DeregisterCaffeSyncThread();
+#endif
 }
 
 /// This function is used for created thread to sync one (ip) layer through SVB

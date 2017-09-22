@@ -42,7 +42,7 @@ public:
 
   void DeregisterThread();
 
-  int32_t RegisterCaffeSyncThread();
+  int32_t RegisterCaffeSyncThread(int32_t thread_offset);
 
   void DeregisterCaffeSyncThread();
 

@@ -56,7 +56,13 @@ class Solver {
   virtual void ComputeUpdateValue(const int param_id) = 0;
   virtual void ComputeUpdateValue() = 0;
   virtual void ThreadSyncWithPS(const shared_ptr<Blob<Dtype> >& param,
-      const int param_id, const int param_owner, const int clock);
+      const int param_id,
+      const int param_owner,
+      const int clock
+#ifdef USE_PS_THIN
+      , const int offset
+#endif
+      );
   virtual void ThreadSyncWithSVB(
     const shared_ptr<Blob<Dtype> >& param, const int param_id, 
     const shared_ptr<Layer<Dtype> >& layer, const int layer_id,

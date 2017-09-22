@@ -133,9 +133,12 @@ namespace petuum {
      * update / pull values from a table. From spawn until it is killed each
      * thread handles only one table exclusively. As a result, we not have to
      * setup, thread level cache, vector clock, etc.
+     *
+     * Further, the ephemeral threads can re-use thread ids, as long as two
+     * threads with same ideas are not registered at the same time.
      */
-    static int32_t RegisterCaffeSyncThread() {
-        return abstract_table_group_->RegisterCaffeSyncThread();
+    static int32_t RegisterCaffeSyncThread(int32_t thread_offset) {
+        return abstract_table_group_->RegisterCaffeSyncThread(thread_offset);
     }
 
     static void DeregisterCaffeSyncThread() {

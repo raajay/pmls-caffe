@@ -168,12 +168,11 @@ namespace petuum {
     return thread_id;
   }
 
-  int32_t TableGroup::RegisterCaffeSyncThread() {
+  int32_t TableGroup::RegisterCaffeSyncThread(int32_t thread_offset) {
       CHECK_EQ(true, GlobalContext::am_i_worker_client())
           << "Only (application threads on) worker clients can create tables.";
-      int ephemeral_thread_id_offset = ++num_ephemeral_threads_registered_;
-      int ephemeral_thread_id = GlobalContext::get_head_ephemeral_thread_id()
-          + ephemeral_thread_id_offset;
+      ++num_ephemeral_threads_registered_;
+      int ephemeral_thread_id = GlobalContext::get_head_ephemeral_thread_id() + thread_offset;
       // Register with comm bus
       petuum::CommBus::Config comm_config;
       comm_config.entity_id_ = ephemeral_thread_id;
