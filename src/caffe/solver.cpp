@@ -549,6 +549,7 @@ void Solver<Dtype>::JoinSyncThreads() {
     delete sync_threads_[i];
   }
   sync_threads_.clear();
+  VLOG(0) << "Deleting all sync threads";
 }
 
 template <typename Dtype>
