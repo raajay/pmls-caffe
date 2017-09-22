@@ -31,3 +31,5 @@ sudo apt-get install -y libgoogle-glog-dev \
 sudo apt-get install -y libopenblas-dev
 
 sudo apt-get install -y libtiff4-dev
+
+# install latest zeromq from source
