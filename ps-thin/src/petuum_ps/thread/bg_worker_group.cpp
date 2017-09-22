@@ -62,6 +62,18 @@ void BgWorkerGroup::AppThreadDeregister() {
   }
 }
 
+void BgWorkerGroup::SyncThreadRegister() {
+  for (const auto &worker : bg_worker_vec_) {
+    worker->SyncThreadRegister();
+  }
+}
+
+void BgWorkerGroup::SyncThreadDeregister() {
+  for (const auto &worker : bg_worker_vec_) {
+    worker->SyncThreadDeregister();
+  }
+}
+
 bool BgWorkerGroup::CreateTable(int32_t table_id,
                                 const ClientTableConfig &table_config) {
   return bg_worker_vec_[0]->CreateTable(table_id, table_config);

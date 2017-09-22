@@ -57,6 +57,19 @@ namespace petuum {
         CHECK_EQ(sent_size, msg.get_size());
     }
 
+    void AbstractBgWorker::SyncThreadRegister() {
+        SyncThreadConnectMsg connect_msg;
+        void *msg = connect_msg.get_mem();
+        size_t msg_size = connect_msg.get_size();
+        comm_bus_->ConnectTo(my_id_, msg, msg_size);
+    }
+
+    void AbstractBgWorker::SyncThreadDeregister() {
+        SyncThreadDeregMsg msg;
+        size_t sent_size = SendMsg(reinterpret_cast<MsgBase *>(&msg));
+        CHECK_EQ(sent_size, msg.get_size());
+    }
+
     bool AbstractBgWorker::CreateTable(int32_t table_id,
                                        const ClientTableConfig &table_config) {
         {
@@ -865,6 +878,7 @@ namespace petuum {
         int32_t num_connected_app_threads = 0;
         int32_t num_deregistered_app_threads = 0;
         int32_t num_shutdown_acked_servers = 0;
+        int32_t num_ephemeral_app_threads = 0;
 
         VLOG(5) << "THREAD-" << my_id_ << ": Prepare to connect with app threads";
         RecvAppInitThreadConnection(&num_connected_app_threads);
@@ -939,6 +953,20 @@ namespace petuum {
                     }
                 }
                     break;
+
+                case kSyncThreadConnect:
+                    ++num_ephemeral_app_threads;
+                    // (raajay) since ephemeral threads have an exclusive lock
+                    // on the tables, the number of such threads at any given
+                    // point should not exceed the number of tables.
+                    CHECK_LE(num_ephemeral_app_threads, GlobalContext::get_num_tables());
+                    break;
+
+                case kSyncThreadDereg:
+                    --num_ephemeral_app_threads;
+                    CHECK_GE(num_ephemeral_app_threads, 0);
+                    break;
+
                 case kServerShutDownAck: {
                     ++num_shutdown_acked_servers;
                     // if all them ack your shutdown, only then de-register and terminate out of the infinite loop

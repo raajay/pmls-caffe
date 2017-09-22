@@ -17,6 +17,8 @@ public:
   void ShutDown();
   void AppThreadRegister();
   void AppThreadDeregister();
+  void SyncThreadRegister();
+  void SyncThreadDeregister();
 
   // Assuming table does not yet exist
   bool CreateTable(int32_t table_id,

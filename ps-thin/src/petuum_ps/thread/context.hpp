@@ -295,6 +295,10 @@ namespace petuum {
       return (num_table_threads_ == num_app_threads_) ? init_thread_id : init_thread_id + 1;
     }
 
+    static inline int32_t get_head_ephemeral_thread_id() {
+        return get_thread_id_min(client_id_) + kEphemeralThreadIIDStartOffset;
+    }
+
     static inline int32_t get_num_tables() {
       return num_tables_;
     }
@@ -451,19 +455,21 @@ namespace petuum {
 
     // name node thread id - 0
     // server thread ids - 1~99
-    // bg thread ids - 100~199
+    // bg thread ids - 101~199
     // init thread id - 200
     // app threads - 201~899
+    // aggregator thread >500
 
     static const int32_t kMaxClientsOfAType = 100;
     static const int32_t kMaxNumThreadsPerClient = 1000;
     // num of server + name node threads per node <= 100
+    static const int32_t kServerThreadIDStartOffset = 1;
     static const int32_t kBgThreadIDStartOffset = 101;
     static const int32_t kInitThreadIDOffset = 200;
-    static const int32_t kServerThreadIDStartOffset = 1;
+    static const int32_t kAggregatorThreadIDStartOffset = 301; // 301 - 400
+    static const int32_t kReplicaThreadIDStartOffset = 401; // 401 - 500
+    static const int32_t kEphemeralThreadIIDStartOffset = 501;
 
-    static const int32_t kAggregatorThreadIDStartOffset = 500; // 500 - 600
-    static const int32_t kReplicaThreadIDStartOffset = 500; // 500 - 600
 
     static const int32_t kNameNodeClientId = 0;
     static const int32_t kServerClientMinId = 0;

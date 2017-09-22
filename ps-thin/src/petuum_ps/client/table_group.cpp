@@ -24,6 +24,7 @@ namespace petuum {
     int32_t local_id_min = GlobalContext::get_thread_id_min(client_id);
     int32_t local_id_max = GlobalContext::get_thread_id_max(client_id);
     num_app_threads_registered_ = 1;  // init thread is the first one
+    num_ephemeral_threads_registered_ = 0;
 
     STATS_INIT(table_group_config);
     STATS_REGISTER_THREAD(kAppThread);
@@ -146,7 +147,8 @@ namespace petuum {
 
 
   int32_t TableGroup::RegisterThread() {
-    CHECK_EQ(true, GlobalContext::am_i_worker_client()) << "Only (application threads on) worker clients can create tables.";
+    CHECK_EQ(true, GlobalContext::am_i_worker_client())
+        << "Only (application threads on) worker clients can create tables.";
     STATS_REGISTER_THREAD(kAppThread);
     int app_thread_id_offset = num_app_threads_registered_++;
     int32_t thread_id = GlobalContext::get_local_id_min() + GlobalContext::kInitThreadIDOffset + app_thread_id_offset;
@@ -166,9 +168,25 @@ namespace petuum {
     return thread_id;
   }
 
+  int32_t TableGroup::RegisterCaffeSyncThread() {
+      CHECK_EQ(true, GlobalContext::am_i_worker_client())
+          << "Only (application threads on) worker clients can create tables.";
+      int ephemeral_thread_id_offset = ++num_ephemeral_threads_registered_;
+      int ephemeral_thread_id = GlobalContext::get_head_ephemeral_thread_id()
+          + ephemeral_thread_id_offset;
+      // Register with comm bus
+      petuum::CommBus::Config comm_config;
+      comm_config.entity_id_ = ephemeral_thread_id;
+      comm_config.ltype_ = petuum::CommBus::kInProc;
+      GlobalContext::comm_bus->ThreadRegister(comm_config);
+      // Connect to BgWorkers -- sends a dummy message to that ZMQ is setup
+      BgWorkers::SyncThreadRegister();
+      return ephemeral_thread_id;
+  }
 
   void TableGroup::DeregisterThread(){
-    CHECK_EQ(true, GlobalContext::am_i_worker_client()) << "Only (application threads on) worker clients can create tables.";
+    CHECK_EQ(true, GlobalContext::am_i_worker_client())
+        << "Only (application threads on) worker clients can create tables.";
     for (auto table_iter = tables_.cbegin(); table_iter != tables_.cend(); table_iter++) {
       table_iter->second->DeregisterThread();
     }
@@ -177,6 +195,18 @@ namespace petuum {
     STATS_DEREGISTER_THREAD();
   }
 
+  void TableGroup::DeregisterCaffeSyncThread() {
+      CHECK_EQ(true, GlobalContext::am_i_worker_client())
+          << "Only (application threads on) worker clients can create tables.";
+      BgWorkers::SyncThreadDeregister();
+      GlobalContext::comm_bus->ThreadDeregister();
+      // (raajay) On de-registering we reduce the number of ephemeral threads.
+      // This enables us to re-use the thread ids, when new sync threads are
+      // spawned at the next iteration.
+      int remaining_threads = --num_ephemeral_threads_registered_;
+      CHECK_GE(remaining_threads, 0)
+          << "Number of ephemeral threads is less than zero";
+  }
 
   // this is just a wrapper over aggressive or conservative clock.
   void TableGroup::Clock() {

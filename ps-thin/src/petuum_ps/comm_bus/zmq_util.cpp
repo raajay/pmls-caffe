@@ -34,6 +34,7 @@ void ZMQUtil::ZMQSetSockOpt (zmq::socket_t *sock, int option,
 void ZMQUtil::ZMQBind(zmq::socket_t *sock, const std::string &connect_addr){
   try{
     sock->bind(connect_addr.c_str());
+    VLOG(20) << "Bind socket addr=" << connect_addr;
   }catch(zmq::error_t &e){
     switch(e.num()){
     case EINVAL:
@@ -51,6 +52,29 @@ void ZMQUtil::ZMQBind(zmq::socket_t *sock, const std::string &connect_addr){
       LOG(FATAL) << e.what();
     }
   }
+}
+
+void ZMQUtil::ZMQUnbind(zmq::socket_t *sock, const std::string &connect_addr) {
+    try {
+        VLOG(20) << "Unbind socket addr=" << connect_addr;
+        sock->unbind(connect_addr.c_str());
+    } catch(zmq::error_t &e) {
+        switch(e.num()) {
+            case EINVAL:
+            case EPROTONOSUPPORT:
+            case ENOCOMPATPROTO:
+            case EADDRINUSE:
+            case EADDRNOTAVAIL:
+            case ENODEV:
+            case ETERM:
+            case ENOTSOCK:
+            case EMTHREAD:
+              LOG(FATAL) << e.what() << " connect_addr = " << connect_addr;
+              break;
+            default:
+              LOG(FATAL) << e.what();
+        }
+    }
 }
 
 void ZMQUtil::ZMQConnectSend(zmq::socket_t *sock,
@@ -83,25 +107,25 @@ void ZMQUtil::ZMQConnectSend(zmq::socket_t *sock,
     try {
       len = sock->send(&zmq_id, sizeof(zmq_id), ZMQ_SNDMORE);
       if (len == sizeof(zmq_id)) {
-	len = sock->send(msg, size, 0);
-	break;
+	    len = sock->send(msg, size, 0);
+	    break;
       } else {
-	VLOG(0) << "len = " << len;
-	len = -1;
+	    VLOG(0) << "len = " << len;
+	    len = -1;
       }
     } catch(zmq::error_t &e) {
       switch(e.num()){
-      case ENOTSUP:
-      case EFSM:
-      case ETERM:
-      case EAGAIN: // EAGAIN should not be thrown
-      case ENOTSOCK:
-      case EINTR:
-	// These errors mean there are bugs in the code, fail fast
-	LOG(FATAL) << e.what();
-	break;
+        case ENOTSUP:
+        case EFSM:
+        case ETERM:
+        case EAGAIN: // EAGAIN should not be thrown
+        case ENOTSOCK:
+        case EINTR:
+	    // These errors mean there are bugs in the code, fail fast
+	    LOG(FATAL) << e.what();
+	    break;
       default:
-	len = -1;
+	    len = -1;
       }
     }
     int suc = nanosleep(&sleep_time, &rem_time);
@@ -192,8 +216,7 @@ void ZMQUtil::ZMQRecv(zmq::socket_t *sock, int32_t *zmq_id,
 /*
  * return number of bytes sent
  */
-size_t ZMQUtil::ZMQSend(zmq::socket_t *sock, const void *data, size_t len,
-  int flag){
+size_t ZMQUtil::ZMQSend(zmq::socket_t *sock, const void *data, size_t len, int flag){
   size_t nbytes;
   try{
     nbytes = sock->send(data, len, flag);
@@ -223,16 +246,21 @@ size_t ZMQUtil::ZMQSend(zmq::socket_t *sock, const void *data, size_t len,
 
 // 0 means cannot be sent, try again;
 // should not happen unless flag = ZMQ_DONTWAIT
-size_t ZMQUtil::ZMQSend(zmq::socket_t *sock, int32_t zmq_id, const void *data,
-  size_t len, int flag){
+size_t ZMQUtil::ZMQSend(zmq::socket_t *sock,
+                        int32_t zmq_id,
+                        const void *data,
+                        size_t len,
+                        int flag) {
   size_t zid_sent_size = ZMQSend(sock, &zmq_id, sizeof(zmq_id), flag | ZMQ_SNDMORE);
-
-  if(zid_sent_size == 0) return 0;
-
+  if(zid_sent_size == 0) {
+      return 0;
+  }
   return ZMQSend(sock, data, len, flag);
 }
 
-size_t ZMQUtil::ZMQSend(zmq::socket_t *sock, zmq::message_t &msg, int flag){
+size_t ZMQUtil::ZMQSend(zmq::socket_t *sock,
+                        zmq::message_t &msg,
+                        int flag) {
   size_t nbytes;
   try{
     nbytes = sock->send(msg, flag);
@@ -258,14 +286,10 @@ size_t ZMQUtil::ZMQSend(zmq::socket_t *sock, zmq::message_t &msg, int flag){
   return nbytes;
 }
 
-size_t ZMQUtil::ZMQSend(zmq::socket_t *sock, int32_t zmq_id, zmq::message_t &msg,
-  int flag){
-
-  size_t zid_sent_size = ZMQSend(sock, &zmq_id, sizeof(zmq_id),
-    flag | ZMQ_SNDMORE);
-
-  if(zid_sent_size == 0) return 0;
-
+size_t ZMQUtil::ZMQSend(zmq::socket_t *sock, int32_t zmq_id, zmq::message_t &msg, int flag){
+  size_t zid_sent_size = ZMQSend(sock, &zmq_id, sizeof(zmq_id), flag | ZMQ_SNDMORE);
+  if(zid_sent_size == 0) 
+      return 0;
   return ZMQSend(sock, msg, flag);
 }
 

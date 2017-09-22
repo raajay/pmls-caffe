@@ -38,6 +38,10 @@ public:
 
   virtual void DeregisterThread() = 0;
 
+  virtual int32_t RegisterCaffeSyncThread() = 0;
+
+  virtual void DeregisterCaffeSyncThread() = 0;
+
   virtual void Clock() = 0;
 
   virtual void GlobalBarrier() = 0;

@@ -128,6 +128,19 @@ namespace petuum {
       return abstract_table_group_->DeregisterThread();
     }
 
+    /**
+     * (raajay) In Caffe, the new sync threads are spawned in each iteration to
+     * update / pull values from a table. From spawn until it is killed each
+     * thread handles only one table exclusively. As a result, we not have to
+     * setup, thread level cache, vector clock, etc.
+     */
+    static int32_t RegisterCaffeSyncThread() {
+        return abstract_table_group_->RegisterCaffeSyncThread();
+    }
+
+    static void DeregisterCaffeSyncThread() {
+        return abstract_table_group_->DeregisterCaffeSyncThread();
+    }
 
     /**
      * Advance clock for the application thread.

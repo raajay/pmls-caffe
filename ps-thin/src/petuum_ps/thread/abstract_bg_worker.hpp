@@ -31,6 +31,8 @@ namespace petuum {
 
     void AppThreadRegister();
     void AppThreadDeregister();
+    void SyncThreadRegister();
+    void SyncThreadDeregister();
 
     bool CreateTable(int32_t table_id,
                      const ClientTableConfig& table_config);

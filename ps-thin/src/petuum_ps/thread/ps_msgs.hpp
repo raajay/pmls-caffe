@@ -126,6 +126,52 @@ namespace petuum {
     }
   };
 
+  struct SyncThreadConnectMsg : public NumberedMsg {
+      public:
+          SyncThreadConnectMsg() {
+              if (get_size() > PETUUM_MSG_STACK_BUFF_SIZE) {
+                own_mem_ = true;
+                use_stack_buff_ = false;
+                mem_.Alloc(get_size());
+              } else {
+                own_mem_ = false;
+                use_stack_buff_ = true;
+                mem_.Reset(stack_buff_);
+              }
+              InitMsg();
+          }
+
+          explicit SyncThreadConnectMsg(void *msg) : NumberedMsg(msg) { }
+
+      protected:
+          void InitMsg() {
+              get_msg_type() = kSyncThreadConnect;
+          }
+  };
+
+  struct SyncThreadDeregMsg : public NumberedMsg {
+      public:
+          SyncThreadDeregMsg() {
+              if (get_size() > PETUUM_MSG_STACK_BUFF_SIZE) {
+                own_mem_ = true;
+                use_stack_buff_ = false;
+                mem_.Alloc(get_size());
+              } else {
+                own_mem_ = false;
+                use_stack_buff_ = true;
+                mem_.Reset(stack_buff_);
+              }
+              InitMsg();
+          }
+
+          explicit SyncThreadDeregMsg(void *msg) : NumberedMsg(msg) { }
+
+      protected:
+          void InitMsg() {
+              get_msg_type() = kSyncThreadDereg;
+          }
+  };
+
   struct BgCreateTableMsg : public NumberedMsg {
   public:
     BgCreateTableMsg() {

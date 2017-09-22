@@ -42,6 +42,10 @@ public:
 
   void DeregisterThread();
 
+  int32_t RegisterCaffeSyncThread();
+
+  void DeregisterCaffeSyncThread();
+
   void Clock();
 
   void GlobalBarrier();
@@ -56,6 +60,7 @@ private:
   std::map<int32_t, ClientTable* > tables_;
   pthread_barrier_t register_barrier_;
   std::atomic<int> num_app_threads_registered_;
+  std::atomic<int> num_ephemeral_threads_registered_;
 
   // Max staleness among all tables.
   int32_t max_table_staleness_;

@@ -30,6 +30,14 @@ namespace petuum {
     bg_worker_group_->AppThreadDeregister();
   }
 
+  void BgWorkers::SyncThreadRegister() {
+      bg_worker_group_->SyncThreadRegister();
+  }
+
+  void BgWorkers::SyncThreadDeregister() {
+      bg_worker_group_->SyncThreadDeregister();
+  }
+
   bool BgWorkers::CreateTable(int32_t table_id,
                               const ClientTableConfig& table_config) {
     return bg_worker_group_->CreateTable(table_id, table_config);

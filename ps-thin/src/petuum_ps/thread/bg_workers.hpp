@@ -13,6 +13,8 @@ public:
   static void ShutDown();
   static void AppThreadRegister();
   static void AppThreadDeregister();
+  static void SyncThreadRegister();
+  static void SyncThreadDeregister();
 
   // Assuming table does not yet exist
   static bool CreateTable(int32_t table_id,

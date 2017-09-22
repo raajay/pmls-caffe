@@ -18,6 +18,8 @@ public:
   
   static void ZMQBind(zmq::socket_t *sock, const std::string &connect_addr);
 
+  static void ZMQUnbind(zmq::socket_t *sock, const std::string &connect_addr);
+
   static void ZMQConnectSend(zmq::socket_t *sock, const std::string &connect_addr, 
     int32_t zmq_id, void *msg, size_t size);
 
@@ -43,9 +45,7 @@ public:
   // msg is nollified during the call
   static size_t ZMQSend(zmq::socket_t *sock, zmq::message_t &msg, int flag = 0);
 
-  static size_t ZMQSend(zmq::socket_t *sock, int32_t zmq_id, 
-    zmq::message_t &msg, int flag = 0);
-
+  static size_t ZMQSend(zmq::socket_t *sock, int32_t zmq_id, zmq::message_t &msg, int flag = 0);
 
 };
 }

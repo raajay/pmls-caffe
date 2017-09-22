@@ -138,9 +138,7 @@ void CommBus::ThreadRegister(const Config &config) {
 
     zmq::socket_t *sock = thr_info_->interproc_sock_.get();
 
-    SetUpRouterSocket(sock, config.entity_id_,
-        config.num_bytes_inproc_send_buff_,
-        config.num_bytes_inproc_recv_buff_);
+    SetUpRouterSocket(sock, config.entity_id_, config.num_bytes_inproc_send_buff_, config.num_bytes_inproc_recv_buff_);
 
     std::string bind_addr;
     MakeInterProcAddr(config.network_addr_, &bind_addr);
@@ -151,7 +149,24 @@ void CommBus::ThreadRegister(const Config &config) {
 }
 
 void CommBus::ThreadDeregister() {
-  thr_info_.reset();
+    CHECK(nullptr != thr_info_.get()) << "This thread has not been initialized";
+    zmq::socket_t *inproc_sock = thr_info_->inproc_sock_.get();
+    if(inproc_sock) {
+        std::string bind_addr;
+        MakeInProcAddr(thr_info_->entity_id_, &bind_addr);
+        ZMQUtil::ZMQUnbind(inproc_sock, bind_addr);
+        delete inproc_sock;
+    }
+
+//    zmq::socket_t *interproc_sock = thr_info_->interproc_sock_.get();
+//    if(interproc_sock) {
+//        LOG(FATAL) << "Attempting to de-register a thread with inter-proc socket";
+//    }
+//
+    // (raajay) while de-registering we will destroy the socket so that another
+    // thread with the same id can be registered. Deleting zmq::socket_t will
+    // hopefully unbind and close the underlying socket.
+    thr_info_.reset();
 }
 
 void CommBus::ConnectTo(int32_t entity_id, void *connect_msg, size_t size) {
