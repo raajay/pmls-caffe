@@ -1,5 +1,4 @@
 #include <petuum_ps/thread/ssp_bg_worker.hpp>
-
 #include <petuum_ps/client/ssp_client_row.hpp>
 
 namespace petuum {
@@ -192,4 +191,4 @@ namespace petuum {
     }
   }
 
-} // end namespace -- petuum
+}
