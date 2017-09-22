@@ -34,7 +34,7 @@ void ZMQUtil::ZMQSetSockOpt (zmq::socket_t *sock, int option,
 void ZMQUtil::ZMQBind(zmq::socket_t *sock, const std::string &connect_addr){
   try{
     sock->bind(connect_addr.c_str());
-    VLOG(0) << "Bind socket addr=" << connect_addr;
+    VLOG(20) << "Bind socket addr=" << connect_addr;
   }catch(zmq::error_t &e){
     switch(e.num()){
     case EINVAL:
@@ -56,7 +56,7 @@ void ZMQUtil::ZMQBind(zmq::socket_t *sock, const std::string &connect_addr){
 
 void ZMQUtil::ZMQUnbind(zmq::socket_t *sock, const std::string &connect_addr) {
     try {
-        VLOG(0) << "Unbind socket addr=" << connect_addr;
+        VLOG(20) << "Unbind socket addr=" << connect_addr;
         sock->unbind(connect_addr.c_str());
     } catch(zmq::error_t &e) {
         switch(e.num()) {
