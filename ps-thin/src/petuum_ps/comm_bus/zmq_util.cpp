@@ -89,10 +89,10 @@ void ZMQUtil::ZMQConnectSend(zmq::socket_t *sock,
     case ETERM:
     case ENOTSOCK:
     case EMTHREAD:
-      LOG(FATAL) << e.what();
+      LOG(FATAL) << e.what() << "connect addr=" << connect_addr;
       break;
     default:
-      LOG(FATAL) << e.what();
+      LOG(FATAL) << e.what() << "connect addr=" << connect_addr;
     }
   }
 
@@ -122,7 +122,7 @@ void ZMQUtil::ZMQConnectSend(zmq::socket_t *sock,
         case ENOTSOCK:
         case EINTR:
 	    // These errors mean there are bugs in the code, fail fast
-	    LOG(FATAL) << e.what();
+	    LOG(FATAL) << e.what() << "connect addr=" << connect_addr;
 	    break;
       default:
 	    len = -1;

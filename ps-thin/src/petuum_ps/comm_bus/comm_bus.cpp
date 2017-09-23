@@ -285,7 +285,7 @@ void CommBus::Recv(int32_t *entity_id, zmq::message_t *msg) {
     thr_info_->pollitems_[1].events = ZMQ_POLLIN;
   }
 
-  zmq::poll(thr_info_->pollitems_.get(), 2);
+  zmq::poll(thr_info_->pollitems_.get(), 2, -1);
   zmq::socket_t *sock;
   if (thr_info_->pollitems_[0].revents) {
     sock = thr_info_->inproc_sock_.get();
