@@ -87,7 +87,7 @@ void SSPConsistencyController::Inc(int32_t row_id, int32_t column_id,
   void *oplog_delta = oplog_accessor.get_row_oplog()->FindCreate(column_id);
   sample_row_->AddUpdates(column_id, oplog_delta, delta);
 
-  if (!version_maintain_) {
+  if (false == version_maintain_) {
     RowAccessor row_accessor;
     ClientRow *client_row = process_storage_.Find(row_id, &row_accessor);
     if (client_row != 0) {
@@ -108,20 +108,19 @@ void SSPConsistencyController::BatchInc(int32_t row_id,
   const uint8_t* deltas_uint8 = reinterpret_cast<const uint8_t*>(updates);
 
   for (int i = 0; i < num_updates; ++i) {
-    void *oplog_delta
-        = oplog_accessor.get_row_oplog()->FindCreate(column_ids[i]);
-    sample_row_->AddUpdates(column_ids[i], oplog_delta, deltas_uint8
-			    + sample_row_->get_update_size()*i);
+    void *oplog_delta = oplog_accessor.get_row_oplog()->FindCreate(column_ids[i]);
+    sample_row_->AddUpdates(column_ids[i], oplog_delta,
+            deltas_uint8 + sample_row_->get_update_size()*i);
   }
   STATS_APP_SAMPLE_BATCH_INC_OPLOG_END();
 
-  if (!version_maintain_) {
+  if (false == version_maintain_) {
+      CHECK_EQ(table_id_, 2);
     STATS_APP_SAMPLE_BATCH_INC_PROCESS_STORAGE_BEGIN();
     RowAccessor row_accessor;
     ClientRow *client_row = process_storage_.Find(row_id, &row_accessor);
     if (client_row != 0) {
-      client_row->GetRowDataPtr()->ApplyBatchInc(column_ids, updates,
-                                                 num_updates);
+      client_row->GetRowDataPtr()->ApplyBatchInc(column_ids, updates, num_updates);
     }
     STATS_APP_SAMPLE_BATCH_INC_PROCESS_STORAGE_END();
   }

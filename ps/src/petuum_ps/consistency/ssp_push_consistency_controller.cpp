@@ -67,9 +67,8 @@ void SSPPushConsistencyController::WaitPendingAsnycGet() {
   }
 }
 
-ClientRow *SSPPushConsistencyController::Get(
-    int32_t row_id,
-    RowAccessor* row_accessor, int32_t clock) {
+ClientRow *SSPPushConsistencyController::Get(int32_t row_id, RowAccessor* row_accessor, int32_t clock) {
+
   STATS_APP_SAMPLE_SSP_GET_BEGIN(table_id_);
 
   // Look for row_id in process_storage_.
@@ -77,7 +76,7 @@ ClientRow *SSPPushConsistencyController::Get(
 
   int32_t system_clock = BgWorkers::GetSystemClock();
   if (system_clock < stalest_clock) {
-    LOG(INFO) << "system_clock = " << system_clock << " stalest_clock = " << stalest_clock;
+    VLOG(20) << "system_clock = " << system_clock << " stalest_clock = " << stalest_clock;
     STATS_APP_ACCUM_SSPPUSH_GET_COMM_BLOCK_BEGIN(table_id_);
     BgWorkers::WaitSystemClock(stalest_clock);
     STATS_APP_ACCUM_SSPPUSH_GET_COMM_BLOCK_END(table_id_);
@@ -90,32 +89,10 @@ ClientRow *SSPPushConsistencyController::Get(
     STATS_APP_SAMPLE_SSP_GET_END(table_id_, true);
     return client_row;
   }
-
-  // Didn't find row_id that's fresh enough in process_storage_.
-  // Fetch from server.
-   int32_t num_fetches = 0;
-  do {
-    STATS_APP_ACCUM_SSP_GET_SERVER_FETCH_BEGIN(table_id_);
-    LOG(INFO) << "row request for table_id=" << table_id_ << " row_id=" << row_id;
-    BgWorkers::RequestRow(table_id_, row_id, stalest_clock);
-    STATS_APP_ACCUM_SSP_GET_SERVER_FETCH_END(table_id_);
-
-    // fetch again
-    client_row = process_storage_.Find(row_id, row_accessor);
-    // TODO (jinliang):
-    // It's possible that the application thread does not find the row that
-    // the bg thread has just inserted. In practice, this shouldn't be an issue.
-    // We'll fix it if it turns out there are too many misses.
-    ++num_fetches;
-    CHECK_LE(num_fetches, 3); // to prevent infinite loop
-  }while(client_row == 0);
-
-  STATS_APP_SAMPLE_SSP_GET_END(table_id_, false);
-  return client_row;
+  LOG(FATAL) << "SSP Push consistency controller should not reach here.";
 }
 
-void SSPPushConsistencyController::ThreadGet(
-    int32_t row_id, ThreadRowAccessor* row_accessor) {
+void SSPPushConsistencyController::ThreadGet(int32_t row_id, ThreadRowAccessor* row_accessor) {
   STATS_APP_SAMPLE_THREAD_GET_BEGIN(table_id_);
 
   // Look for row_id in process_storage_.
