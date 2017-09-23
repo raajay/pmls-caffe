@@ -18,7 +18,7 @@ namespace {
 // Initial # of entries for decay_rates_.
 const int kNumClocksDefault = 20000;
 
-}   // anonymous namespace
+} // anonymous namespace
 
 // DenseDecayFeature stores only feature values on std::vector and support
 // efficient sparse weight decay:
@@ -27,37 +27,37 @@ const int kNumClocksDefault = 20000;
 // DenseDecayFeature<float> ddf(...);
 //   ddf.Decay();
 //   ddf[0] += gradient;
-template<typename V>
-class DenseDecayFeature : public DenseFeature<V> {
+template <typename V> class DenseDecayFeature : public DenseFeature<V> {
 public:
-  DenseDecayFeature(const std::vector<V>& val) :
-    DenseFeature<V>(val), clock_(0), param_clocks_(val.size()),
-    current_(true), decay_rates_(kNumClocksDefault, 1.), decay_rate_(1.) { }
+  DenseDecayFeature(const std::vector<V> &val)
+      : DenseFeature<V>(val), clock_(0), param_clocks_(val.size()),
+        current_(true), decay_rates_(kNumClocksDefault, 1.), decay_rate_(1.) {}
 
-  DenseDecayFeature(int32_t feature_dim, const V& default_val = V(0)) :
-    DenseFeature<V>(feature_dim, default_val), clock_(0), param_clocks_(feature_dim),
-    current_(true), decay_rates_(kNumClocksDefault, 1.), decay_rate_(1.) { }
+  DenseDecayFeature(int32_t feature_dim, const V &default_val = V(0))
+      : DenseFeature<V>(feature_dim, default_val), clock_(0),
+        param_clocks_(feature_dim), current_(true),
+        decay_rates_(kNumClocksDefault, 1.), decay_rate_(1.) {}
 
-  DenseDecayFeature(const std::vector<int32_t>& feature_ids,
-      const std::vector<V>& val, int32_t feature_dim) :
-    DenseFeature<V>(feature_ids, val, feature_dim), clock_(0), param_clocks_(feature_dim),
-    current_(true), decay_rates_(kNumClocksDefault, 1.), decay_rate_(1.) {
-    }
+  DenseDecayFeature(const std::vector<int32_t> &feature_ids,
+                    const std::vector<V> &val, int32_t feature_dim)
+      : DenseFeature<V>(feature_ids, val, feature_dim), clock_(0),
+        param_clocks_(feature_dim), current_(true),
+        decay_rates_(kNumClocksDefault, 1.), decay_rate_(1.) {}
 
   // Makes it behave like std::vector.
-  inline V& operator[](int32_t feature_id) {
+  inline V &operator[](int32_t feature_id) {
     ApplyDecay(feature_id);
     return this->data_[feature_id];
   }
 
-  inline const std::vector<V>& GetVector() const {
+  inline const std::vector<V> &GetVector() const {
     if (!current_) {
       ApplyDecayAll();
     }
     return this->data_;
   }
 
-  inline std::vector<V>& GetVector() {
+  inline std::vector<V> &GetVector() {
     if (!current_) {
       ApplyDecayAll();
     }
@@ -85,16 +85,12 @@ public:
     current_ = false;
   }
 
-public:  // DenseFeature override.
-  DenseDecayFeature() : clock_(0), current_(true) {
-    SetDecayRate(1.);
-  }
+public: // DenseFeature override.
+  DenseDecayFeature() : clock_(0), current_(true) { SetDecayRate(1.); }
 
-  DenseDecayFeature(const DenseDecayFeature<V>& other) {
-    *this = other;
-  }
+  DenseDecayFeature(const DenseDecayFeature<V> &other) { *this = other; }
 
-  DenseDecayFeature<V>& operator=(const DenseDecayFeature<V>& other) {
+  DenseDecayFeature<V> &operator=(const DenseDecayFeature<V> &other) {
     decay_rate_ = other.decay_rate_;
     decay_rates_ = other.decay_rates_;
     clock_ = other.clock_;
@@ -111,9 +107,9 @@ public:  // DenseFeature override.
     return this->data_[feature_id];
   }
 
-  void SetFeatureVal(int32_t feature_id, const V& val) {
+  void SetFeatureVal(int32_t feature_id, const V &val) {
     this->data_[feature_id] = val;
-    param_clocks_[feature_id] = clock_;   // make it current.
+    param_clocks_[feature_id] = clock_; // make it current.
   }
 
   inline V GetFeatureVal(int32_t idx) const {
@@ -125,17 +121,18 @@ public:  // DenseFeature override.
     ApplyDecayAll();
     return DenseFeature<V>::ToString();
   }
+
 private:
   // Apply decay to a feature.
   void ApplyDecay(int feature_id) const {
-    this->data_[feature_id] *=
-      decay_rates_[clock_ - param_clocks_[feature_id]];
+    this->data_[feature_id] *= decay_rates_[clock_ - param_clocks_[feature_id]];
     param_clocks_[feature_id] = clock_;
   }
 
   // Apply all pending decay and zero the clock.
   inline void ApplyDecayAll() const {
-    if (current_) return;
+    if (current_)
+      return;
     for (int i = 0; i < this->feature_dim_; ++i) {
       this->data_[i] *= decay_rates_[clock_ - param_clocks_[i]];
     }
@@ -161,5 +158,5 @@ private:
   double decay_rate_;
 };
 
-}  // namespace ml
-}  // namespace petuum
+} // namespace ml
+} // namespace petuum

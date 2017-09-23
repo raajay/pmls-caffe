@@ -17,6 +17,13 @@ add_library(petuum_ps ${Bosen_SOURCE_FILES})
 target_include_directories(petuum_ps PUBLIC ${Bosen_INCLUDE_DIRS} ${third_INCLUDE_DIRS})
 target_link_libraries(petuum_ps PUBLIC ${Bosen_LIBRARIES})
 
+# clang based format
+add_custom_target(clangformat
+    COMMAND /usr/bin/clang-format-3.5
+    -style=LLVM
+    -i
+    ${Bosen_SOURCE_FILES})
+
 # set headers for parents
 set(PS_INCLUDE_DIRS ${PS_INCLUDE_DIRS} ${Bosen_INCLUDE_DIRS} ${third_INCLUDE_DIRS} PARENT_SCOPE)
 

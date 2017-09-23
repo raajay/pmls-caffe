@@ -11,12 +11,7 @@
 
 namespace petuum {
 
-  enum EntityType {
-    SERVER = 0,
-    WORKER = 1,
-    AGGREGATOR = 2,
-    ALL = 3
-  };
+enum EntityType { SERVER = 0, WORKER = 1, AGGREGATOR = 2, ALL = 3 };
 
 enum ConsistencyModel {
   /**
@@ -39,43 +34,25 @@ struct RowOpLogType {
   static const int32_t kSparseVectorRowOpLog = 2;
 };
 
-enum OpLogType {
-  Sparse = 0,
-  AppendOnly = 1,
-  Dense = 2
-};
+enum OpLogType { Sparse = 0, AppendOnly = 1, Dense = 2 };
 
-enum AppendOnlyOpLogType {
-  Inc = 0,
-  BatchInc = 1,
-  DenseBatchInc = 2
-};
+enum AppendOnlyOpLogType { Inc = 0, BatchInc = 1, DenseBatchInc = 2 };
 
-enum ProcessStorageType {
-  BoundedDense = 0,
-  BoundedSparse = 1
-};
+enum ProcessStorageType { BoundedDense = 0, BoundedSparse = 1 };
 
 struct TableGroupConfig {
 
-  TableGroupConfig():
-      stats_path(""),
-      num_comm_channels_per_client(1),
-      num_tables(1),
-      num_total_clients(1),
-      num_local_app_threads(2),
-      entity_type(ALL), // by default all the clients have server and worker threads
-      aggressive_clock(false),
-      aggressive_cpu(false),
-      snapshot_clock(-1),
-      resume_clock(-1),
-      update_sort_policy(Random),
-      bg_idle_milli(0),
-      bandwidth_mbps(4000),
-      oplog_push_upper_bound_kb(1000),
-      oplog_push_staleness_tolerance(2),
-      thread_oplog_batch_size(100*1000*1000),
-      server_row_candidate_factor(5) { }
+  TableGroupConfig()
+      : stats_path(""), num_comm_channels_per_client(1), num_tables(1),
+        num_total_clients(1), num_local_app_threads(2),
+        entity_type(
+            ALL), // by default all the clients have server and worker threads
+        aggressive_clock(false),
+        aggressive_cpu(false), snapshot_clock(-1), resume_clock(-1),
+        update_sort_policy(Random), bg_idle_milli(0), bandwidth_mbps(4000),
+        oplog_push_upper_bound_kb(1000), oplog_push_staleness_tolerance(2),
+        thread_oplog_batch_size(100 * 1000 * 1000),
+        server_row_candidate_factor(5) {}
 
   std::string stats_path;
 
@@ -195,9 +172,10 @@ struct TableGroupConfig {
   std::string toString() {
     std::stringstream ss;
     ss << "TableGroupConfig:" << std::endl;
-    ss << "  num_comm_channels_per_client: " << num_comm_channels_per_client << std::endl;
+    ss << "  num_comm_channels_per_client: " << num_comm_channels_per_client
+       << std::endl;
     ss << "  num_tables: " << num_tables << std::endl;
-    ss << "  num_total_clients: " << num_total_clients  << std::endl;
+    ss << "  num_total_clients: " << num_total_clients << std::endl;
     ss << "  num_local_app_threads: " << num_local_app_threads << std::endl;
     ss << "  client_id: " << client_id << std::endl;
     ss << "  entity_type: " << entity_type << std::endl;
@@ -213,12 +191,16 @@ struct TableGroupConfig {
     ss << "  update_sort_policy: " << update_sort_policy << std::endl;
     ss << "  bg_idle_milli: " << bg_idle_milli << std::endl;
     ss << "  bandwidth_mbps: " << bandwidth_mbps << std::endl;
-    ss << "  oplog_push_upper_bound_kb: " << oplog_push_upper_bound_kb << std::endl;
-    ss << "  oplog_push_staleness_tolerance: " << oplog_push_staleness_tolerance << std::endl;
+    ss << "  oplog_push_upper_bound_kb: " << oplog_push_upper_bound_kb
+       << std::endl;
+    ss << "  oplog_push_staleness_tolerance: " << oplog_push_staleness_tolerance
+       << std::endl;
     ss << "  thread_oplog_batch_size: " << thread_oplog_batch_size << std::endl;
-    ss << "  server_push_row_threshold: " << server_push_row_threshold << std::endl;
+    ss << "  server_push_row_threshold: " << server_push_row_threshold
+       << std::endl;
     ss << "  server_idle_milli: " << server_idle_milli << std::endl;
-    ss << "  server_row_candidate_factor: " << server_row_candidate_factor << std::endl;
+    ss << "  server_row_candidate_factor: " << server_row_candidate_factor
+       << std::endl;
     return ss.str();
   }
 };
@@ -227,13 +209,10 @@ struct TableGroupConfig {
  * TableInfo is shared between client and server.
  */
 struct TableInfo {
-  TableInfo():
-      table_staleness(0),
-      row_type(-1),
-      row_capacity(0),
-      oplog_dense_serialized(false),
-      row_oplog_type(1),
-      dense_row_oplog_capacity(0) { }
+  TableInfo()
+      : table_staleness(0), row_type(-1), row_capacity(0),
+        oplog_dense_serialized(false), row_oplog_type(1),
+        dense_row_oplog_capacity(0) {}
 
   /**
    * table_staleness is used for SSP and ClockVAP.
@@ -268,27 +247,22 @@ struct TableInfo {
     ss << "  row_capacity: " << row_capacity << std::endl;
     ss << "  oplog_dense_serialized: " << oplog_dense_serialized << std::endl;
     ss << "  row_oplog_type: " << row_oplog_type << std::endl;
-    ss << "  dense_row_oplog_capacity: " << dense_row_oplog_capacity << std::endl;
+    ss << "  dense_row_oplog_capacity: " << dense_row_oplog_capacity
+       << std::endl;
     return ss.str();
   }
-
 };
 
 /**
  * ClientTableConfig is used by client only.
  */
 struct ClientTableConfig {
-  ClientTableConfig():
-      process_cache_capacity(0),
-      thread_cache_capacity(1),
-      oplog_capacity(0),
-      oplog_type(Dense),
-      append_only_oplog_type(Inc),
-      append_only_buff_capacity(10*k1_Mi),
-      per_thread_append_only_buff_pool_size(3),
-      bg_apply_append_oplog_freq(1),
-      process_storage_type(BoundedSparse),
-      no_oplog_replay(false) { }
+  ClientTableConfig()
+      : process_cache_capacity(0), thread_cache_capacity(1), oplog_capacity(0),
+        oplog_type(Dense), append_only_oplog_type(Inc),
+        append_only_buff_capacity(10 * k1_Mi),
+        per_thread_append_only_buff_pool_size(3), bg_apply_append_oplog_freq(1),
+        process_storage_type(BoundedSparse), no_oplog_replay(false) {}
 
   TableInfo table_info;
 
@@ -326,4 +300,4 @@ struct ClientTableConfig {
   bool no_oplog_replay;
 };
 
-}  // namespace petuum
+} // namespace petuum

@@ -12,24 +12,20 @@ namespace petuum {
 
 class RowOpLogRecycle : boost::noncopyable {
 public:
-  RowOpLogRecycle(
-      int32_t row_oplog_type,
-      const AbstractRow *sample_row,
-      size_t update_size,
-      size_t dense_row_oplog_capacity):
-      sample_row_(sample_row),
-      update_size_(update_size),
-      dense_row_oplog_capacity_(dense_row_oplog_capacity) {
-      if (row_oplog_type == RowOpLogType::kDenseRowOpLog)
-        CreateRowOpLog_ = CreateRowOpLog::CreateDenseRowOpLog;
-      else if (row_oplog_type == RowOpLogType::kSparseRowOpLog)
-        CreateRowOpLog_ = CreateRowOpLog::CreateSparseRowOpLog;
-      else
-        CreateRowOpLog_ = CreateRowOpLog::CreateSparseVectorRowOpLog;
+  RowOpLogRecycle(int32_t row_oplog_type, const AbstractRow *sample_row,
+                  size_t update_size, size_t dense_row_oplog_capacity)
+      : sample_row_(sample_row), update_size_(update_size),
+        dense_row_oplog_capacity_(dense_row_oplog_capacity) {
+    if (row_oplog_type == RowOpLogType::kDenseRowOpLog)
+      CreateRowOpLog_ = CreateRowOpLog::CreateDenseRowOpLog;
+    else if (row_oplog_type == RowOpLogType::kSparseRowOpLog)
+      CreateRowOpLog_ = CreateRowOpLog::CreateSparseRowOpLog;
+    else
+      CreateRowOpLog_ = CreateRowOpLog::CreateSparseVectorRowOpLog;
   }
 
   ~RowOpLogRecycle() {
-    while(!row_oplog_pool_.empty()) {
+    while (!row_oplog_pool_.empty()) {
       AbstractRowOpLog *row_oplog = row_oplog_pool_.front();
       delete row_oplog;
       row_oplog_pool_.pop();
@@ -39,7 +35,8 @@ public:
   AbstractRowOpLog *GetRowOpLog() {
     if (row_oplog_pool_.empty()) {
       STATS_BG_APPEND_ONLY_CREATE_ROW_OPLOG_INC();
-      return CreateRowOpLog_(update_size_, sample_row_, dense_row_oplog_capacity_);
+      return CreateRowOpLog_(update_size_, sample_row_,
+                             dense_row_oplog_capacity_);
     }
 
     STATS_BG_APPEND_ONLY_RECYCLE_ROW_OPLOG_INC();
@@ -58,7 +55,6 @@ private:
   const size_t update_size_;
   const size_t dense_row_oplog_capacity_;
   CreateRowOpLog::CreateRowOpLogFunc CreateRowOpLog_;
-  std::queue<AbstractRowOpLog*> row_oplog_pool_;
+  std::queue<AbstractRowOpLog *> row_oplog_pool_;
 };
-
 }

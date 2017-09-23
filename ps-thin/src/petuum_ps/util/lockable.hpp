@@ -3,7 +3,6 @@
 
 #pragma once
 
-
 namespace petuum {
 
 /**
@@ -31,7 +30,6 @@ public:
    * @return true if the lock was acquired, false otherwise
    */
   virtual bool try_lock() = 0;
-
 };
 
-}   // namespace petuum
+} // namespace petuum

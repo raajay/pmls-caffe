@@ -16,7 +16,7 @@ public:
   /**
    * Initialize client_ids.size() client clocks with all of them at time 0.
    */
-  explicit VectorClock(const std::vector<int32_t>& ids);
+  explicit VectorClock(const std::vector<int32_t> &ids);
 
   /**
    * Add a clock in vector clock with initial timestampe. id must be unique.
@@ -53,4 +53,4 @@ private:
   int32_t min_clock_;
 };
 
-}  // namespace petuum
+} // namespace petuum

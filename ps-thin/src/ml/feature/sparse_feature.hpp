@@ -17,52 +17,47 @@ namespace ml {
 // SparseFeature stores pairs of (int32_t, V) in an array (int32_t for
 // feature_id), sorted on column index in descending order. Like map, it
 // supports unbounded number of items through dynamic memory allocation.
-template<typename V>
-class SparseFeature : public AbstractFeature<V> {
+template <typename V> class SparseFeature : public AbstractFeature<V> {
 public:
   // Initialize SparseFeature to be (feature_ids[0], val[0]),
   // (feature_ids[1],val[1]) ... pairs.  feature_ids needs to be sorted, and
   // max(feature_ids[i]) < feature_dim. These are checked.
-  SparseFeature(const std::vector<int32_t>& feature_ids,
-      const std::vector<V>& val, int32_t feature_dim);
+  SparseFeature(const std::vector<int32_t> &feature_ids,
+                const std::vector<V> &val, int32_t feature_dim);
 
   SparseFeature(int32_t feature_dim);
 
-  void Init(const std::vector<int32_t>& feature_ids,
-      const std::vector<V>& val, int32_t feature_dim);
+  void Init(const std::vector<int32_t> &feature_ids, const std::vector<V> &val,
+            int32_t feature_dim);
 
   void Init(int32_t feature_dim);
 
-public:  // AbstractFeature override.
+public: // AbstractFeature override.
   SparseFeature();
 
-  SparseFeature(const SparseFeature<V>& other);
+  SparseFeature(const SparseFeature<V> &other);
 
-  SparseFeature<V>& operator=(const SparseFeature<V>& other);
+  SparseFeature<V> &operator=(const SparseFeature<V> &other);
 
   virtual V operator[](int32_t feature_id) const;
 
-  virtual void SetFeatureVal(int32_t feature_id, const V& val);
+  virtual void SetFeatureVal(int32_t feature_id, const V &val);
 
   // Number of (non-zero) entries in the underlying vector.
-  virtual int32_t GetNumEntries() const {
-    return num_entries_;
-  }
+  virtual int32_t GetNumEntries() const { return num_entries_; }
 
   // Does not check idx range.
   virtual int32_t GetFeatureId(int32_t idx) const {
     return entries_[idx].first;
   }
 
-  virtual V GetFeatureVal(int32_t idx) const {
-    return entries_[idx].second;
-  }
+  virtual V GetFeatureVal(int32_t idx) const { return entries_[idx].second; }
 
   virtual std::string ToString() const;
 
-protected:  // protected functions
+protected: // protected functions
   // Comparator for std::lower_bound.
-  static bool CompareIdx(const Entry<V>& a, const Entry<V>& b);
+  static bool CompareIdx(const Entry<V> &a, const Entry<V> &b);
 
   // Return vector index of associated with feature_id, or -1 if not found.
   int32_t FindIndex(int32_t feature_id) const;
@@ -79,14 +74,14 @@ protected:  // protected functions
   // Remove vector_idx and shift the rest forward.
   void RemoveOneEntryAndCompact(int32_t vector_idx);
 
-public:   // static constants
+public: // static constants
   // Size to increase or shrink entries_; in # of entries. The larger it is
   // the less memory efficient, but less memory allocation.
   static const int32_t K_BLOCK_SIZE_;
 
 protected:
   // Array of sorted entries.
-  std::unique_ptr<Entry<V>[]> entries_;
+  std::unique_ptr<Entry<V> []> entries_;
 
   // # of entries in entries_.
   int32_t num_entries_;
@@ -97,30 +92,28 @@ protected:
 
 // ================ Implementation =================
 
-template<typename V>
-const int32_t SparseFeature<V>::K_BLOCK_SIZE_ = 32;
+template <typename V> const int32_t SparseFeature<V>::K_BLOCK_SIZE_ = 32;
 
-template<typename V>
-SparseFeature<V>::SparseFeature() :
-  num_entries_(0), capacity_(0) { }
+template <typename V>
+SparseFeature<V>::SparseFeature()
+    : num_entries_(0), capacity_(0) {}
 
-template<typename V>
-SparseFeature<V>::SparseFeature(int32_t feature_dim) :
-  AbstractFeature<V>(feature_dim), num_entries_(0), capacity_(0) { }
+template <typename V>
+SparseFeature<V>::SparseFeature(int32_t feature_dim)
+    : AbstractFeature<V>(feature_dim), num_entries_(0), capacity_(0) {}
 
-template<typename V>
-void SparseFeature<V>::Init(int32_t feature_dim) {
+template <typename V> void SparseFeature<V>::Init(int32_t feature_dim) {
   this->feature_dim_ = feature_dim;
   num_entries_ = 0;
   capacity_ = 0;
 }
 
-template<typename V>
-SparseFeature<V>::SparseFeature(const std::vector<int32_t>& feature_ids,
-    const std::vector<V>& val, int32_t feature_dim) :
-    AbstractFeature<V>(feature_dim),
-    entries_(new Entry<V>[feature_ids.size()]),
-    num_entries_(feature_ids.size()), capacity_(num_entries_) {
+template <typename V>
+SparseFeature<V>::SparseFeature(const std::vector<int32_t> &feature_ids,
+                                const std::vector<V> &val, int32_t feature_dim)
+    : AbstractFeature<V>(feature_dim),
+      entries_(new Entry<V>[feature_ids.size()]),
+      num_entries_(feature_ids.size()), capacity_(num_entries_) {
   CHECK_EQ(feature_ids.size(), val.size());
   int32_t prev_idx = -1;
   for (int i = 0; i < num_entries_; ++i) {
@@ -132,9 +125,9 @@ SparseFeature<V>::SparseFeature(const std::vector<int32_t>& feature_ids,
   CHECK_LT(prev_idx, this->feature_dim_);
 }
 
-template<typename V>
-void SparseFeature<V>::Init(const std::vector<int32_t>& feature_ids,
-    const std::vector<V>& val, int32_t feature_dim) {
+template <typename V>
+void SparseFeature<V>::Init(const std::vector<int32_t> &feature_ids,
+                            const std::vector<V> &val, int32_t feature_dim) {
   this->feature_dim_ = feature_dim;
   entries_.reset(new Entry<V>[feature_ids.size()]);
   num_entries_ = feature_ids.size();
@@ -150,36 +143,35 @@ void SparseFeature<V>::Init(const std::vector<int32_t>& feature_ids,
   CHECK_LT(prev_idx, this->feature_dim_);
 }
 
-template<typename V>
-SparseFeature<V>::SparseFeature(const SparseFeature<V>& other) :
-  AbstractFeature<V>(other.feature_dim_), num_entries_(other.num_entries_),
-  capacity_(other.capacity) {
-    Entry<V>* new_entries = new Entry<V>[capacity_];
-    memcpy(new_entries, other.entries_.get(), num_entries_ * sizeof(Entry<V>));
-    entries_.reset(new_entries);
-  }
+template <typename V>
+SparseFeature<V>::SparseFeature(const SparseFeature<V> &other)
+    : AbstractFeature<V>(other.feature_dim_), num_entries_(other.num_entries_),
+      capacity_(other.capacity) {
+  Entry<V> *new_entries = new Entry<V>[capacity_];
+  memcpy(new_entries, other.entries_.get(), num_entries_ * sizeof(Entry<V>));
+  entries_.reset(new_entries);
+}
 
-template<typename V>
-SparseFeature<V>& SparseFeature<V>::operator=(const SparseFeature<V>& other) {
+template <typename V>
+SparseFeature<V> &SparseFeature<V>::operator=(const SparseFeature<V> &other) {
   this->feature_dim_ = other.feature_dim_;
   num_entries_ = other.num_entries_;
   capacity_ = other.capacity_;
-  Entry<V>* new_entries = new Entry<V>[capacity_];
+  Entry<V> *new_entries = new Entry<V>[capacity_];
   memcpy(new_entries, other.entries_.get(), num_entries_ * sizeof(Entry<V>));
   entries_.reset(new_entries);
   return *this;
 }
 
-template<typename V>
-V SparseFeature<V>::operator[](int32_t feature_id) const {
+template <typename V> V SparseFeature<V>::operator[](int32_t feature_id) const {
   int32_t vector_idx = FindIndex(feature_id);
   if (vector_idx == -1)
     return V(0);
   return entries_[vector_idx].second;
 }
 
-template<typename V>
-void SparseFeature<V>::SetFeatureVal(int32_t feature_id, const V& val) {
+template <typename V>
+void SparseFeature<V>::SetFeatureVal(int32_t feature_id, const V &val) {
   int32_t vector_idx = FindIndex(feature_id);
   if (vector_idx != -1) {
     // Remove vector_idx if vector_idx becomes 0.
@@ -203,9 +195,7 @@ void SparseFeature<V>::SetFeatureVal(int32_t feature_id, const V& val) {
   OneSidedBubbleSort(num_entries_ - 1, false);
 }
 
-
-template<typename V>
-std::string SparseFeature<V>::ToString() const {
+template <typename V> std::string SparseFeature<V>::ToString() const {
   std::stringstream ss;
   for (int i = 0; i < num_entries_; ++i) {
     ss << entries_[i].first << ":" << entries_[i].second << " ";
@@ -216,11 +206,10 @@ std::string SparseFeature<V>::ToString() const {
 
 // ========================== Private Methods ===========================
 
-template<typename V>
-bool SparseFeature<V>::CompareIdx(const Entry<V>& a, const Entry<V>& b) {
+template <typename V>
+bool SparseFeature<V>::CompareIdx(const Entry<V> &a, const Entry<V> &b) {
   return a.first < b.first;
 }
-
 
 namespace {
 
@@ -228,9 +217,9 @@ namespace {
 const int32_t kNumLinearSearch = 20;
 
 // Search for index of col_id on [lower, upper).
-template<typename V>
-int32_t BinarySearch(const Entry<V>* entries, int32_t key, int32_t lower,
-    int32_t upper) {
+template <typename V>
+int32_t BinarySearch(const Entry<V> *entries, int32_t key, int32_t lower,
+                     int32_t upper) {
   if (upper - lower < kNumLinearSearch) {
     // Naive linear search.
     for (int i = lower; i < upper; ++i) {
@@ -248,16 +237,15 @@ int32_t BinarySearch(const Entry<V>* entries, int32_t key, int32_t lower,
   return BinarySearch(entries, key, mid, upper);
 }
 
-}  // anonymous namespace
+} // anonymous namespace
 
-template<typename V>
+template <typename V>
 int32_t SparseFeature<V>::FindIndex(int32_t feature_id) const {
   return BinarySearch(entries_.get(), feature_id, 0, num_entries_);
 }
 
-template<typename V>
-void SparseFeature<V>::OneSidedBubbleSort(int32_t vector_idx,
-    bool forward) {
+template <typename V>
+void SparseFeature<V>::OneSidedBubbleSort(int32_t vector_idx, bool forward) {
   if (forward) {
     // new_idx is the correct index for vector_idx.
     int32_t new_idx = vector_idx;
@@ -273,7 +261,7 @@ void SparseFeature<V>::OneSidedBubbleSort(int32_t vector_idx,
       // Move item in vector_idx to new_idx
       Entry<V> tmp = entries_[vector_idx];
       memmove(entries_.get() + vector_idx, entries_.get() + vector_idx + 1,
-          (new_idx - vector_idx) * sizeof(Entry<V>));
+              (new_idx - vector_idx) * sizeof(Entry<V>));
       entries_[new_idx] = tmp;
     }
   } else {
@@ -291,13 +279,13 @@ void SparseFeature<V>::OneSidedBubbleSort(int32_t vector_idx,
       // Move item in vector_idx to new_idx
       Entry<V> tmp = entries_[vector_idx];
       memmove(entries_.get() + new_idx + 1, entries_.get() + new_idx,
-          (vector_idx - new_idx) * sizeof(Entry<V>));
+              (vector_idx - new_idx) * sizeof(Entry<V>));
       entries_[new_idx] = tmp;
     }
   }
 }
 
-template<typename V>
+template <typename V>
 void SparseFeature<V>::ResetCapacity(int32_t new_capacity) {
   CHECK_GE(new_capacity, num_entries_);
   int32_t remainder = new_capacity % K_BLOCK_SIZE_;
@@ -305,15 +293,15 @@ void SparseFeature<V>::ResetCapacity(int32_t new_capacity) {
     new_capacity += K_BLOCK_SIZE_ - remainder;
   }
   capacity_ = new_capacity;
-  Entry<V>* new_entries = new Entry<V>[capacity_];
+  Entry<V> *new_entries = new Entry<V>[capacity_];
   memcpy(new_entries, entries_.get(), num_entries_ * sizeof(Entry<V>));
   entries_.reset(new_entries);
 }
 
-template<typename V>
+template <typename V>
 void SparseFeature<V>::RemoveOneEntryAndCompact(int32_t vector_idx) {
   memmove(entries_.get() + vector_idx, entries_.get() + vector_idx + 1,
-      (num_entries_ - vector_idx - 1) * sizeof(Entry<V>));
+          (num_entries_ - vector_idx - 1) * sizeof(Entry<V>));
   --num_entries_;
   // Compact criterion.
   if (capacity_ - num_entries_ >= 2 * K_BLOCK_SIZE_) {
@@ -322,5 +310,5 @@ void SparseFeature<V>::RemoveOneEntryAndCompact(int32_t vector_idx) {
   }
 }
 
-}  // namespace ml
-}  // namespace petuum
+} // namespace ml
+} // namespace petuum

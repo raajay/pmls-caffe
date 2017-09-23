@@ -5,11 +5,11 @@
 
 namespace petuum {
 
-BgWorkerGroup::BgWorkerGroup(std::map<int32_t, ClientTable*> *tables):
-    tables_(tables),
-    bg_worker_vec_(GlobalContext::get_num_comm_channels_per_client()),
-    bg_worker_id_st_(GlobalContext::get_head_bg_id(
-        GlobalContext::get_client_id())) {
+BgWorkerGroup::BgWorkerGroup(std::map<int32_t, ClientTable *> *tables)
+    : tables_(tables),
+      bg_worker_vec_(GlobalContext::get_num_comm_channels_per_client()),
+      bg_worker_id_st_(
+          GlobalContext::get_head_bg_id(GlobalContext::get_client_id())) {
 
   pthread_barrier_init(&init_barrier_, NULL,
                        GlobalContext::get_num_comm_channels_per_client() + 1);
@@ -30,7 +30,7 @@ void BgWorkerGroup::CreateBgWorkers() {
   int32_t idx = 0;
   for (auto &worker : bg_worker_vec_) {
     worker = new SSPBgWorker(bg_worker_id_st_ + idx, idx, tables_,
-                          &init_barrier_, &create_table_barrier_);
+                             &init_barrier_, &create_table_barrier_);
     ++idx;
   }
   VLOG(5) << "Created " << idx << " instances of SSPBgWorker";
@@ -90,7 +90,7 @@ bool BgWorkerGroup::RequestRow(int32_t table_id, int32_t row_id,
 }
 
 void BgWorkerGroup::RequestRowAsync(int32_t table_id, int32_t row_id,
-                                    int32_t clock, bool forced){
+                                    int32_t clock, bool forced) {
   int32_t bg_idx = GlobalContext::GetPartitionCommChannelIndex(row_id);
   bg_worker_vec_[bg_idx]->RequestRowAsync(table_id, row_id, clock, forced);
 }
@@ -126,5 +126,4 @@ int32_t BgWorkerGroup::GetSystemClock() {
 void BgWorkerGroup::WaitSystemClock(int32_t my_clock) {
   LOG(FATAL) << "Not supported function";
 }
-
 }

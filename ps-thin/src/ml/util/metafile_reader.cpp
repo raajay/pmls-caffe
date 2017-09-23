@@ -9,13 +9,13 @@
 namespace petuum {
 namespace ml {
 
-MetafileReader::MetafileReader() { }
+MetafileReader::MetafileReader() {}
 
-MetafileReader::MetafileReader(const std::string& metafile_path) {
+MetafileReader::MetafileReader(const std::string &metafile_path) {
   Init(metafile_path);
 }
 
-void MetafileReader::Init(const std::string& metafile_path) {
+void MetafileReader::Init(const std::string &metafile_path) {
   metafile_path_ = metafile_path;
   std::ifstream is(metafile_path_);
   CHECK(is) << "Failed to open " << metafile_path_;
@@ -26,7 +26,7 @@ void MetafileReader::Init(const std::string& metafile_path) {
     std::string field_val;
     linestream >> field_name >> field_val;
     CHECK_EQ(":", field_name.substr(field_name.size() - 1))
-      << "Field name needs to be 'field_name: field_value' ";
+        << "Field name needs to be 'field_name: field_value' ";
     field_name = field_name.substr(0, field_name.size() - 1);
     content_[field_name] = field_val;
   }
@@ -49,10 +49,10 @@ bool MetafileReader::get_bool(std::string key) {
 
 std::string MetafileReader::get_string(std::string key) {
   auto it = content_.find(key);
-  CHECK(it != content_.end())
-    << "Failed to lookup " << key << " in " << metafile_path_;
+  CHECK(it != content_.end()) << "Failed to lookup " << key << " in "
+                              << metafile_path_;
   return it->second;
 }
 
-}   // namespace ml
-}   // namespace petuum
+} // namespace ml
+} // namespace petuum

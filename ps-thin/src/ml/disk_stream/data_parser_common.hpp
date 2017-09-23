@@ -6,10 +6,7 @@
 namespace petuum {
 namespace ml {
 
-enum OutputFeatureType {
-  kSparseFeature,
-  kDenseFeature
-};
+enum OutputFeatureType { kSparseFeature, kDenseFeature };
 
-}  // namespace ml
-}  // namespace petuum
+} // namespace ml
+} // namespace petuum

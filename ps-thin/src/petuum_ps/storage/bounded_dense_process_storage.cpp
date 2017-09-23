@@ -7,13 +7,10 @@
 
 namespace petuum {
 
-BoundedDenseProcessStorage::BoundedDenseProcessStorage(size_t capacity,
-                                                       CreateClientRowFunc CreateClientRow,
-                                                       int32_t offset):
-    storage_vec_(capacity),
-    capacity_(capacity),
-    CreateClientRow_(CreateClientRow),
-    offset_(offset) {
+BoundedDenseProcessStorage::BoundedDenseProcessStorage(
+    size_t capacity, CreateClientRowFunc CreateClientRow, int32_t offset)
+    : storage_vec_(capacity), capacity_(capacity),
+      CreateClientRow_(CreateClientRow), offset_(offset) {
 
   for (int i = 0; i < capacity_; ++i) {
     storage_vec_[i] = CreateClientRow_(0);
@@ -33,7 +30,8 @@ BoundedDenseProcessStorage::~BoundedDenseProcessStorage() {
 }
 
 ClientRow *BoundedDenseProcessStorage::Find(int32_t row_id,
-                                            RowAccessor* row_accessor __attribute__ ((unused))) {
+                                            RowAccessor *row_accessor
+                                            __attribute__((unused))) {
   return (this->*Find_)(row_id);
 }
 
@@ -46,13 +44,11 @@ ClientRow *BoundedDenseProcessStorage::FindNoOffset(int32_t row_id) {
   return storage_vec_[row_id];
 }
 
-bool BoundedDenseProcessStorage::Find(int32_t row_id) {
-  return true;
-}
+bool BoundedDenseProcessStorage::Find(int32_t row_id) { return true; }
 
-bool BoundedDenseProcessStorage::Insert(int32_t row_id, ClientRow* client_row) {
+bool BoundedDenseProcessStorage::Insert(int32_t row_id, ClientRow *client_row) {
   LOG(FATAL) << "Operation not supported!";
   return false;
 }
 
-}  // namespace petuum
+} // namespace petuum

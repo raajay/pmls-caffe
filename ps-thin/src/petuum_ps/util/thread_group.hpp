@@ -4,8 +4,7 @@
 
 namespace petuum {
 
-template <typename ThreadType>
-class ThreadGroup {
+template <typename ThreadType> class ThreadGroup {
 public:
   virtual ~ThreadGroup() {
     for (auto &thread : threads_) {
@@ -26,9 +25,8 @@ public:
   }
 
 protected:
-    ThreadGroup(size_t num_threads):
-      threads_(num_threads) { }
+  ThreadGroup(size_t num_threads) : threads_(num_threads) {}
 
-  std::vector<ThreadType*> threads_;
+  std::vector<ThreadType *> threads_;
 };
 }

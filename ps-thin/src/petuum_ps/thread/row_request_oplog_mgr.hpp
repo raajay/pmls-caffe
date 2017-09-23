@@ -20,17 +20,13 @@ public:
   uint32_t version;
   bool sent;
 
-  RowRequestInfo() :
-    app_thread_id(0),
-    clock(0),
-    version(0) {}
+  RowRequestInfo() : app_thread_id(0), clock(0), version(0) {}
 
-  RowRequestInfo(const RowRequestInfo & other):
-    app_thread_id(other.app_thread_id),
-    clock(other.clock),
-    version(other.version) {}
+  RowRequestInfo(const RowRequestInfo &other)
+      : app_thread_id(other.app_thread_id), clock(other.clock),
+        version(other.version) {}
 
-  RowRequestInfo & operator=(const RowRequestInfo & other) {
+  RowRequestInfo &operator=(const RowRequestInfo &other) {
     app_thread_id = other.app_thread_id;
     clock = other.clock;
     version = other.version;
@@ -40,9 +36,9 @@ public:
 
 class RowRequestOpLogMgr : boost::noncopyable {
 public:
-  RowRequestOpLogMgr() { }
+  RowRequestOpLogMgr() {}
 
-  virtual ~RowRequestOpLogMgr() { }
+  virtual ~RowRequestOpLogMgr() {}
 
   // return true unless there's a previous request with lower or same clock
   // number
@@ -54,7 +50,8 @@ public:
   // If all row requests prior to some version are removed, those OpLogs are
   // removed as well.
   virtual int32_t InformReply(int32_t table_id, int32_t row_id, int32_t clock,
-    uint32_t curr_version, std::vector<int32_t> *app_thread_ids) = 0;
+                              uint32_t curr_version,
+                              std::vector<int32_t> *app_thread_ids) = 0;
 
   // Get OpLog of a particular version.
   virtual BgOpLog *GetOpLog(uint32_t version) = 0;
@@ -111,7 +108,7 @@ public:
 
   ~SSPRowRequestOpLogMgr() {
     for (auto iter = version_oplog_map_.begin();
-      iter != version_oplog_map_.end(); iter++) {
+         iter != version_oplog_map_.end(); iter++) {
       CHECK_NOTNULL(iter->second);
       delete iter->second;
     }
@@ -126,7 +123,8 @@ public:
   // If all row requests prior to some version are removed, those OpLogs are
   // removed as well.
   int32_t InformReply(int32_t table_id, int32_t row_id, int32_t clock,
-    uint32_t curr_version, std::vector<int32_t> *app_thread_ids);
+                      uint32_t curr_version,
+                      std::vector<int32_t> *app_thread_ids);
 
   // Get OpLog of a particular version.
   BgOpLog *GetOpLog(uint32_t version);
@@ -134,9 +132,9 @@ public:
   // An OpLog is inserted only if there are appending oplogs.
   bool AddOpLog(uint32_t version, BgOpLog *oplog);
 
-  void InformVersionInc() { }
+  void InformVersionInc() {}
   // not supported
-  void ServerAcknowledgeVersion(int32_t server_id, uint32_t version) { }
+  void ServerAcknowledgeVersion(int32_t server_id, uint32_t version) {}
 
   BgOpLog *OpLogIterInit(uint32_t start_version, uint32_t end_version);
   BgOpLog *OpLogIterNext(uint32_t *version);
@@ -150,20 +148,19 @@ private:
   // removed.
   // This function only removes OpLogs of version that is larger than
   // req_version (at least req_version + 1).
-  void CleanVersionOpLogs(uint32_t req_version,
-    uint32_t curr_version);
+  void CleanVersionOpLogs(uint32_t req_version, uint32_t curr_version);
 
   // map <table_id, row_id> to a list of requests
   // The list is in increasing order of clock.
-  std::map<std::pair<int32_t, int32_t>,
-    std::list<RowRequestInfo> > pending_row_requests_;
+  std::map<std::pair<int32_t, int32_t>, std::list<RowRequestInfo>>
+      pending_row_requests_;
 
   // version -> (table_id, OpLogPartition)
   // The version number of a request means that all oplogs up to and including
   // this version have been applied to this row.
   // An OpLogPartition of version V is needed for requests sent before the oplog
   // is sent. This means requests of version V - 1, V - 2, ...
-  std::map<uint32_t, BgOpLog* > version_oplog_map_;
+  std::map<uint32_t, BgOpLog *> version_oplog_map_;
 
   // how many pending requests are in this version?
   // Map version to number of requests.
@@ -177,4 +174,4 @@ private:
   uint32_t oplog_iter_version_end_;
 };
 
-}  // namespace petuum
+} // namespace petuum

@@ -15,7 +15,7 @@ namespace {
 
 const float kCutoff = 1e-15;
 
-}  // anonymous namespace
+} // anonymous namespace
 
 float SafeLog(float x) {
   if (std::abs(x) < kCutoff) {
@@ -24,16 +24,14 @@ float SafeLog(float x) {
   return fastlog(x);
 }
 
-float Sigmoid(float x) {
-  return 1. / (1. + exp(-x));
-}
+float Sigmoid(float x) { return 1. / (1. + exp(-x)); }
 
 float LogSum(float log_a, float log_b) {
-  return (log_a < log_b) ? log_b + fastlog(1 + fastexp(log_a - log_b)) :
-      log_a + fastlog(1 + fastexp(log_b-log_a));
+  return (log_a < log_b) ? log_b + fastlog(1 + fastexp(log_a - log_b))
+                         : log_a + fastlog(1 + fastexp(log_b - log_a));
 }
 
-float LogSumVec(const std::vector<float>& logvec) {
+float LogSumVec(const std::vector<float> &logvec) {
   float sum = 0.;
   sum = logvec[0];
   for (int i = 1; i < logvec.size(); ++i) {
@@ -42,36 +40,36 @@ float LogSumVec(const std::vector<float>& logvec) {
   return sum;
 }
 
-void Softmax(std::vector<float>* vec) {
+void Softmax(std::vector<float> *vec) {
   CHECK_NOTNULL(vec);
   // TODO(wdai): Figure out why this is necessary. Doubt it is.
-	for (int i = 0; i < vec->size(); ++i) {
-		if (std::abs((*vec)[i]) < kCutoff) {
-			(*vec)[i] = kCutoff;
+  for (int i = 0; i < vec->size(); ++i) {
+    if (std::abs((*vec)[i]) < kCutoff) {
+      (*vec)[i] = kCutoff;
     }
-	}
-	double lsum = LogSumVec(*vec);
-	for (int i = 0; i < vec->size(); ++i) {
-		(*vec)[i] = fastexp((*vec)[i] - lsum);
-		//(*vec)[i] = exp((*vec)[i] - lsum);
+  }
+  double lsum = LogSumVec(*vec);
+  for (int i = 0; i < vec->size(); ++i) {
+    (*vec)[i] = fastexp((*vec)[i] - lsum);
+    //(*vec)[i] = exp((*vec)[i] - lsum);
     (*vec)[i] = (*vec)[i] > 1 ? 1. : (*vec)[i];
   }
 }
 
-float DenseDenseFeatureDotProduct(const AbstractFeature<float>& f1,
-    const AbstractFeature<float>& f2) {
+float DenseDenseFeatureDotProduct(const AbstractFeature<float> &f1,
+                                  const AbstractFeature<float> &f2) {
   CHECK_EQ(f1.GetFeatureDim(), f2.GetFeatureDim());
-  auto f1_dense_ptr = static_cast<const DenseFeature<float>*>(&f1);
-  auto f2_dense_ptr = static_cast<const DenseFeature<float>*>(&f2);
-  const std::vector<float>& v1 = f1_dense_ptr->GetVector();
-  const std::vector<float>& v2 = f2_dense_ptr->GetVector();
+  auto f1_dense_ptr = static_cast<const DenseFeature<float> *>(&f1);
+  auto f2_dense_ptr = static_cast<const DenseFeature<float> *>(&f2);
+  const std::vector<float> &v1 = f1_dense_ptr->GetVector();
+  const std::vector<float> &v2 = f2_dense_ptr->GetVector();
   Eigen::Map<const Eigen::VectorXf> e1(v1.data(), v1.size());
   Eigen::Map<const Eigen::VectorXf> e2(v2.data(), v2.size());
   return e1.dot(e2);
 }
 
-float SparseDenseFeatureDotProduct(const AbstractFeature<float>& f1,
-    const AbstractFeature<float>& f2) {
+float SparseDenseFeatureDotProduct(const AbstractFeature<float> &f1,
+                                   const AbstractFeature<float> &f2) {
   CHECK_EQ(f1.GetFeatureDim(), f2.GetFeatureDim());
   float sum = 0.;
   for (int i = 0; i < f1.GetNumEntries(); ++i) {
@@ -81,13 +79,13 @@ float SparseDenseFeatureDotProduct(const AbstractFeature<float>& f1,
   return sum;
 }
 
-float DenseSparseFeatureDotProduct(const AbstractFeature<float>& f1,
-    const AbstractFeature<float>& f2) {
+float DenseSparseFeatureDotProduct(const AbstractFeature<float> &f1,
+                                   const AbstractFeature<float> &f2) {
   return SparseDenseFeatureDotProduct(f2, f1);
 }
 
-float SparseSparseFeatureDotProduct(const AbstractFeature<float>& f1,
-    const AbstractFeature<float>& f2) {
+float SparseSparseFeatureDotProduct(const AbstractFeature<float> &f1,
+                                    const AbstractFeature<float> &f2) {
   CHECK_EQ(f1.GetFeatureDim(), f2.GetFeatureDim());
   int j = 0;
   float sum = 0.;
@@ -104,18 +102,18 @@ float SparseSparseFeatureDotProduct(const AbstractFeature<float>& f1,
   return sum;
 }
 
-void FeatureScaleAndAdd(float alpha, const DenseFeature<float>& f1,
-    DenseFeature<float>* f2) {
-  const std::vector<float>& f1_vec = f1.GetVector();
-  std::vector<float>& f2_vec = f2->GetVector();
+void FeatureScaleAndAdd(float alpha, const DenseFeature<float> &f1,
+                        DenseFeature<float> *f2) {
+  const std::vector<float> &f1_vec = f1.GetVector();
+  std::vector<float> &f2_vec = f2->GetVector();
   for (int i = 0; i < f1_vec.size(); ++i) {
     f2_vec[i] += alpha * f1_vec[i];
   }
 }
 
 // f1 sparse, f2 dense.
-void FeatureScaleAndAdd(float alpha, const AbstractFeature<float>& f1,
-    AbstractFeature<float>* f2) {
+void FeatureScaleAndAdd(float alpha, const AbstractFeature<float> &f1,
+                        AbstractFeature<float> *f2) {
   CHECK_EQ(f1.GetFeatureDim(), f2->GetFeatureDim());
   for (int i = 0; i < f1.GetNumEntries(); ++i) {
     int32_t f1_fid = f1.GetFeatureId(i);
@@ -123,5 +121,5 @@ void FeatureScaleAndAdd(float alpha, const AbstractFeature<float>& f1,
   }
 }
 
-}  // namespace ml
-}  // namespace petuum
+} // namespace ml
+} // namespace petuum

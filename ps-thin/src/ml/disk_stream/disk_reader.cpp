@@ -17,28 +17,24 @@
 namespace petuum {
 namespace ml {
 
-DiskReader::DiskReader(const DiskReaderConfig& config,
-    MultiBuffer* multi_buffer) :
-  file_counter_(0), pass_counter_(0),
-  multi_buffer_(CHECK_NOTNULL(multi_buffer)),
-  // DiskReaderConfig parameters
-  snappy_compressed_(config.snappy_compressed),
-  num_passes_(config.num_passes),
-  read_mode_(config.read_mode),
-  dir_path_(config.dir_path),
-  file_list_(config.file_list),
-  seq_id_begin_(config.seq_id_begin),
-  num_files_(config.num_files),
-  file_seq_prefix_(config.file_seq_prefix) {
-    GenerateFileList();
-  }
+DiskReader::DiskReader(const DiskReaderConfig &config,
+                       MultiBuffer *multi_buffer)
+    : file_counter_(0), pass_counter_(0),
+      multi_buffer_(CHECK_NOTNULL(multi_buffer)),
+      // DiskReaderConfig parameters
+      snappy_compressed_(config.snappy_compressed),
+      num_passes_(config.num_passes), read_mode_(config.read_mode),
+      dir_path_(config.dir_path), file_list_(config.file_list),
+      seq_id_begin_(config.seq_id_begin), num_files_(config.num_files),
+      file_seq_prefix_(config.file_seq_prefix) {
+  GenerateFileList();
+}
 
 void DiskReader::Start() {
-  ByteBuffer* buffer_ptr = multi_buffer_->GetIOBuffer();
+  ByteBuffer *buffer_ptr = multi_buffer_->GetIOBuffer();
   petuum::HighResolutionTimer read_timer;
   int64_t num_bytes_read = 0;
-  while (buffer_ptr != 0 &&
-      (num_passes_ == 0 || pass_counter_ < num_passes_)) {
+  while (buffer_ptr != 0 && (num_passes_ == 0 || pass_counter_ < num_passes_)) {
     // 0 is shutdown signal.
     std::vector<char> file_bytes = ReadNextFile();
     num_bytes_read += file_bytes.size();
@@ -49,14 +45,14 @@ void DiskReader::Start() {
   multi_buffer_->IOThreadShutdown();
   int num_secs = read_timer.elapsed();
   LOG(INFO) << "Reader thread read " << num_bytes_read << " bytes in "
-    << num_secs << " seconds ("
-    << static_cast<float>(num_bytes_read) / 1e6 / num_secs << "MB/s)";
+            << num_secs << " seconds ("
+            << static_cast<float>(num_bytes_read) / 1e6 / num_secs << "MB/s)";
 }
 
 namespace {
 
 // Generate file list from directory.
-std::vector<std::string> ReadDir(const std::string& dir_path) {
+std::vector<std::string> ReadDir(const std::string &dir_path) {
   std::vector<std::string> files;
   struct dirent *entry;
   DIR *dp = opendir(dir_path.c_str());
@@ -76,7 +72,7 @@ std::vector<std::string> ReadDir(const std::string& dir_path) {
 }
 
 // Generate file list from reading a file list.
-std::vector<std::string> ReadFileList(const std::string& file_list) {
+std::vector<std::string> ReadFileList(const std::string &file_list) {
   std::vector<std::string> files;
   std::ifstream is(file_list);
   CHECK(is) << "Failed to open " << file_list;
@@ -88,8 +84,8 @@ std::vector<std::string> ReadFileList(const std::string& file_list) {
 }
 
 // Generate file list from a file sequence.
-std::vector<std::string> ReadFileSequence(
-    const std::string& file_seq_prefix, int seq_id_begin, int num_files) {
+std::vector<std::string> ReadFileSequence(const std::string &file_seq_prefix,
+                                          int seq_id_begin, int num_files) {
   CHECK_GT(num_files, 0) << "no file to read.";
   std::vector<std::string> files;
   for (int i = 0; i < num_files; ++i) {
@@ -98,7 +94,7 @@ std::vector<std::string> ReadFileSequence(
   return files;
 }
 
-}  // anonymous namespace
+} // anonymous namespace
 
 void DiskReader::GenerateFileList() {
   if (read_mode_ == kDirPath) {
@@ -107,13 +103,11 @@ void DiskReader::GenerateFileList() {
   } else if (read_mode_ == kFileList) {
     files_ = ReadFileList(file_list_);
   } else if (read_mode_ == kFileSequence) {
-    files_ = ReadFileSequence(file_seq_prefix_, seq_id_begin_,
-        num_files_);
+    files_ = ReadFileSequence(file_seq_prefix_, seq_id_begin_, num_files_);
   } else {
     LOG(FATAL) << "Unrecognized read_mode: " << read_mode_;
   }
-  LOG(INFO) << "Reader thread will read from " << files_.size()
-    << " files";
+  LOG(INFO) << "Reader thread will read from " << files_.size() << " files";
 }
 
 std::vector<char> DiskReader::ReadNextFile() {
@@ -130,7 +124,7 @@ std::vector<char> DiskReader::ReadNextFile() {
     // Snappy-decompress.
     std::string uncompressed;
     CHECK(snappy::Uncompress(result.data(), result.size(), &uncompressed))
-      << "Cannot decompress with snappy. File might be corrupted.";
+        << "Cannot decompress with snappy. File might be corrupted.";
     result = std::vector<char>(uncompressed.begin(), uncompressed.end());
   }
 
@@ -142,5 +136,5 @@ std::vector<char> DiskReader::ReadNextFile() {
   return result;
 }
 
-}  // namespace ml
-}  // namespace petuum
+} // namespace ml
+} // namespace petuum

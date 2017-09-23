@@ -10,67 +10,47 @@ namespace petuum {
 
 class MetaRowOpLog : public virtual AbstractRowOpLog {
 public:
-  MetaRowOpLog():
-      AbstractRowOpLog(0) { }
+  MetaRowOpLog() : AbstractRowOpLog(0) {}
 
-  ~MetaRowOpLog() { }
+  ~MetaRowOpLog() {}
 
-  void SetMeta(const RowOpLogMeta &other) {
-    meta_ = other;
-  }
+  void SetMeta(const RowOpLogMeta &other) { meta_ = other; }
 
-  RowOpLogMeta &GetMeta() {
-    return meta_;
-  }
+  RowOpLogMeta &GetMeta() { return meta_; }
 
-  void InvalidateMeta() {
-    meta_.set_clock(-1);
-  }
+  void InvalidateMeta() { meta_.set_clock(-1); }
 
-  void ResetImportance() {
-    meta_.set_importance(0);
-  }
+  void ResetImportance() { meta_.set_importance(0); }
 
 private:
   RowOpLogMeta meta_;
-
 };
 
 class DenseMetaRowOpLog : public MetaRowOpLog, public DenseRowOpLog {
 public:
-  DenseMetaRowOpLog(
-      InitUpdateFunc InitUpdate,
-      CheckZeroUpdateFunc CheckZeroUpdate,
-      size_t update_size,
-      size_t row_size):
-      AbstractRowOpLog(update_size),
-      DenseRowOpLog(InitUpdate, CheckZeroUpdate,
-                    update_size, row_size) { }
-
+  DenseMetaRowOpLog(InitUpdateFunc InitUpdate,
+                    CheckZeroUpdateFunc CheckZeroUpdate, size_t update_size,
+                    size_t row_size)
+      : AbstractRowOpLog(update_size),
+        DenseRowOpLog(InitUpdate, CheckZeroUpdate, update_size, row_size) {}
 };
 
 class SparseMetaRowOpLog : public MetaRowOpLog, public SparseRowOpLog {
 public:
-  SparseMetaRowOpLog(
-      InitUpdateFunc InitUpdate,
-      CheckZeroUpdateFunc CheckZeroUpdate,
-      size_t update_size):
-      AbstractRowOpLog(update_size),
-      SparseRowOpLog(
-          InitUpdate, CheckZeroUpdate, update_size) { }
+  SparseMetaRowOpLog(InitUpdateFunc InitUpdate,
+                     CheckZeroUpdateFunc CheckZeroUpdate, size_t update_size)
+      : AbstractRowOpLog(update_size),
+        SparseRowOpLog(InitUpdate, CheckZeroUpdate, update_size) {}
 };
 
 class SparseVectorMetaRowOpLog : public MetaRowOpLog,
                                  public SparseVectorRowOpLog {
 public:
-  SparseVectorMetaRowOpLog(
-      InitUpdateFunc InitUpdate,
-      CheckZeroUpdateFunc CheckZeroUpdate,
-      size_t update_size):
-      AbstractRowOpLog(update_size),
-      SparseVectorRowOpLog(
-          kOpLogRowInitCapacity,
-          InitUpdate, CheckZeroUpdate, update_size) { }
+  SparseVectorMetaRowOpLog(InitUpdateFunc InitUpdate,
+                           CheckZeroUpdateFunc CheckZeroUpdate,
+                           size_t update_size)
+      : AbstractRowOpLog(update_size),
+        SparseVectorRowOpLog(kOpLogRowInitCapacity, InitUpdate, CheckZeroUpdate,
+                             update_size) {}
 };
-
 }

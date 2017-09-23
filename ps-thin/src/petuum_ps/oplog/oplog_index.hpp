@@ -14,13 +14,14 @@ namespace petuum {
 class PartitionOpLogIndex : boost::noncopyable {
 public:
   explicit PartitionOpLogIndex(size_t capacity);
-  PartitionOpLogIndex(PartitionOpLogIndex && other);
-  PartitionOpLogIndex & operator = (PartitionOpLogIndex && other) = delete;
+  PartitionOpLogIndex(PartitionOpLogIndex &&other);
+  PartitionOpLogIndex &operator=(PartitionOpLogIndex &&other) = delete;
 
   ~PartitionOpLogIndex();
   void AddIndex(const std::unordered_set<int32_t> &oplog_index);
   cuckoohash_map<int32_t, bool> *Reset();
   size_t GetNumRowOpLogs();
+
 private:
   size_t capacity_;
   SharedMutex smtx_;
@@ -28,13 +29,15 @@ private:
   cuckoohash_map<int32_t, bool> *shared_oplog_index_;
 };
 
-class TableOpLogIndex : boost::noncopyable{
+class TableOpLogIndex : boost::noncopyable {
 public:
   explicit TableOpLogIndex(size_t capacity);
-  void AddIndex(int32_t partition_num, const std::unordered_set<int32_t> &oplog_index);
+  void AddIndex(int32_t partition_num,
+                const std::unordered_set<int32_t> &oplog_index);
   cuckoohash_map<int32_t, bool> *ResetPartition(int32_t partition_num);
   size_t GetNumRowOpLogs(int32_t partition_num);
-    void AddRowIndex(int32_t row_id);
+  void AddRowIndex(int32_t row_id);
+
 private:
   std::vector<PartitionOpLogIndex> partition_oplog_index_;
 };
