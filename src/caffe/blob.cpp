@@ -78,12 +78,15 @@ void Blob<Dtype>::CreatePSTable() {
   table_config.process_cache_capacity = num_rows_per_table * 10;
   table_config.oplog_capacity = table_config.process_cache_capacity;
   table_config.thread_cache_capacity = 1;
-  global_table_row_capacity_
-      = (count_ + num_rows_per_table - 1) / num_rows_per_table;
+  global_table_row_capacity_ = (count_ + num_rows_per_table - 1) / num_rows_per_table;
   table_config.table_info.row_capacity = global_table_row_capacity_;
-  table_config.table_info.dense_row_oplog_capacity
-      = global_table_row_capacity_;
+  table_config.table_info.dense_row_oplog_capacity = global_table_row_capacity_;
   table_config.no_oplog_replay = true;
+#ifndef USE_PS_THIN
+  if(2 == global_id_) {
+      table_config.table_info.version_maintain = false;
+  }
+#endif
 
   petuum::PSTableGroup::CreateTable(global_id_, table_config);
 }

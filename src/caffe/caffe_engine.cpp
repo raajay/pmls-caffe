@@ -207,8 +207,7 @@ void CaffeEngine<Dtype>::CreatePSTableForNetOutputs(
 
   table_config.table_info.row_type = caffe::kDenseRowDtypeID;
   table_config.table_info.row_oplog_type = row_oplog_type;
-  table_config.table_info.oplog_dense_serialized
-      = oplog_dense_serialized;
+  table_config.table_info.oplog_dense_serialized = oplog_dense_serialized;
   table_config.table_info.table_staleness = loss_table_staleness_;
   table_config.process_cache_capacity = num_rows;
   table_config.oplog_capacity = table_config.process_cache_capacity;
