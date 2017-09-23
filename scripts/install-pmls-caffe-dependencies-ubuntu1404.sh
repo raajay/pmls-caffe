@@ -73,3 +73,6 @@ function install_cppzmq() {
 
 #install_zeromq
 install_cppzmq
+
+# install tools
+sudo apt-get install -y clang-format-3.5
