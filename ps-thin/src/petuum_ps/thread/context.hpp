@@ -180,7 +180,7 @@ namespace petuum {
       server_row_candidate_factor_ = server_row_candidate_factor;
 
       // TODO make this a configurable parameter
-      is_asynchronous_mode_  = true;
+      is_asynchronous_mode_  = false;
 
       // process host map information
       for (auto host_iter = host_map.begin(); host_iter != host_map.end(); ++host_iter) {

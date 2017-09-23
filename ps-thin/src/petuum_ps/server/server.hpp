@@ -49,7 +49,9 @@ namespace petuum {
 
     void ApplyOpLogUpdateVersion(const void *oplog,
                                  size_t oplog_size,
-                                 int32_t bg_thread_id, uint32_t version, int32_t *observed_delay);
+                                 int32_t bg_thread_id,
+                                 uint32_t version,
+                                 int32_t *observed_delay);
 
     // Accessors
     int32_t GetMinClock();
@@ -58,6 +60,20 @@ namespace petuum {
     double GetElapsedTime();
 
   private:
+    double GetUpdateScalingFactor(int32_t row_update_version) {
+        if (false == GlobalContext::is_asynchronous_mode()) {
+            return 1.0;
+        }
+        int row_update_delay = async_version_ - row_update_version;
+        int corrected = std::max(1, row_update_delay);
+        return 1.0 / corrected;
+    }
+
+    void updateOplogDelay(int32_t *observed_delay, int32_t row_update_version) {
+        int row_update_delay = async_version_ - row_update_version;
+        *observed_delay = std::max(row_update_delay, *observed_delay);
+    }
+
     VectorClock bg_clock_;
     int32_t async_version_; // (raajay) we add this to maintain async version number
     boost::unordered_map<int32_t, ServerTable> tables_;

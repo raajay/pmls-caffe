@@ -72,7 +72,7 @@ void ZMQUtil::ZMQUnbind(zmq::socket_t *sock, const std::string &connect_addr) {
               LOG(FATAL) << e.what() << " connect_addr = " << connect_addr;
               break;
             default:
-              LOG(FATAL) << e.what();
+              LOG(FATAL) << e.what() << " connect_addr = " << connect_addr;
         }
     }
 }

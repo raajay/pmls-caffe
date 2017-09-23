@@ -25,9 +25,7 @@ namespace petuum {
   bool ServerThread::WaitMsgSleep(int32_t *sender_id,
                                   zmq::message_t *zmq_msg,
                                   long timeout_milli __attribute__ ((unused)) ) {
-    (GlobalContext::comm_bus->*(
-                                GlobalContext::comm_bus->RecvAny_))(sender_id, zmq_msg);
-
+    (GlobalContext::comm_bus->*(GlobalContext::comm_bus->RecvAny_))(sender_id, zmq_msg);
     return true;
   }
 
@@ -37,8 +35,9 @@ namespace petuum {
                                     zmq::message_t *zmq_msg,
                                     long timeout_milli) {
 
-    bool received = (GlobalContext::comm_bus->*(GlobalContext::comm_bus->RecvTimeOutAny_))
-      (sender_id, zmq_msg, timeout_milli);
+    bool received = (GlobalContext::comm_bus->*(
+                GlobalContext::comm_bus->RecvTimeOutAny_))
+        (sender_id, zmq_msg, timeout_milli);
     return received;
   }
 
@@ -340,9 +339,8 @@ namespace petuum {
         }
         // update the stats clock
         STATS_SERVER_CLOCK();
-
-      } // end if -- clock changed
-    } // end if -- is clock
+      }
+    }
 
 
     // always ack op log receipt, saying the version number for a particular
