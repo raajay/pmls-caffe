@@ -108,12 +108,10 @@ void CommBus::ThreadRegister(const Config &config) {
       config.num_bytes_interproc_recv_buff_;
 
   if (config.ltype_ & kInProc) {
-    // in-proc socket is created to allow threads with in the same process
-    // to contact the current thread. Think of this as a server, that can be
-    // reached only
-    // by client threads with in the process. So a bg_worker needs only a
-    // in-proc socket, since
-    // they are only contacted by app threads.
+    // in-proc socket is created to allow threads with in the same process to
+    // contact the current thread. Think of this as a server, that can be
+    // reached only by client threads with in the process. So a bg_worker needs
+    // only a in-proc socket, since they are only contacted by app threads.
     try {
       thr_info_->inproc_sock_.reset(new zmq::socket_t(*zmq_ctx_, ZMQ_ROUTER));
     } catch (...) {
@@ -135,8 +133,8 @@ void CommBus::ThreadRegister(const Config &config) {
 
   if (config.ltype_ & kInterProc) {
     // inter-proc socket is created to allow (remote) threads, i.e., those
-    // running on
-    // a different machine to connect. That is why it needs a network address.
+    // running on a different machine to connect. That is why it needs a
+    // network address.
     try {
       thr_info_->interproc_sock_.reset(
           new zmq::socket_t(*zmq_ctx_, ZMQ_ROUTER));
@@ -163,21 +161,15 @@ void CommBus::ThreadDeregister() {
   CHECK(nullptr != thr_info_.get()) << "This thread has not been initialized";
   zmq::socket_t *inproc_sock = thr_info_->inproc_sock_.get();
   if (inproc_sock) {
-    std::string bind_addr;
-    MakeInProcAddr(thr_info_->entity_id_, &bind_addr);
-    ZMQUtil::ZMQUnbind(inproc_sock, bind_addr);
     delete inproc_sock;
   }
-
-  //    zmq::socket_t *interproc_sock = thr_info_->interproc_sock_.get();
-  //    if(interproc_sock) {
-  //        LOG(FATAL) << "Attempting to de-register a thread with inter-proc
-  //        socket";
-  //    }
-  //
+  zmq::socket_t *interproc_sock = thr_info_->interproc_sock_.get();
+  if (interproc_sock) {
+    delete interproc_sock;
+  }
   // (raajay) while de-registering we will destroy the socket so that another
-  // thread with the same id can be registered. Deleting zmq::socket_t will
-  // hopefully unbind and close the underlying socket.
+  // thread with the same id can be re-registered. Deleting zmq::socket_t will
+  // hopefully close the underlying socket.
   thr_info_.reset();
 }
 

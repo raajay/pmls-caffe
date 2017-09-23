@@ -172,7 +172,7 @@ int32_t TableGroup::RegisterCaffeSyncThread(int32_t thread_offset) {
   // Register with comm bus
   petuum::CommBus::Config comm_config;
   comm_config.entity_id_ = ephemeral_thread_id;
-  comm_config.ltype_ = petuum::CommBus::kInProc;
+  comm_config.ltype_ = petuum::CommBus::kNone;
   GlobalContext::comm_bus->ThreadRegister(comm_config);
   // Connect to BgWorkers -- sends a dummy message to that ZMQ is setup
   BgWorkers::SyncThreadRegister();
