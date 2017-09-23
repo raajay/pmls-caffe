@@ -46,3 +46,9 @@ file(WRITE ${PROJECT_BINARY_DIR}/__init__.py)
 list(APPEND proto_python ${PROJECT_BINARY_DIR}/__init__.py)
 install(PROGRAMS ${proto_python} DESTINATION python/caffe/proto)
 
+# --[ Clang format
+add_custom_target(caffe-clangformat
+    COMMAND /usr/bin/clang-format-3.5
+    -style=LLVM
+    -i
+    ${srcs})

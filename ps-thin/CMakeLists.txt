@@ -18,7 +18,7 @@ target_include_directories(petuum_ps PUBLIC ${Bosen_INCLUDE_DIRS} ${third_INCLUD
 target_link_libraries(petuum_ps PUBLIC ${Bosen_LIBRARIES})
 
 # clang based format
-add_custom_target(clangformat
+add_custom_target(ps-clangformat
     COMMAND /usr/bin/clang-format-3.5
     -style=LLVM
     -i
