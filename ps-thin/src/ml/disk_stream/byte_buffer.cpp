@@ -10,9 +10,9 @@
 namespace petuum {
 namespace ml {
 
-ByteBuffer::ByteBuffer() : curr_offset_(0) { }
+ByteBuffer::ByteBuffer() : curr_offset_(0) {}
 
-void ByteBuffer::SetBuffer(std::vector<char>* bytes) {
+void ByteBuffer::SetBuffer(std::vector<char> *bytes) {
   curr_offset_ = 0;
   bytes_.swap(*bytes);
 }
@@ -22,13 +22,9 @@ void ByteBuffer::AdvanceOffset(int32_t num_bytes) {
   CHECK_LE(curr_offset_, bytes_.size()) << "num_bytes: " << num_bytes;
 }
 
-bool ByteBuffer::HasMore() const {
-  return curr_offset_ != bytes_.size();
-}
+bool ByteBuffer::HasMore() const { return curr_offset_ != bytes_.size(); }
 
-char* ByteBuffer::GetNextBytes() {
-  return bytes_.data() + curr_offset_;
-}
+char *ByteBuffer::GetNextBytes() { return bytes_.data() + curr_offset_; }
 
-}  // namespace ml
-}  // namespace petuum
+} // namespace ml
+} // namespace petuum

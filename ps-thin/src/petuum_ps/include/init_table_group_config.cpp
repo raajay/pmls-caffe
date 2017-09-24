@@ -9,8 +9,9 @@ void InitTableGroupConfig(TableGroupConfig *config, int32_t num_tables) {
   config->num_comm_channels_per_client = FLAGS_num_comm_channels_per_client;
   config->num_tables = num_tables;
   config->num_total_clients = FLAGS_num_clients;
-  config->num_local_app_threads = FLAGS_init_thread_access_table ?
-                                  FLAGS_num_table_threads : FLAGS_num_table_threads + 1;
+  config->num_local_app_threads = FLAGS_init_thread_access_table
+                                      ? FLAGS_num_table_threads
+                                      : FLAGS_num_table_threads + 1;
 
   GetHostInfos(FLAGS_hostfile, &(config->host_map));
 
@@ -51,5 +52,3 @@ void InitTableGroupConfig(TableGroupConfig *config, int32_t num_tables) {
   config->server_row_candidate_factor = FLAGS_server_row_candidate_factor;
 }
 }
-
-

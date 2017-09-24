@@ -19,22 +19,21 @@ namespace petuum {
 // Multi-threaded sparse row, support unbounded # of columns.  There is never
 // non-zero entry in the map storage, as ApplyInc / ApplyBatchInc
 // removes the zero-writes.
-template<typename V>
+template <typename V>
 class SparseRow : public NumericContainerRow<V>, boost::noncopyable {
 public:
-
-  SparseRow() { };
-  ~SparseRow() { };
+  SparseRow(){};
+  ~SparseRow(){};
 
   // Entry-wide read by acquiring read lock. We recommend using iterators to
   // traverse the map instead of operator[], as each [] need to acquire the
   // read lock.
-  const V& operator[](int32_t col_id) const;
+  const V &operator[](int32_t col_id) const;
 
   // Number of (non-zero) entries in the underlying map.
   int32_t num_entries() const;
 
-public:  // Iterator
+public: // Iterator
   // const_iterator lets you do this:
   //
   //  SparseRow<int> row;
@@ -64,20 +63,20 @@ public:  // Iterator
     // The prefix increment operator moves the iterator forwards. It fails
     // if the iterator is already at the end of the map (ie., has exhausted
     // all nonzero entries).
-    const_iterator* operator++();
+    const_iterator *operator++();
 
     // The postfix increment operator behaves identically to the prefix
     // increment operator.
-    const_iterator* operator++(int);
+    const_iterator *operator++(int);
 
     // The prefix decrement operator moves the iterator backward. It fails
     // if the iterator is already at the begining of the map (ie., the first
     // nonzero entry).
-    const_iterator* operator--();
+    const_iterator *operator--();
 
     // The postfix decrement operator behaves identically to the prefix
     // decrement operator.
-    const_iterator* operator--(int);
+    const_iterator *operator--(int);
 
     bool is_begin();
 
@@ -91,33 +90,31 @@ public:  // Iterator
     boost::shared_lock<SharedMutex> read_lock_;
 
     //  Only let SparseRow to construct const_iterator.
-    const_iterator(const SparseRow<V>& row, bool is_end);
+    const_iterator(const SparseRow<V> &row, bool is_end);
     friend class SparseRow<V>;
 
-    const std::map<int32_t, V>* row_data_;
+    const std::map<int32_t, V> *row_data_;
     // Use map's iterator.
     iter_t it_;
   };
 
-public:  // iterator functions.
+public: // iterator functions.
   const_iterator cbegin() const;
 
   const_iterator cend() const;
 
-public:  // AbstractRow implementation
-  void Init(int32_t capacity) { }
+public: // AbstractRow implementation
+  void Init(int32_t capacity) {}
 
   AbstractRow *Clone() const;
 
-  size_t get_update_size() const {
-    return sizeof(V);
-  }
+  size_t get_update_size() const { return sizeof(V); }
 
   size_t SerializedSize() const;
 
-  size_t Serialize(void* bytes) const;
+  size_t Serialize(void *bytes) const;
 
-  bool Deserialize(const void* data, size_t num_bytes);
+  bool Deserialize(const void *data, size_t num_bytes);
 
   void ResetRowData(const void *data, size_t num_bytes);
 
@@ -127,33 +124,46 @@ public:  // AbstractRow implementation
 
   // We recommend using ApplyBatchInc() as each ApplyInc acquires write
   // lock.
-  void ApplyInc(int32_t column_id, const void *update, double scale=1.0);
+  void ApplyInc(int32_t column_id, const void *update, double scale = 1.0);
 
-  void ApplyBatchInc(const int32_t *column_ids,
-                     const void *update_batch, int32_t num_updates, double scale=1.0);
+  void ApplyBatchInc(const int32_t *column_ids, const void *update_batch,
+                     int32_t num_updates, double scale = 1.0);
 
-  void ApplyIncUnsafe(int32_t column_id, const void *update, double scale=1.0);
+  void ApplyIncUnsafe(int32_t column_id, const void *update,
+                      double scale = 1.0);
 
-  void ApplyBatchIncUnsafe(const int32_t *column_ids,
-                           const void* update_batch, int32_t num_updates, double scale=1.0);
+  void ApplyBatchIncUnsafe(const int32_t *column_ids, const void *update_batch,
+                           int32_t num_updates, double scale = 1.0);
 
-  double ApplyIncGetImportance(int32_t column_id, const void *update, double scale=1.0);
+  double ApplyIncGetImportance(int32_t column_id, const void *update,
+                               double scale = 1.0);
 
   double ApplyBatchIncGetImportance(const int32_t *column_ids,
-                                    const void* update_batch, int32_t num_updates, double scale=1.0);
+                                    const void *update_batch,
+                                    int32_t num_updates, double scale = 1.0);
 
-  double ApplyIncUnsafeGetImportance(int32_t column_id, const void *update, double scale=1.0);
+  double ApplyIncUnsafeGetImportance(int32_t column_id, const void *update,
+                                     double scale = 1.0);
 
   double ApplyBatchIncUnsafeGetImportance(const int32_t *column_ids,
-                                          const void* update_batch, int32_t num_updates, double scale=1.0);
+                                          const void *update_batch,
+                                          int32_t num_updates,
+                                          double scale = 1.0);
 
-  double ApplyDenseBatchIncGetImportance(const void* update_batch, int32_t index_st, int32_t num_updates, double scale=1.0);
+  double ApplyDenseBatchIncGetImportance(const void *update_batch,
+                                         int32_t index_st, int32_t num_updates,
+                                         double scale = 1.0);
 
-  void ApplyDenseBatchInc(const void* update_batch, int32_t index_st, int32_t num_updates, double scale=1.0);
+  void ApplyDenseBatchInc(const void *update_batch, int32_t index_st,
+                          int32_t num_updates, double scale = 1.0);
 
-  double ApplyDenseBatchIncUnsafeGetImportance(const void* update_batch, int32_t index_st, int32_t num_updates, double scale=1.0);
+  double ApplyDenseBatchIncUnsafeGetImportance(const void *update_batch,
+                                               int32_t index_st,
+                                               int32_t num_updates,
+                                               double scale = 1.0);
 
-  void ApplyDenseBatchIncUnsafe(const void* update_batch, int32_t index_st, int32_t num_updates, double scale=1.0);
+  void ApplyDenseBatchIncUnsafe(const void *update_batch, int32_t index_st,
+                                int32_t num_updates, double scale = 1.0);
 
 private:
   friend class const_iterator;
@@ -167,27 +177,26 @@ private:
 
 // ================= Implementation =================
 
-template<typename V>
-const V& SparseRow<V>::operator[](int32_t col_id) const {
+template <typename V> const V &SparseRow<V>::operator[](int32_t col_id) const {
   boost::shared_lock<SharedMutex> read_lock(rw_mutex_);
-  auto it = row_data_.find(col_id);   // map::find() is thread-safe.
+  auto it = row_data_.find(col_id); // map::find() is thread-safe.
   if (it == row_data_.cend()) {
     return V(0);
   }
   return it->second;
 }
 
-template<typename V>
-int32_t SparseRow<V>::num_entries() const {
+template <typename V> int32_t SparseRow<V>::num_entries() const {
   boost::shared_lock<SharedMutex> read_lock(rw_mutex_);
   return row_data_.size();
 }
 
 // ======== const_iterator Implementation ========
 
-template<typename V>
-SparseRow<V>::const_iterator::const_iterator(const SparseRow<V>& row,
-    bool is_end) : read_lock_(row.rw_mutex_), row_data_(&(row.row_data_)) {
+template <typename V>
+SparseRow<V>::const_iterator::const_iterator(const SparseRow<V> &row,
+                                             bool is_end)
+    : read_lock_(row.rw_mutex_), row_data_(&(row.row_data_)) {
   if (is_end) {
     it_ = row_data_->cend();
   } else {
@@ -195,102 +204,96 @@ SparseRow<V>::const_iterator::const_iterator(const SparseRow<V>& row,
   }
 }
 
-template<typename V>
-V SparseRow<V>::const_iterator::operator*() {
+template <typename V> V SparseRow<V>::const_iterator::operator*() {
   CHECK(!is_end());
   return it_->second;
 }
 
-template<typename V>
-typename SparseRow<V>::const_iterator::iter_t
-SparseRow<V>::const_iterator::operator->() {
+template <typename V>
+typename SparseRow<V>::const_iterator::iter_t SparseRow<V>::const_iterator::
+operator->() {
   CHECK(!is_end());
   return it_;
 }
 
-template<typename V>
-typename SparseRow<V>::const_iterator*
-SparseRow<V>::const_iterator::operator++() {
+template <typename V>
+typename SparseRow<V>::const_iterator *SparseRow<V>::const_iterator::
+operator++() {
   CHECK(!is_end());
   it_++;
   return this;
 }
 
-template<typename V>
-typename SparseRow<V>::const_iterator*
-SparseRow<V>::const_iterator::operator++(int unused) {
+template <typename V>
+typename SparseRow<V>::const_iterator *SparseRow<V>::const_iterator::
+operator++(int unused) {
   CHECK(!is_end());
   it_++;
   return this;
 }
 
-template<typename V>
-typename SparseRow<V>::const_iterator*
-SparseRow<V>::const_iterator::operator--() {
+template <typename V>
+typename SparseRow<V>::const_iterator *SparseRow<V>::const_iterator::
+operator--() {
   CHECK(!is_begin());
   it_--;
   return this;
 }
 
-template<typename V>
-typename SparseRow<V>::const_iterator*
-SparseRow<V>::const_iterator::operator--(int unused) {
+template <typename V>
+typename SparseRow<V>::const_iterator *SparseRow<V>::const_iterator::
+operator--(int unused) {
   CHECK(!is_begin());
   it_--;
   return this;
 }
 
-template<typename V>
-bool SparseRow<V>::const_iterator::is_begin() {
+template <typename V> bool SparseRow<V>::const_iterator::is_begin() {
   return (it_ == row_data_->cbegin());
 }
 
-template<typename V>
-bool SparseRow<V>::const_iterator::is_end() {
+template <typename V> bool SparseRow<V>::const_iterator::is_end() {
   return (it_ == row_data_->cend());
 }
 
-template<typename V>
+template <typename V>
 typename SparseRow<V>::const_iterator SparseRow<V>::cbegin() const {
   return const_iterator(*this, false);
 }
 
-template<typename V>
+template <typename V>
 typename SparseRow<V>::const_iterator SparseRow<V>::cend() const {
   return const_iterator(*this, true);
 }
 
 // ======== AbstractRow Implementation ========
 
-template<typename V>
-AbstractRow *SparseRow<V>::Clone() const {
+template <typename V> AbstractRow *SparseRow<V>::Clone() const {
   std::unique_lock<SharedMutex> read_lock(rw_mutex_);
   SparseRow<V> *new_row = new SparseRow<V>();
   new_row->row_data_ = row_data_;
-  return static_cast<AbstractRow*>(new_row);
+  return static_cast<AbstractRow *>(new_row);
 }
 
-template<typename V>
-size_t SparseRow<V>::SerializedSize() const {
+template <typename V> size_t SparseRow<V>::SerializedSize() const {
   return row_data_.size() * (sizeof(int32_t) + sizeof(V));
 }
 
-template<typename V>
-size_t SparseRow<V>::Serialize(void* bytes) const {
-  void* data_ptr = bytes;
-  for (const std::pair<int32_t, V>& entry : row_data_) {
-    int32_t* col_ptr = reinterpret_cast<int32_t*>(data_ptr);
+template <typename V> size_t SparseRow<V>::Serialize(void *bytes) const {
+  void *data_ptr = bytes;
+  for (const std::pair<int32_t, V> &entry : row_data_) {
+    int32_t *col_ptr = reinterpret_cast<int32_t *>(data_ptr);
     *col_ptr = entry.first;
     ++col_ptr;
-    V* val_ptr = reinterpret_cast<V*>(col_ptr);
+    V *val_ptr = reinterpret_cast<V *>(col_ptr);
     *val_ptr = entry.second;
-    data_ptr = reinterpret_cast<void*>(++val_ptr);
+    data_ptr = reinterpret_cast<void *>(++val_ptr);
   }
   return SerializedSize();
 }
 
-template<typename V>
-bool SparseRow<V>::Deserialize(const void* data, size_t num_bytes) {
+template <typename V>
+bool SparseRow<V>::Deserialize(const void *data, size_t num_bytes) {
   row_data_.clear();
 
   int32_t num_bytes_per_entry = (sizeof(int32_t) + sizeof(V));
@@ -298,51 +301,50 @@ bool SparseRow<V>::Deserialize(const void* data, size_t num_bytes) {
 
   int32_t num_entries = num_bytes / num_bytes_per_entry;
 
-  const uint8_t* data_ptr = reinterpret_cast<const uint8_t*>(data);
+  const uint8_t *data_ptr = reinterpret_cast<const uint8_t *>(data);
   for (int i = 0; i < num_entries; ++i) {
-    const int32_t* col_ptr = reinterpret_cast<const int32_t*>(data_ptr);
+    const int32_t *col_ptr = reinterpret_cast<const int32_t *>(data_ptr);
     int32_t col_id = *col_ptr;
     VLOG(2) << "col_id = " << col_id;
     ++col_ptr;
-    const V* val_ptr = reinterpret_cast<const V*>(col_ptr);
+    const V *val_ptr = reinterpret_cast<const V *>(col_ptr);
     V val = *val_ptr;
-    data_ptr = reinterpret_cast<const uint8_t*>(++val_ptr);
+    data_ptr = reinterpret_cast<const uint8_t *>(++val_ptr);
     row_data_[col_id] = val;
   }
   return true;
 }
 
-template<typename V>
+template <typename V>
 void SparseRow<V>::ResetRowData(const void *data, size_t num_bytes) {
   Deserialize(data, num_bytes);
 }
 
-template<typename V>
-void SparseRow<V>::GetWriteLock() {
-  rw_mutex_.lock();
-}
+template <typename V> void SparseRow<V>::GetWriteLock() { rw_mutex_.lock(); }
 
-template<typename V>
-void SparseRow<V>::ReleaseWriteLock() {
+template <typename V> void SparseRow<V>::ReleaseWriteLock() {
   rw_mutex_.unlock();
 }
 
-template<typename V>
-void SparseRow<V>::ApplyInc(int32_t column_id, const void *update, double scale) {
+template <typename V>
+void SparseRow<V>::ApplyInc(int32_t column_id, const void *update,
+                            double scale) {
   std::unique_lock<SharedMutex> write_lock(rw_mutex_);
   ApplyIncUnsafe(column_id, update);
 }
 
-template<typename V>
+template <typename V>
 void SparseRow<V>::ApplyBatchInc(const int32_t *column_ids,
-                                 const void *update_batch, int32_t num_updates, double scale) {
+                                 const void *update_batch, int32_t num_updates,
+                                 double scale) {
   std::unique_lock<SharedMutex> write_lock(rw_mutex_);
   ApplyBatchIncUnsafe(column_ids, update_batch, num_updates);
 }
 
-template<typename V>
-void SparseRow<V>::ApplyIncUnsafe(int32_t column_id, const void *update, double scale) {
-  const V* typed_update = reinterpret_cast<const V*>(update);
+template <typename V>
+void SparseRow<V>::ApplyIncUnsafe(int32_t column_id, const void *update,
+                                  double scale) {
+  const V *typed_update = reinterpret_cast<const V *>(update);
   row_data_[column_id] += *typed_update;
   if (row_data_[column_id] == V(0)) {
     // remove 0 entry.
@@ -350,10 +352,11 @@ void SparseRow<V>::ApplyIncUnsafe(int32_t column_id, const void *update, double 
   }
 }
 
-template<typename V>
+template <typename V>
 void SparseRow<V>::ApplyBatchIncUnsafe(const int32_t *column_ids,
-                                       const void* update_batch, int32_t num_updates, double scale) {
-  const V* typed_updates = reinterpret_cast<const V*>(update_batch);
+                                       const void *update_batch,
+                                       int32_t num_updates, double scale) {
+  const V *typed_updates = reinterpret_cast<const V *>(update_batch);
   for (int32_t i = 0; i < num_updates; ++i) {
     int32_t col_id = column_ids[i];
     row_data_[col_id] += typed_updates[i];
@@ -364,28 +367,32 @@ void SparseRow<V>::ApplyBatchIncUnsafe(const int32_t *column_ids,
   }
 }
 
-template<typename V>
+template <typename V>
 double SparseRow<V>::ApplyIncGetImportance(int32_t column_id,
                                            const void *update, double scale) {
   std::unique_lock<SharedMutex> write_lock(rw_mutex_);
   return ApplyIncUnsafeGetImportance(column_id, update);
 }
 
-template<typename V>
+template <typename V>
 double SparseRow<V>::ApplyBatchIncGetImportance(const int32_t *column_ids,
-                                                const void *update_batch, int32_t num_updates, double scale) {
+                                                const void *update_batch,
+                                                int32_t num_updates,
+                                                double scale) {
   std::unique_lock<SharedMutex> write_lock(rw_mutex_);
-  return ApplyBatchIncUnsafeGetImportance(column_ids,
-                                          update_batch, num_updates);
+  return ApplyBatchIncUnsafeGetImportance(column_ids, update_batch,
+                                          num_updates);
 }
 
-template<typename V>
+template <typename V>
 double SparseRow<V>::ApplyIncUnsafeGetImportance(int32_t column_id,
-                                                 const void *update, double scale) {
-  V typed_update = *(reinterpret_cast<const V*>(update));
+                                                 const void *update,
+                                                 double scale) {
+  V typed_update = *(reinterpret_cast<const V *>(update));
   V row_data = row_data_[column_id];
-  double importance = (double(row_data) == 0) ? double(typed_update)
-                      : (double(typed_update) / double(row_data));
+  double importance = (double(row_data) == 0)
+                          ? double(typed_update)
+                          : (double(typed_update) / double(row_data));
 
   row_data_[column_id] = typed_update + row_data;
   if (row_data_[column_id] == V(0)) {
@@ -396,17 +403,20 @@ double SparseRow<V>::ApplyIncUnsafeGetImportance(int32_t column_id,
   return std::abs(importance);
 }
 
-template<typename V>
+template <typename V>
 double SparseRow<V>::ApplyBatchIncUnsafeGetImportance(const int32_t *column_ids,
-                                                      const void* update_batch, int32_t num_updates, double scale) {
-  const V *typed_updates = reinterpret_cast<const V*>(update_batch);
+                                                      const void *update_batch,
+                                                      int32_t num_updates,
+                                                      double scale) {
+  const V *typed_updates = reinterpret_cast<const V *>(update_batch);
   double accum_importance = 0;
   for (int32_t i = 0; i < num_updates; ++i) {
     int32_t col_id = column_ids[i];
     V row_data = row_data_[col_id];
-    accum_importance
-        += std::abs((double(row_data) == 0) ? double(typed_updates[i])
-                    : (double(typed_updates[i]) / double(row_data)));
+    accum_importance +=
+        std::abs((double(row_data) == 0)
+                     ? double(typed_updates[i])
+                     : (double(typed_updates[i]) / double(row_data)));
 
     row_data_[col_id] += typed_updates[i];
     if (row_data_[col_id] == V(0)) {
@@ -417,32 +427,37 @@ double SparseRow<V>::ApplyBatchIncUnsafeGetImportance(const int32_t *column_ids,
   return std::abs(accum_importance);
 }
 
-template<typename V>
-double SparseRow<V>::ApplyDenseBatchIncGetImportance(
-                                                     const void* update_batch, int32_t index_st, int32_t num_updates, double scale) {
+template <typename V>
+double SparseRow<V>::ApplyDenseBatchIncGetImportance(const void *update_batch,
+                                                     int32_t index_st,
+                                                     int32_t num_updates,
+                                                     double scale) {
   std::unique_lock<SharedMutex> write_lock(rw_mutex_);
-  return ApplyDenseBatchIncUnsafeGetImportance(
-      update_batch, index_st, num_updates);
+  return ApplyDenseBatchIncUnsafeGetImportance(update_batch, index_st,
+                                               num_updates);
 }
 
-template<typename V>
-void SparseRow<V>::ApplyDenseBatchInc(
-                                      const void* update_batch, int32_t index_st, int32_t num_updates, double scale) {
+template <typename V>
+void SparseRow<V>::ApplyDenseBatchInc(const void *update_batch,
+                                      int32_t index_st, int32_t num_updates,
+                                      double scale) {
   std::unique_lock<SharedMutex> write_lock(rw_mutex_);
   ApplyDenseBatchInc(update_batch, index_st, num_updates);
 }
 
-template<typename V>
+template <typename V>
 double SparseRow<V>::ApplyDenseBatchIncUnsafeGetImportance(
-                                                           const void* update_batch, int32_t index_st, int32_t num_updates, double scale) {
-  const V *typed_updates = reinterpret_cast<const V*>(update_batch);
+    const void *update_batch, int32_t index_st, int32_t num_updates,
+    double scale) {
+  const V *typed_updates = reinterpret_cast<const V *>(update_batch);
   double accum_importance = 0;
   for (int32_t i = 0; i < num_updates; ++i) {
     int32_t col_id = i + index_st;
     V row_data = row_data_[col_id];
-    accum_importance
-        += std::abs((double(row_data) == 0) ? double(typed_updates[i])
-                    : (double(typed_updates[i]) / double(row_data)));
+    accum_importance +=
+        std::abs((double(row_data) == 0)
+                     ? double(typed_updates[i])
+                     : (double(typed_updates[i]) / double(row_data)));
     row_data_[col_id] += typed_updates[i];
     if (row_data_[col_id] == V(0)) {
       // remove 0 entry.
@@ -452,10 +467,11 @@ double SparseRow<V>::ApplyDenseBatchIncUnsafeGetImportance(
   return std::abs(accum_importance);
 }
 
-template<typename V>
-void SparseRow<V>::ApplyDenseBatchIncUnsafe(
-                                            const void* update_batch, int32_t index_st, int32_t num_updates, double scale) {
-  const V *typed_updates = reinterpret_cast<const V*>(update_batch);
+template <typename V>
+void SparseRow<V>::ApplyDenseBatchIncUnsafe(const void *update_batch,
+                                            int32_t index_st,
+                                            int32_t num_updates, double scale) {
+  const V *typed_updates = reinterpret_cast<const V *>(update_batch);
   for (int32_t i = 0; i < num_updates; ++i) {
     int32_t col_id = i + index_st;
     V row_data = row_data_[col_id];
@@ -467,4 +483,4 @@ void SparseRow<V>::ApplyDenseBatchIncUnsafe(
   }
 }
 
-}  // namespace petuum
+} // namespace petuum

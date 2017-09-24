@@ -13,24 +13,24 @@
 namespace petuum {
 namespace ml {
 
-MultiBuffer::MultiBuffer(int32_t num_buffers) : io_thread_shutdown_(false),
-  worker_thread_shutdown_(false) {
+MultiBuffer::MultiBuffer(int32_t num_buffers)
+    : io_thread_shutdown_(false), worker_thread_shutdown_(false) {
   // Create num_buffers in free_buffers_.
   for (int i = 0; i < num_buffers; ++i) {
     free_buffers_.push(new ByteBuffer);
   }
 }
 
-ByteBuffer* MultiBuffer::GetWorkBuffer() {
+ByteBuffer *MultiBuffer::GetWorkBuffer() {
   std::unique_lock<std::mutex> lock(mtx_);
-  work_buffer_not_empty_.wait(lock, [&]() {
-      return work_buffers_.size() > 0 || io_thread_shutdown_; });
+  work_buffer_not_empty_.wait(
+      lock, [&]() { return work_buffers_.size() > 0 || io_thread_shutdown_; });
   if ((io_thread_shutdown_ && work_buffers_.size() == 0) ||
       worker_thread_shutdown_) {
     // Exit after all work buffers are consumed since disk reader thread
     // could exit after one sweep but worker threads need to see all read
     // data.
-    return 0;   // signal end of stream.
+    return 0; // signal end of stream.
   }
   return work_buffers_.front();
 }
@@ -43,12 +43,13 @@ void MultiBuffer::DoneConsumingWorkBuffer() {
   free_buffers_not_empty_.notify_one();
 }
 
-ByteBuffer* MultiBuffer::GetIOBuffer() {
+ByteBuffer *MultiBuffer::GetIOBuffer() {
   std::unique_lock<std::mutex> lock(mtx_);
-  free_buffers_not_empty_.wait(lock,
-      [&](){ return free_buffers_.size() > 0 || worker_thread_shutdown_; });
+  free_buffers_not_empty_.wait(lock, [&]() {
+    return free_buffers_.size() > 0 || worker_thread_shutdown_;
+  });
   if (worker_thread_shutdown_) {
-    return 0;  // shutdown message to the IO thread.
+    return 0; // shutdown message to the IO thread.
   }
   return free_buffers_.front();
 }
@@ -71,5 +72,5 @@ void MultiBuffer::WorkerThreadShutdown() {
   free_buffers_not_empty_.notify_one();
 }
 
-}  // namespace ml
-}  // namespace petuum
+} // namespace ml
+} // namespace petuum

@@ -8,33 +8,33 @@
 
 namespace petuum {
 
-TableOpLogMeta::TableOpLogMeta(const AbstractRow *sample_row):
-    sample_row_(sample_row) {
+TableOpLogMeta::TableOpLogMeta(const AbstractRow *sample_row)
+    : sample_row_(sample_row) {
 
-  switch(GlobalContext::get_update_sort_policy()) {
-    case FIFO:
-      CompRowOpLogMeta_ = CompRowOpLogMetaClock;
-      ReassignImportance_ = ReassignImportanceNoOp;
-      MergeRowOpLogMeta_ = MergeRowOpLogMetaNoOp;
-      break;
-    case Random:
-      CompRowOpLogMeta_ = CompRowOpLogMetaImportance;
-      ReassignImportance_ = ReassignImportanceRandom;
-      MergeRowOpLogMeta_ = MergeRowOpLogMetaNoOp;
-      break;
-    case RelativeMagnitude:
-      CompRowOpLogMeta_ = CompRowOpLogMetaImportance;
-      ReassignImportance_ = ReassignImportanceNoOp;
-      MergeRowOpLogMeta_ = MergeRowOpLogMetaAccum;
-      break;
-    case FIFO_N_ReMag:
-      CompRowOpLogMeta_ = CompRowOpLogMetaRelativeFIFONReMag;
-      ReassignImportance_ = ReassignImportanceNoOp;
-      MergeRowOpLogMeta_ = MergeRowOpLogMetaAccum;
-      break;
-    default:
-      LOG(FATAL) << "Unrecognized update sort policy "
-                 << GlobalContext::get_update_sort_policy();
+  switch (GlobalContext::get_update_sort_policy()) {
+  case FIFO:
+    CompRowOpLogMeta_ = CompRowOpLogMetaClock;
+    ReassignImportance_ = ReassignImportanceNoOp;
+    MergeRowOpLogMeta_ = MergeRowOpLogMetaNoOp;
+    break;
+  case Random:
+    CompRowOpLogMeta_ = CompRowOpLogMetaImportance;
+    ReassignImportance_ = ReassignImportanceRandom;
+    MergeRowOpLogMeta_ = MergeRowOpLogMetaNoOp;
+    break;
+  case RelativeMagnitude:
+    CompRowOpLogMeta_ = CompRowOpLogMetaImportance;
+    ReassignImportance_ = ReassignImportanceNoOp;
+    MergeRowOpLogMeta_ = MergeRowOpLogMetaAccum;
+    break;
+  case FIFO_N_ReMag:
+    CompRowOpLogMeta_ = CompRowOpLogMetaRelativeFIFONReMag;
+    ReassignImportance_ = ReassignImportanceNoOp;
+    MergeRowOpLogMeta_ = MergeRowOpLogMetaAccum;
+    break;
+  default:
+    LOG(FATAL) << "Unrecognized update sort policy "
+               << GlobalContext::get_update_sort_policy();
   }
 }
 
@@ -45,8 +45,9 @@ TableOpLogMeta::~TableOpLogMeta() {
   }
 }
 
-void TableOpLogMeta::InsertMergeRowOpLogMeta(int32_t row_id,
-                                             const RowOpLogMeta& row_oplog_meta) {
+void
+TableOpLogMeta::InsertMergeRowOpLogMeta(int32_t row_id,
+                                        const RowOpLogMeta &row_oplog_meta) {
   auto iter = oplog_map_.find(row_id);
 
   if (iter == oplog_map_.end()) {
@@ -65,13 +66,11 @@ void TableOpLogMeta::Sort() {
   oplog_list_.sort(CompRowOpLogMeta_);
 }
 
-
 int32_t TableOpLogMeta::GetAndClearNextInOrder() {
   if (oplog_list_.empty())
     return -1;
 
-  std::pair<int32_t, RowOpLogMeta*> &oplog_pair
-      = oplog_list_.front();
+  std::pair<int32_t, RowOpLogMeta *> &oplog_pair = oplog_list_.front();
   int32_t row_id = oplog_pair.first;
   delete oplog_pair.second;
 
@@ -85,8 +84,7 @@ int32_t TableOpLogMeta::GetAndClearNextInOrder(double *importance) {
   if (oplog_list_.empty())
     return -1;
 
-  std::pair<int32_t, RowOpLogMeta*> &oplog_pair
-      = oplog_list_.front();
+  std::pair<int32_t, RowOpLogMeta *> &oplog_pair = oplog_list_.front();
   int32_t row_id = oplog_pair.first;
   *importance = oplog_pair.second->get_importance();
   delete oplog_pair.second;
@@ -124,8 +122,8 @@ int32_t TableOpLogMeta::GetAndClearNextUptoClock() {
 }
 
 bool TableOpLogMeta::CompRowOpLogMetaClock(
-    const std::pair<int32_t, RowOpLogMeta*> &oplog1,
-    const std::pair<int32_t, RowOpLogMeta*> &oplog2) {
+    const std::pair<int32_t, RowOpLogMeta *> &oplog1,
+    const std::pair<int32_t, RowOpLogMeta *> &oplog2) {
 
   if (oplog1.second->get_clock() == oplog2.second->get_clock()) {
     return oplog1.first < oplog2.first;
@@ -135,8 +133,8 @@ bool TableOpLogMeta::CompRowOpLogMetaClock(
 }
 
 bool TableOpLogMeta::CompRowOpLogMetaImportance(
-    const std::pair<int32_t, RowOpLogMeta*> &oplog1,
-    const std::pair<int32_t, RowOpLogMeta*> &oplog2) {
+    const std::pair<int32_t, RowOpLogMeta *> &oplog1,
+    const std::pair<int32_t, RowOpLogMeta *> &oplog2) {
 
   if (oplog1.second->get_importance() == oplog2.second->get_importance()) {
     return oplog1.first < oplog2.first;
@@ -146,14 +144,14 @@ bool TableOpLogMeta::CompRowOpLogMetaImportance(
 }
 
 bool TableOpLogMeta::CompRowOpLogMetaRelativeFIFONReMag(
-    const std::pair<int32_t, RowOpLogMeta*> &oplog1,
-    const std::pair<int32_t, RowOpLogMeta*> &oplog2) {
+    const std::pair<int32_t, RowOpLogMeta *> &oplog1,
+    const std::pair<int32_t, RowOpLogMeta *> &oplog2) {
 
   return CompRowOpLogMetaImportance(oplog1, oplog2);
 }
 
 void TableOpLogMeta::ReassignImportanceRandom(
-    std::list<std::pair<int32_t, RowOpLogMeta*> > *oplog_list) {
+    std::list<std::pair<int32_t, RowOpLogMeta *>> *oplog_list) {
   srand(time(NULL));
   for (auto list_iter = (*oplog_list).begin(); list_iter != (*oplog_list).end();
        ++list_iter) {
@@ -163,14 +161,13 @@ void TableOpLogMeta::ReassignImportanceRandom(
 }
 
 void TableOpLogMeta::ReassignImportanceNoOp(
-    std::list<std::pair<int32_t, RowOpLogMeta*> > *oplog_list) { }
+    std::list<std::pair<int32_t, RowOpLogMeta *>> *oplog_list) {}
 
 void TableOpLogMeta::MergeRowOpLogMetaAccum(RowOpLogMeta *row_oplog_meta,
-                                            const RowOpLogMeta& to_merge) {
+                                            const RowOpLogMeta &to_merge) {
   return row_oplog_meta->accum_importance(to_merge.get_importance());
 }
 
 void TableOpLogMeta::MergeRowOpLogMetaNoOp(RowOpLogMeta *row_oplog_meta,
-                                           const RowOpLogMeta& to_merge) { }
-
+                                           const RowOpLogMeta &to_merge) {}
 }

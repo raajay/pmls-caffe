@@ -15,5 +15,4 @@ void NameNode::ShutDown() {
   name_node_thread_->ShutDown();
   delete name_node_thread_;
 }
-
 }

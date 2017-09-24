@@ -24,7 +24,7 @@ void InitTableConfig(ClientTableConfig *config) {
 
   if (FLAGS_oplog_type == "Sparse") {
     config->oplog_type = Sparse;
-  } else if (FLAGS_oplog_type == "AppendOnly"){
+  } else if (FLAGS_oplog_type == "AppendOnly") {
     config->oplog_type = AppendOnly;
     if (FLAGS_append_only_oplog_type == "Inc") {
       config->append_only_oplog_type = Inc;
@@ -33,7 +33,8 @@ void InitTableConfig(ClientTableConfig *config) {
     } else if (FLAGS_append_only_oplog_type == "DenseBatchInc") {
       config->append_only_oplog_type = DenseBatchInc;
     } else {
-      LOG(FATAL) << "Unknown append only oplog type = " << FLAGS_append_only_oplog_type;
+      LOG(FATAL) << "Unknown append only oplog type = "
+                 << FLAGS_append_only_oplog_type;
     }
   } else if (FLAGS_oplog_type == "Dense") {
     config->oplog_type = Dense;
@@ -42,7 +43,8 @@ void InitTableConfig(ClientTableConfig *config) {
   }
 
   config->append_only_buff_capacity = FLAGS_append_only_buffer_capacity;
-  config->per_thread_append_only_buff_pool_size = FLAGS_append_only_buffer_pool_size;
+  config->per_thread_append_only_buff_pool_size =
+      FLAGS_append_only_buffer_pool_size;
   config->bg_apply_append_oplog_freq = FLAGS_bg_apply_append_oplog_freq;
 
   if (FLAGS_process_storage_type == "BoundedDense") {
@@ -53,5 +55,4 @@ void InitTableConfig(ClientTableConfig *config) {
     LOG(FATAL) << "Unknown process storage type " << FLAGS_process_storage_type;
   }
 }
-
 }

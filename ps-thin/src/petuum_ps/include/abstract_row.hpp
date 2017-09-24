@@ -15,7 +15,7 @@ namespace petuum {
 
 class AbstractRow {
 public:
-  virtual ~AbstractRow() { }
+  virtual ~AbstractRow() {}
 
   virtual void Init(int32_t capacity) = 0;
 
@@ -24,23 +24,26 @@ public:
   virtual size_t get_update_size() const = 0;
 
   /**
-   * @return Upper bound of the number of bytes that serialized row shall occupy.
+   * @return Upper bound of the number of bytes that serialized row shall
+   * occupy.
    * Find some balance between tightness and time complexity.
    */
   virtual size_t SerializedSize() const = 0;
 
   /**
-   * @param Bytes points to a chunk of allocated memory whose size is guaranteed to
-   * be at least SerializedSize(). Need not be thread safe. 
+   * @param Bytes points to a chunk of allocated memory whose size is guaranteed
+   * to
+   * be at least SerializedSize(). Need not be thread safe.
    * @return The exact size of serialized row.
    */
   virtual size_t Serialize(void *bytes) const = 0;
 
   /**
-   * Deserialize and initialize a row. Init is not called yet. Need not be thread-safe.
+   * Deserialize and initialize a row. Init is not called yet. Need not be
+   * thread-safe.
    * @return true on success, false otherwise.
    */
-  virtual bool Deserialize(const void* data, size_t num_bytes) = 0;
+  virtual bool Deserialize(const void *data, size_t num_bytes) = 0;
 
   /**
    * Init or Deserialize has been called on this row. Need not be thread-safe.
@@ -60,15 +63,19 @@ public:
   /**
    * Thread safe.
    */
-  virtual double ApplyIncGetImportance(int32_t column_id, const void *update, double scale=1.0) = 0;
+  virtual double ApplyIncGetImportance(int32_t column_id, const void *update,
+                                       double scale = 1.0) = 0;
 
   /**
    * Thread safe.
-   * @param update_batch points to where updates are stored contiguously in the memory.
+   * @param update_batch points to where updates are stored contiguously in the
+   * memory.
    * @return importance.
    */
   virtual double ApplyBatchIncGetImportance(const int32_t *column_ids,
-                                            const void* update_batch, int32_t num_updates, double scale=1.0) = 0;
+                                            const void *update_batch,
+                                            int32_t num_updates,
+                                            double scale = 1.0) = 0;
 
   /**
    * Not necessarily thread-safe.
@@ -76,7 +83,8 @@ public:
    * or itself.
    */
   virtual double ApplyIncUnsafeGetImportance(int32_t column_id,
-                                             const void *update, double scale=1.0) = 0;
+                                             const void *update,
+                                             double scale = 1.0) = 0;
 
   /**
    * Not necessarily thread-safe.
@@ -84,26 +92,32 @@ public:
    * or itself.
    */
   virtual double ApplyBatchIncUnsafeGetImportance(const int32_t *column_ids,
-                                                  const void* update_batch, int32_t num_updates, double scale=1.0) = 0;
+                                                  const void *update_batch,
+                                                  int32_t num_updates,
+                                                  double scale = 1.0) = 0;
 
   /**
    * Thread safe.
    */
-  virtual void ApplyInc(int32_t column_id, const void *update, double scale=1.0) = 0;
+  virtual void ApplyInc(int32_t column_id, const void *update,
+                        double scale = 1.0) = 0;
 
   /**
    * Thread safe.
-   * @param update_batch points to where updates are stored contiguously in the memory.
+   * @param update_batch points to where updates are stored contiguously in the
+   * memory.
    */
   virtual void ApplyBatchInc(const int32_t *column_ids,
-                             const void* update_batch, int32_t num_updates, double scale=1.0) = 0;
+                             const void *update_batch, int32_t num_updates,
+                             double scale = 1.0) = 0;
 
   /**
    * Not necessarily thread-safe.
    * PS guarantees to not call this function concurrently with other functions
    * or itself.
    */
-  virtual void ApplyIncUnsafe(int32_t column_id, const void *update, double scale=1.0) = 0;
+  virtual void ApplyIncUnsafe(int32_t column_id, const void *update,
+                              double scale = 1.0) = 0;
 
   /**
    * Not necessarily thread-safe.
@@ -111,36 +125,42 @@ public:
    * or itself.
    */
   virtual void ApplyBatchIncUnsafe(const int32_t *column_ids,
-                                   const void* update_batch, int32_t num_updates, double scale=1.0) = 0;
+                                   const void *update_batch,
+                                   int32_t num_updates, double scale = 1.0) = 0;
 
   /**
    * @param update_batch contains an update for each each element within the
    * capacity of the row, in the order of increasing column_ids.
    */
-  virtual double ApplyDenseBatchIncGetImportance(const void* update_batch,
-                                                 int32_t index_st, int32_t num_updates, double scale=1.0) = 0;
+  virtual double ApplyDenseBatchIncGetImportance(const void *update_batch,
+                                                 int32_t index_st,
+                                                 int32_t num_updates,
+                                                 double scale = 1.0) = 0;
 
   /**
    * @param update_batch contains an update for each each element within the
    * capacity of the row, in the order of increasing column_ids.
    */
-  virtual void ApplyDenseBatchInc(
-                                  const void* update_batch, int32_t index_st, int32_t num_updates, double scale=1.0) = 0;
+  virtual void ApplyDenseBatchInc(const void *update_batch, int32_t index_st,
+                                  int32_t num_updates, double scale = 1.0) = 0;
 
   /**
    * @param update_batch contains an update for each each element within the
 
    * capacity of the row, in the order of increasing column_ids.
    */
-  virtual double ApplyDenseBatchIncUnsafeGetImportance(
-                                                       const void* update_batch, int32_t index_st, int32_t num_updates, double scale=1.0) = 0;
+  virtual double ApplyDenseBatchIncUnsafeGetImportance(const void *update_batch,
+                                                       int32_t index_st,
+                                                       int32_t num_updates,
+                                                       double scale = 1.0) = 0;
 
   /**
    * @param update_batch contains an update for each each element within the
    * capacity of the row, in the order of increasing column_ids.
    */
-  virtual void ApplyDenseBatchIncUnsafe(
-                                        const void* update_batch, int32_t index_st, int32_t num_updates, double scale=1.0) = 0;
+  virtual void ApplyDenseBatchIncUnsafe(const void *update_batch,
+                                        int32_t index_st, int32_t num_updates,
+                                        double scale = 1.0) = 0;
 
   /**
    * Aggregate update1 and update2 by summation and substraction (update1 -
@@ -152,8 +172,8 @@ public:
    * Need be thread-safe and better be concurrent.
    * Those functions must work correctly without Init() or Deserialize().
    */
-  virtual void AddUpdates(int32_t column_id, void* update1,
-                          const void* update2) const = 0;
+  virtual void AddUpdates(int32_t column_id, void *update1,
+                          const void *update2) const = 0;
 
   /**
    * Aggregate update1 and update2 by summation and substraction (update1 -
@@ -166,31 +186,32 @@ public:
    * Those functions must work correctly without Init() or Deserialize().
    */
   virtual void SubtractUpdates(int32_t column_id, void *update1,
-                               const void* update2) const = 0;
+                               const void *update2) const = 0;
 
   /**
-   * @return importance of this update as if it is applied on to the given value.
+   * @return importance of this update as if it is applied on to the given
+   * value.
    */
   virtual double GetImportance(int32_t column_id, const void *update,
                                const void *value) const = 0;
 
   virtual double GetImportance(int32_t column_id, const void *update) const = 0;
 
-  virtual double GetAccumImportance(
-      const int32_t *column_ids, const void *update_batch,
-      int32_t num_updates) const = 0;
+  virtual double GetAccumImportance(const int32_t *column_ids,
+                                    const void *update_batch,
+                                    int32_t num_updates) const = 0;
 
-  virtual double GetDenseAccumImportance(
-      const void *update_batch, int32_t index_st,
-      int32_t num_updates) const = 0;
+  virtual double GetDenseAccumImportance(const void *update_batch,
+                                         int32_t index_st,
+                                         int32_t num_updates) const = 0;
 
   /**
    * Initialize update. Initialized update represents "zero update".
    * In other words, 0 + u = u (0 is the zero update).
    */
-  virtual void InitUpdate(int32_t column_id, void* zero) const = 0;
+  virtual void InitUpdate(int32_t column_id, void *zero) const = 0;
 
   virtual bool CheckZeroUpdate(const void *update) const = 0;
 };
 
-}   // namespace petuum
+} // namespace petuum

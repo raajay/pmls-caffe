@@ -15,16 +15,16 @@
 namespace petuum {
 
 enum RowType {
-  kUndefinedRow = 0
-  , kDenseFloatRow = 1
-  , kDenseIntRow = 2
-  , kSparseFloatRow = 3
-  , kSparseIntRow = 4
+  kUndefinedRow = 0,
+  kDenseFloatRow = 1,
+  kDenseIntRow = 2,
+  kSparseFloatRow = 3,
+  kSparseIntRow = 4
 };
 
 struct TableConfig {
   // Required config for table.
-  std::string name;   // name is used to fetch the table
+  std::string name; // name is used to fetch the table
   RowType row_type{kUndefinedRow};
   int64_t num_cols{-1};
   int64_t num_rows{-1};
@@ -42,18 +42,14 @@ struct TableConfig {
 
 class PsApp {
 public:
-  void Run(int num_worker_threads=1) {
+  void Run(int num_worker_threads = 1) {
     process_barrier_.reset(new boost::barrier(num_worker_threads));
 
     // Step 1.0. Register common row types
-    PSTableGroup::RegisterRow<
-      DenseRow<float>>(kDenseFloatRow);
-    PSTableGroup::RegisterRow<
-      DenseRow<int32_t>>(kDenseIntRow);
-    PSTableGroup::RegisterRow<
-      SparseRow<float>>(kSparseFloatRow);
-    PSTableGroup::RegisterRow<
-      SparseRow<int>>(kSparseIntRow);
+    PSTableGroup::RegisterRow<DenseRow<float>>(kDenseFloatRow);
+    PSTableGroup::RegisterRow<DenseRow<int32_t>>(kDenseIntRow);
+    PSTableGroup::RegisterRow<SparseRow<float>>(kSparseFloatRow);
+    PSTableGroup::RegisterRow<SparseRow<int>>(kSparseIntRow);
 
     std::vector<TableConfig> configs = ConfigTables();
 
@@ -85,12 +81,12 @@ public:
 
     // Spin num_worker_threads to run.
     LOG(INFO) << "Starting program with " << num_worker_threads << " threads "
-      << "on client " << table_group_config.client_id;
+              << "on client " << table_group_config.client_id;
     std::vector<std::thread> threads(num_worker_threads);
-    for (auto& thr : threads) {
+    for (auto &thr : threads) {
       thr = std::thread(&PsApp::RunWorkerThread, this);
     }
-    for (auto& thr : threads) {
+    for (auto &thr : threads) {
       thr.join();
     }
 
@@ -100,9 +96,9 @@ public:
   }
 
 protected:
-  PsApp() : thread_counter_(0) {};
+  PsApp() : thread_counter_(0){};
 
-  ~PsApp() {};
+  ~PsApp(){};
 
   // InitApp() can data loading in single-thread. Or it can do nothing. It may
   // not access PS table.
@@ -113,11 +109,10 @@ protected:
 
   virtual void WorkerThread(int client_id, int thread_id) = 0;
 
-  template<typename V>
-  Table<V> GetTable(const std::string& table_name) {
+  template <typename V> Table<V> GetTable(const std::string &table_name) {
     auto it = table_names_.find(table_name);
     CHECK(it != table_names_.cend()) << "Table " << table_name
-      << " was not registered";
+                                     << " was not registered";
     return PSTableGroup::GetTableOrDie<V>(it->second);
   }
 
@@ -130,28 +125,29 @@ private:
   }
 
   // Convert from a simplified TableConfig to ClientTableConfig
-  ClientTableConfig ConvertTableConfig(const TableConfig& config) {
+  ClientTableConfig ConvertTableConfig(const TableConfig &config) {
     // Check required fields in TableConfig
     CHECK_NE("", config.name) << "Table name must be set";
-    CHECK_NE(-1, config.num_rows)
-      << "Table " << config.name << " num_rows must be set.";
-    CHECK_NE(-1, config.num_cols)
-      << "Table " << config.name << " num_cols must be set.";
-    CHECK_NE(kUndefinedRow, config.row_type)
-      << "Table " << config.name << " row_type must be set.";
+    CHECK_NE(-1, config.num_rows) << "Table " << config.name
+                                  << " num_rows must be set.";
+    CHECK_NE(-1, config.num_cols) << "Table " << config.name
+                                  << " num_cols must be set.";
+    CHECK_NE(kUndefinedRow, config.row_type) << "Table " << config.name
+                                             << " row_type must be set.";
 
     ClientTableConfig table_config;
     table_config.table_info.table_staleness = config.staleness;
     table_config.table_info.row_type = config.row_type;
     table_config.table_info.row_capacity = config.num_cols;
 
-    table_config.process_cache_capacity = config.num_rows_to_cache == -1 ?
-      config.num_rows : config.num_rows_to_cache;
+    table_config.process_cache_capacity = config.num_rows_to_cache == -1
+                                              ? config.num_rows
+                                              : config.num_rows_to_cache;
     table_config.table_info.row_oplog_type = config.oplog_type;
-    table_config.oplog_capacity = config.num_oplog_rows == -1 ?
-      config.num_rows : config.num_oplog_rows;
+    table_config.oplog_capacity =
+        config.num_oplog_rows == -1 ? config.num_rows : config.num_oplog_rows;
     table_config.table_info.dense_row_oplog_capacity =
-      table_config.table_info.row_capacity;
+        table_config.table_info.row_capacity;
     return table_config;
   }
 
@@ -165,4 +161,4 @@ private:
   // Map table name to PS's internal table ID.
   std::map<std::string, int> table_names_;
 };
-}  // namespace petuum
+} // namespace petuum

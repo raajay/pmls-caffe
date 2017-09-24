@@ -8,15 +8,17 @@ namespace petuum {
 
 class BgWorkers {
 public:
-  static void Start(std::map<int32_t, ClientTable* > *tables);
+  static void Start(std::map<int32_t, ClientTable *> *tables);
 
   static void ShutDown();
   static void AppThreadRegister();
   static void AppThreadDeregister();
+  static void SyncThreadRegister();
+  static void SyncThreadDeregister();
 
   // Assuming table does not yet exist
   static bool CreateTable(int32_t table_id,
-                          const ClientTableConfig& table_config);
+                          const ClientTableConfig &table_config);
   static void WaitCreateTable();
   static bool RequestRow(int32_t table_id, int32_t row_id, int32_t clock);
   // If forced is set to true, a row request is forced to send even if
@@ -33,5 +35,4 @@ public:
 private:
   static BgWorkerGroup *bg_worker_group_;
 };
-
 }

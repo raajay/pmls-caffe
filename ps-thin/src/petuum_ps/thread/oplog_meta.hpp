@@ -11,9 +11,9 @@ namespace petuum {
 
 class OpLogMeta : boost::noncopyable {
 public:
-  OpLogMeta() { }
+  OpLogMeta() {}
 
-  ~OpLogMeta() { }
+  ~OpLogMeta() {}
 
   TableOpLogMeta *AddTableOpLogMeta(int32_t table_id,
                                     const AbstractRow *sample_row) {
@@ -44,5 +44,4 @@ public:
 private:
   std::map<int32_t, TableOpLogMeta> table_oplog_map_;
 };
-
 }

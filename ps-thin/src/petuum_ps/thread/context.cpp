@@ -4,7 +4,7 @@ namespace petuum {
 
 __thread ThreadContext::Info *ThreadContext::thr_info_;
 
-CommBus* GlobalContext::comm_bus;
+CommBus *GlobalContext::comm_bus;
 
 int32_t GlobalContext::num_clients_ = 0;
 
@@ -66,7 +66,7 @@ long GlobalContext::server_idle_milli_;
 
 int32_t GlobalContext::server_row_candidate_factor_;
 
-  // (raajay) new variables
-  bool GlobalContext::is_asynchronous_mode_;
+// (raajay) new variables
+bool GlobalContext::is_asynchronous_mode_;
 
-}   // namespace petuum
+} // namespace petuum

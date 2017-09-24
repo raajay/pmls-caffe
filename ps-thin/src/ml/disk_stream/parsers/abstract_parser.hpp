@@ -10,14 +10,13 @@
 namespace petuum {
 namespace ml {
 
-template<typename DATUM>
-class AbstractParser {
+template <typename DATUM> class AbstractParser {
 public:
-  virtual ~AbstractParser() { }
+  virtual ~AbstractParser() {}
 
   // Parse line and return # of bytes consumed.
-  virtual DATUM* Parse(char const* line, int* num_bytes_used) = 0;
+  virtual DATUM *Parse(char const *line, int *num_bytes_used) = 0;
 };
 
-}  // namespace ml
-}  // namespace petuum
+} // namespace ml
+} // namespace petuum

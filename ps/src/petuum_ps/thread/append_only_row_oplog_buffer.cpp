@@ -2,31 +2,33 @@
 
 namespace petuum {
 
-void AppendOnlyRowOpLogBuffer::BatchIncGeneral(
-    AbstractRowOpLog *row_oplog,
-    const int32_t *col_ids, const void *updates, int32_t num_updates) {
-  const uint8_t* deltas_uint8 = reinterpret_cast<const uint8_t*>(updates);
+void AppendOnlyRowOpLogBuffer::BatchIncGeneral(AbstractRowOpLog *row_oplog,
+                                               const int32_t *col_ids,
+                                               const void *updates,
+                                               int32_t num_updates) {
+  const uint8_t *deltas_uint8 = reinterpret_cast<const uint8_t *>(updates);
   for (int i = 0; i < num_updates; ++i) {
     void *oplog_delta = row_oplog->FindCreate(col_ids[i]);
     sample_row_->AddUpdates(col_ids[i], oplog_delta,
-                            deltas_uint8 + update_size_*i);
+                            deltas_uint8 + update_size_ * i);
   }
 }
 
-void AppendOnlyRowOpLogBuffer::BatchIncDense(
-    AbstractRowOpLog *row_oplog,
-    const int32_t *col_ids, const void *updates, int32_t num_updates) {
-  const uint8_t* deltas_uint8 = reinterpret_cast<const uint8_t*>(updates);
+void AppendOnlyRowOpLogBuffer::BatchIncDense(AbstractRowOpLog *row_oplog,
+                                             const int32_t *col_ids,
+                                             const void *updates,
+                                             int32_t num_updates) {
+  const uint8_t *deltas_uint8 = reinterpret_cast<const uint8_t *>(updates);
 
   for (int i = 0; i < num_updates; ++i) {
     void *oplog_delta = row_oplog->FindCreate(i);
-    sample_row_->AddUpdates(i, oplog_delta, deltas_uint8 + update_size_*i);
+    sample_row_->AddUpdates(i, oplog_delta, deltas_uint8 + update_size_ * i);
   }
 }
 
-void AppendOnlyRowOpLogBuffer::BatchInc(
-    int32_t row_id, const int32_t *col_ids,
-    const void *updates, int32_t num_updates) {
+void AppendOnlyRowOpLogBuffer::BatchInc(int32_t row_id, const int32_t *col_ids,
+                                        const void *updates,
+                                        int32_t num_updates) {
   auto iter = row_oplog_map_.find(row_id);
   if (iter == row_oplog_map_.end()) {
     AbstractRowOpLog *row_oplog = row_oplog_generator_.GetRowOpLog();
@@ -36,16 +38,17 @@ void AppendOnlyRowOpLogBuffer::BatchInc(
   (this->*BatchInc_)(iter->second, col_ids, updates, num_updates);
 }
 
-void AppendOnlyRowOpLogBuffer::BatchIncTmp(
-    int32_t row_id, const int32_t *col_ids,
-    const void *updates, int32_t num_updates) {
+void AppendOnlyRowOpLogBuffer::BatchIncTmp(int32_t row_id,
+                                           const int32_t *col_ids,
+                                           const void *updates,
+                                           int32_t num_updates) {
   auto iter = tmp_row_oplog_map_.find(row_id);
   if (iter == tmp_row_oplog_map_.end()) {
     AbstractRowOpLog *row_oplog = row_oplog_generator_.GetRowOpLog();
     tmp_row_oplog_map_.insert(std::make_pair(row_id, row_oplog));
     iter = tmp_row_oplog_map_.find(row_id);
   }
-  //LOG(INFO) << "BatchInc_ = " << BatchInc_;
+  // LOG(INFO) << "BatchInc_ = " << BatchInc_;
   (this->*BatchInc_)(iter->second, col_ids, updates, num_updates);
 }
 
@@ -99,8 +102,8 @@ AbstractRowOpLog *AppendOnlyRowOpLogBuffer::InitReadRmOpLog(int32_t *row_id) {
   *row_id = map_iter_->first;
   AbstractRowOpLog *row_oplog = map_iter_->second;
 
-  std::unordered_map<int32_t, AbstractRowOpLog*>::iterator tmp_iter
-      = row_oplog_map_.erase(map_iter_);
+  std::unordered_map<int32_t, AbstractRowOpLog *>::iterator tmp_iter =
+      row_oplog_map_.erase(map_iter_);
 
   map_iter_ = tmp_iter;
 
@@ -114,8 +117,8 @@ AbstractRowOpLog *AppendOnlyRowOpLogBuffer::NextReadRmOpLog(int32_t *row_id) {
   *row_id = map_iter_->first;
   AbstractRowOpLog *row_oplog = map_iter_->second;
 
-  std::unordered_map<int32_t, AbstractRowOpLog*>::iterator tmp_iter
-      = row_oplog_map_.erase(map_iter_);
+  std::unordered_map<int32_t, AbstractRowOpLog *>::iterator tmp_iter =
+      row_oplog_map_.erase(map_iter_);
 
   map_iter_ = tmp_iter;
   return row_oplog;
@@ -148,5 +151,4 @@ AbstractRowOpLog *AppendOnlyRowOpLogBuffer::GetRowOpLog(int32_t row_id) const {
 
   return map_iter->second;
 }
-
 }

@@ -11,21 +11,20 @@ namespace petuum {
 class OpLogPartition : public AbstractOpLog {
 public:
   OpLogPartition(int32_t capacity, const AbstractRow *sample_row,
-                 size_t dense_row_oplog_capacity,
-                 int32_t row_oplog_type);
+                 size_t dense_row_oplog_capacity, int32_t row_oplog_type);
   ~OpLogPartition();
 
-  void RegisterThread() { }
-  void DeregisterThread() { }
-  void FlushOpLog() { }
+  void RegisterThread() {}
+  void DeregisterThread() {}
+  void FlushOpLog() {}
 
   // exclusive access
   bool Inc(int32_t row_id, int32_t column_id, const void *delta);
-  bool BatchInc(int32_t row_id, const int32_t *column_ids,
-    const void *deltas, int32_t num_updates);
+  bool BatchInc(int32_t row_id, const int32_t *column_ids, const void *deltas,
+                int32_t num_updates);
 
-  bool DenseBatchInc(int32_t row_id, const void *updates,
-                     int32_t index_st, int32_t num_updates);
+  bool DenseBatchInc(int32_t row_id, const void *updates, int32_t index_st,
+                     int32_t num_updates);
 
   // Guaranteed exclusive accesses to the same row id.
   bool FindOpLog(int32_t row_id, OpLogAccessor *oplog_accessor);
@@ -42,21 +41,21 @@ public:
 
   // Mutual exclusive accesses
   bool GetEraseOpLog(int32_t row_id, AbstractRowOpLog **row_oplog_ptr);
-  bool GetEraseOpLogIf(int32_t row_id, GetOpLogTestFunc test,
-                       void *test_args, AbstractRowOpLog **row_oplog_ptr);
+  bool GetEraseOpLogIf(int32_t row_id, GetOpLogTestFunc test, void *test_args,
+                       AbstractRowOpLog **row_oplog_ptr);
 
   bool GetInvalidateOpLogMeta(int32_t row_id, RowOpLogMeta *row_oplog_meta);
 
   AbstractAppendOnlyBuffer *GetAppendOnlyBuffer();
-  void PutBackBuffer(AbstractAppendOnlyBuffer* buff);
+  void PutBackBuffer(AbstractAppendOnlyBuffer *buff);
 
 private:
   const size_t update_size_;
   StripedLock<int32_t> locks_;
-  cuckoohash_map<int32_t, AbstractRowOpLog*> oplog_map_;
+  cuckoohash_map<int32_t, AbstractRowOpLog *> oplog_map_;
   const AbstractRow *sample_row_;
   const size_t dense_row_oplog_capacity_;
   CreateRowOpLog::CreateRowOpLogFunc CreateRowOpLog_;
 };
 
-}   // namespace petuum
+} // namespace petuum

@@ -24,13 +24,12 @@ namespace ml {
 //  for (int i = 0; i < sf.GetFeatureDim(); ++i) {
 //    float feature_val = df[i];
 //  }
-template<typename V>
-class AbstractFeature {
+template <typename V> class AbstractFeature {
 public:
-  AbstractFeature() : feature_dim_(0) { }
-  virtual ~AbstractFeature() { }
+  AbstractFeature() : feature_dim_(0) {}
+  virtual ~AbstractFeature() {}
 
-  AbstractFeature(int32_t feature_dim) : feature_dim_(feature_dim) { }
+  AbstractFeature(int32_t feature_dim) : feature_dim_(feature_dim) {}
 
   // Feature dimension.
   int32_t GetFeatureDim() const { return feature_dim_; }
@@ -39,7 +38,7 @@ public:
   virtual V operator[](int32_t feature_id) const = 0;
 
   // Setter for feature value using feature id.
-  virtual void SetFeatureVal(int32_t feature_id, const V& val) = 0;
+  virtual void SetFeatureVal(int32_t feature_id, const V &val) = 0;
 
   // Number of non-zero entries in the feature. For dense feature it assume
   // all entries are non-zero.
@@ -59,8 +58,8 @@ public:
   static_assert(std::is_pod<V>::value, "V must be POD");
 
 protected:
-  int32_t feature_dim_;   // feature dimension.
+  int32_t feature_dim_; // feature dimension.
 };
 
-}  // namespace ml
-}  // namespace petuum
+} // namespace ml
+} // namespace petuum

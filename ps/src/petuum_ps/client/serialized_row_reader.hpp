@@ -30,15 +30,13 @@ namespace petuum {
 class SerializedRowReader : boost::noncopyable {
 public:
   // does not take ownership
-  SerializedRowReader(const void *mem, size_t mem_size):
-      mem_(reinterpret_cast<const uint8_t*>(mem)),
-      mem_size_(mem_size) {
-  }
-  ~SerializedRowReader() { }
+  SerializedRowReader(const void *mem, size_t mem_size)
+      : mem_(reinterpret_cast<const uint8_t *>(mem)), mem_size_(mem_size) {}
+  ~SerializedRowReader() {}
 
   bool Restart() {
     offset_ = 0;
-    current_table_id_ = *(reinterpret_cast<const int32_t*>(mem_ + offset_));
+    current_table_id_ = *(reinterpret_cast<const int32_t *>(mem_ + offset_));
     offset_ += sizeof(int32_t);
 
     if (current_table_id_ == GlobalContext::get_serialized_table_end())
@@ -55,23 +53,24 @@ public:
     // (st_end)
     // 4. normal row data
 
-    if (offset_ + sizeof (int32_t) > mem_size_)
+    if (offset_ + sizeof(int32_t) > mem_size_)
       return NULL;
-    *row_id = *(reinterpret_cast<const int32_t*>(mem_ + offset_));
+    *row_id = *(reinterpret_cast<const int32_t *>(mem_ + offset_));
     offset_ += sizeof(int32_t);
 
     do {
       if (*row_id == GlobalContext::get_serialized_table_separator()) {
-        if (offset_ + sizeof (int32_t) > mem_size_)
+        if (offset_ + sizeof(int32_t) > mem_size_)
           return NULL;
 
-        current_table_id_ = *(reinterpret_cast<const int32_t*>(mem_ + offset_));
+        current_table_id_ =
+            *(reinterpret_cast<const int32_t *>(mem_ + offset_));
         offset_ += sizeof(int32_t);
 
-        if (offset_ + sizeof (int32_t) > mem_size_)
+        if (offset_ + sizeof(int32_t) > mem_size_)
           return NULL;
 
-        *row_id = *(reinterpret_cast<const int32_t*>(mem_ + offset_));
+        *row_id = *(reinterpret_cast<const int32_t *>(mem_ + offset_));
         offset_ += sizeof(int32_t);
         // row_id could be
         // 1) st_separator: if the table is empty and there there are other
@@ -83,13 +82,13 @@ public:
         return NULL;
       } else {
         *table_id = current_table_id_;
-        *row_size = *(reinterpret_cast<const size_t*>(mem_ + offset_));
+        *row_size = *(reinterpret_cast<const size_t *>(mem_ + offset_));
         offset_ += sizeof(size_t);
         const void *data_mem = mem_ + offset_;
         offset_ += *row_size;
         return data_mem;
       }
-    }while(1);
+    } while (1);
   }
 
 private:
@@ -99,4 +98,4 @@ private:
   int32_t current_table_id_;
 };
 
-}  // namespace petuum
+} // namespace petuum

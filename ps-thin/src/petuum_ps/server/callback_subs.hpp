@@ -14,8 +14,8 @@ namespace petuum {
 
 class CallBackSubs {
 public:
-  CallBackSubs() { }
-  ~CallBackSubs() { }
+  CallBackSubs() {}
+  ~CallBackSubs() {}
 
   bool Subscribe(int32_t client_id) {
     bool bit_changed = false;
@@ -35,7 +35,7 @@ public:
     return bit_changed;
   }
 
-// this needs fixing, do get_num_clients here mean the servers/workers
+  // this needs fixing, do get_num_clients here mean the servers/workers
   /*
   bool AppendRowToBuffs(
       int32_t client_id_st,
@@ -60,7 +60,7 @@ public:
   }
   */
 
-// this needs fixing, do get_num_clients here mean the servers/workers
+  // this needs fixing, do get_num_clients here mean the servers/workers
   /*
   void AccumSerializedSizePerClient(
       boost::unordered_map<int32_t, size_t> *client_size_map,
@@ -75,7 +75,6 @@ public:
     }
   }
   */
-
 
   /*
   void AppendRowToBuffs(
@@ -99,4 +98,4 @@ private:
   std::bitset<PETUUM_MAX_NUM_CLIENTS> subscriptions_;
 };
 
-}  //namespace petuum
+} // namespace petuum

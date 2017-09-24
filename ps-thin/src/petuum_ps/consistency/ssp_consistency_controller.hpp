@@ -14,83 +14,79 @@
 
 namespace petuum {
 
-  class SSPConsistencyController : public AbstractConsistencyController {
-  public:
-    SSPConsistencyController(const TableInfo& info,
-                             int32_t table_id,
-                             AbstractProcessStorage& process_storage,
-                             AbstractOpLog& oplog,
-                             const AbstractRow* sample_row,
-                             boost::thread_specific_ptr<ThreadTable> &thread_cache,
-                             TableOpLogIndex &oplog_index,
-                             int32_t row_oplog_type);
+class SSPConsistencyController : public AbstractConsistencyController {
 
-    // We don't need GetAsync because in SSP we reply on the clock count of each
-    // client row to check whether the row is too stale and fetch it from server
-    // when it is too stale.
-    virtual void GetAsyncForced(int32_t row_id) { }
-    virtual void GetAsync(int32_t row_id);
-    virtual void WaitPendingAsnycGet();
-
-    // Check freshness; make request and block if too stale or row_id not found
-    // in storage.
-    virtual ClientRow *Get(int32_t row_id, RowAccessor* row_accessor, int32_t clock);
-
-
-    // Return immediately.
-    virtual void Inc(int32_t row_id,
-                     int32_t column_id,
-                     const void* delta);
-
-    virtual void BatchInc(int32_t row_id,
-                          const int32_t* column_ids,
-                          const void* updates,
-                          int32_t num_updates,
-                          int32_t global_version = -1);
-
-    virtual void DenseBatchInc(int32_t row_id,
-                               const void *updates,
-                               int32_t index_st,
+protected:
+  void DenseBatchIncDenseOpLog(OpLogAccessor *oplog_accessor,
+                               const uint8_t *updates, int32_t index_st,
                                int32_t num_updates);
 
-    virtual void FlushThreadCache();
+  void DenseBatchIncNonDenseOpLog(OpLogAccessor *oplog_accessor,
+                                  const uint8_t *updates, int32_t index_st,
+                                  int32_t num_updates);
 
-    virtual void Clock();
+  typedef void (SSPConsistencyController::*DenseBatchIncOpLogFunc)(
+      OpLogAccessor *oplog_accessor, const uint8_t *updates, int32_t index_st,
+      int32_t num_updates);
 
-  protected:
+  // SSP staleness parameter.
+  int32_t staleness_;
 
-    void DenseBatchIncDenseOpLog(OpLogAccessor *oplog_accessor,
-                                 const uint8_t *updates,
-                                 int32_t index_st,
-                                 int32_t num_updates);
+  boost::thread_specific_ptr<ThreadTable> &thread_cache_;
 
-    void DenseBatchIncNonDenseOpLog(OpLogAccessor *oplog_accessor,
-                                    const uint8_t *updates,
-                                    int32_t index_st,
-                                    int32_t num_updates);
+  TableOpLogIndex &oplog_index_;
 
-    typedef void (SSPConsistencyController::*DenseBatchIncOpLogFunc)(OpLogAccessor *oplog_accessor,
-                                                                     const uint8_t *updates,
-                                                                     int32_t index_st,
-                                                                     int32_t num_updates);
+  // Controller will only write to oplog_ but never read from it, as
+  // all local updates are reflected in the row values.
+  AbstractOpLog &oplog_;
 
-    // SSP staleness parameter.
-    int32_t staleness_;
+  typedef std::function<void(int32_t, void *, const void *)> AddUpdatesFunc;
+  AddUpdatesFunc AddUpdates_;
 
-    boost::thread_specific_ptr<ThreadTable> &thread_cache_;
+  DenseBatchIncOpLogFunc DenseBatchIncOpLog_;
 
-    TableOpLogIndex &oplog_index_;
+  boost::thread_specific_ptr<size_t> pending_async_get_cnt_;
 
-    // Controller will only write to oplog_ but never read from it, as
-    // all local updates are reflected in the row values.
-    AbstractOpLog& oplog_;
+public:
+  SSPConsistencyController(
+      const TableInfo &info, int32_t table_id,
+      AbstractProcessStorage &process_storage, AbstractOpLog &oplog,
+      const AbstractRow *sample_row,
+      boost::thread_specific_ptr<ThreadTable> &thread_cache,
+      TableOpLogIndex &oplog_index, int32_t row_oplog_type);
 
-    typedef std::function<void(int32_t, void*, const void*)> AddUpdatesFunc;
+  // From old bosen: We don't need GetAsync because in SSP we reply on the clock
+  // count of each
+  // client row to check whether the row is too stale and fetch it from server
+  // when it is too stale.
+  //
+  // (raajay) We have modified these interfaces. All async functions do
+  // non-blocking row requests.
+  virtual void GetAsyncForced(int32_t row_id);
+  virtual void GetAsync(int32_t row_id);
+  virtual void WaitPendingAsnycGet();
 
-    AddUpdatesFunc AddUpdates_;
+  // Check freshness; make request and block if too stale or row_id not found
+  // in storage. This call is blocking.
+  virtual ClientRow *Get(int32_t row_id, RowAccessor *row_accessor,
+                         int32_t clock);
 
-    DenseBatchIncOpLogFunc DenseBatchIncOpLog_;
+  // Return immediately.
+  virtual void Inc(int32_t row_id, int32_t column_id, const void *delta);
 
-  }; // end class - SSPConsistencyController
+  virtual void BatchInc(int32_t row_id, const int32_t *column_ids,
+                        const void *updates, int32_t num_updates,
+                        int32_t global_version = -1);
 
-}  // namespace petuum
+  virtual void DenseBatchInc(int32_t row_id, const void *updates,
+                             int32_t index_st, int32_t num_updates);
+
+  virtual void FlushThreadCache();
+
+  virtual void Clock();
+
+  void incrementPendingAsyncCounter();
+
+}; // end class - SSPConsistencyController
+
+} // namespace petuum

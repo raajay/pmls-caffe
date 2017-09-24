@@ -16,9 +16,11 @@ namespace petuum {
  * Note that the first line of the file will be considered as name node.
  */
 void GetHostInfos(std::string server_file,
-  std::map<int32_t, HostInfo> *host_map);
+                  std::map<int32_t, HostInfo> *host_map);
 
 void GetServerIDsFromHostMap(std::vector<int32_t> *server_ids,
-  const std::map<int32_t, HostInfo> & host_map);
+                             const std::map<int32_t, HostInfo> &host_map);
 
-}   // namespace petuum
+std::string GetTableRowStringId(int32_t table_id, int32_t row_id);
+
+} // namespace petuum

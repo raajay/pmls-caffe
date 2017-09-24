@@ -13,7 +13,7 @@ namespace ml {
 enum ReadMode {
   kDirPath,     // Read all files under a directory (default).
   kFileList,    // Read all files in a file list.
-  kFileSequence    // Read files with same prefix followed by #.
+  kFileSequence // Read files with same prefix followed by #.
 };
 
 struct DiskReaderConfig {
@@ -41,18 +41,17 @@ struct DiskReaderConfig {
   std::string file_seq_prefix;
 };
 
-
 // DiskReader reads (and optionally snappy-decompress) a set of  files
 // (usually 64MB each), one at a time, to a MultiBuffer.
 class DiskReader {
 public:
   // Does not take ownership of multi_buffer.
-  DiskReader(const DiskReaderConfig& config, MultiBuffer* multi_buffer);
+  DiskReader(const DiskReaderConfig &config, MultiBuffer *multi_buffer);
 
   // Read 'num_passes_' times over the  files (could be infinite loop).
   void Start();
 
-private:    // private functions.
+private: // private functions.
   // Figure out the list of files to read and store in files_.
   void GenerateFileList();
 
@@ -60,7 +59,7 @@ private:    // private functions.
   // Comment (wdai): NRVO in C++ will avoid copying the returned vector.
   std::vector<char> ReadNextFile();
 
-private:    // private members.
+private: // private members.
   // # of files read so far (wrapped around).
   int32_t file_counter_;
 
@@ -68,7 +67,7 @@ private:    // private members.
   int32_t pass_counter_;
 
   // Does not take ownership of multi_buffer_.
-  MultiBuffer* multi_buffer_;
+  MultiBuffer *multi_buffer_;
 
   // List of files to read.
   std::vector<std::string> files_;
@@ -84,5 +83,5 @@ private:    // private members.
   std::string file_seq_prefix_;
 };
 
-}  // namespace ml
-}  // namespace petuum
+} // namespace ml
+} // namespace petuum

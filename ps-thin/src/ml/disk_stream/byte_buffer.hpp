@@ -13,13 +13,13 @@ namespace petuum {
 namespace ml {
 
 // ByteBuffer is a simple, non-thread-safe byte storage.
-class ByteBuffer : boost::noncopyable{
+class ByteBuffer : boost::noncopyable {
 public:
   ByteBuffer();
 
   // bytes will be swapped with bytes_. bytes will become arbitrary. This is
   // not thread safe so no other function should be called during SetBuffer.
-  void SetBuffer(std::vector<char>* bytes);
+  void SetBuffer(std::vector<char> *bytes);
 
   // Advance the read offset. Fail if advancing beyond the buffer end.
   void AdvanceOffset(int32_t num_bytes);
@@ -28,7 +28,7 @@ public:
   bool HasMore() const;
 
   // Get pointer to the next byte.
-  char* GetNextBytes();
+  char *GetNextBytes();
 
 private:
   // byte storage.
@@ -40,5 +40,5 @@ private:
   std::mutex mtx_;
 };
 
-}  // namespace ml
-}  // namespace petuum
+} // namespace ml
+} // namespace petuum

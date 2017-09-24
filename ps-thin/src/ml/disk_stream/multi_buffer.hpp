@@ -24,7 +24,7 @@ public:
   // Get the work buffer (i.e., buffer ready for workers threads to consume).
   // Block if no buffer is ready. Only one worker thread should call this
   // method.
-  ByteBuffer* GetWorkBuffer();
+  ByteBuffer *GetWorkBuffer();
 
   // Worker calls this to signal the buffer obtained from GetWorkBuffer() is
   // fully consumed by worker threads. Only one worker thread should call this
@@ -34,7 +34,7 @@ public:
   // Get a buffer that is either (1) unused or (2) worker threads have
   // finished consuming the content. Return 0 (null) to signal to IO thread to
   // shutdown.  Only IO thread should call this method.
-  ByteBuffer* GetIOBuffer();
+  ByteBuffer *GetIOBuffer();
 
   // IO thread pushes a buffer from free_buffers_ to work_buffers_.
   void DoneFillingIOBuffer();
@@ -52,10 +52,10 @@ public:
 
 private:
   // Buffers available for IO thread to fill.
-  std::queue<ByteBuffer*> free_buffers_;
+  std::queue<ByteBuffer *> free_buffers_;
 
   // Buffers ready for the worker thread to consume.
-  std::queue<ByteBuffer*> work_buffers_;
+  std::queue<ByteBuffer *> work_buffers_;
 
   // mtx_ (1) synchronizes access to free_buffers_ and work_buffers_; (2)
   // mutex for work_buffer_not_empty_ and free_buffers_not_empty_.
@@ -73,5 +73,5 @@ private:
   std::atomic_bool worker_thread_shutdown_;
 };
 
-}  // namespace ml
-}  // namespace petuum
+} // namespace ml
+} // namespace petuum

@@ -12,11 +12,10 @@ namespace petuum {
 //
 // Comment(wdai): We cannot use std::pair since we use memcpy and memmove and
 // std::pair isn't POD.
-template<typename V>
-struct Entry {
+template <typename V> struct Entry {
   static_assert(std::is_pod<V>::value, "V must be POD");
   int32_t first;
   V second;
 };
 
-}  // namespace petuum
+} // namespace petuum
