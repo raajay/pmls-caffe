@@ -236,5 +236,4 @@ int32_t Server::GetBgVersion(int32_t bg_thread_id) {
 
 double Server::GetElapsedTime() { return from_start_timer_.elapsed(); }
 
-int32_t Server::GetAsyncModelVersion() { return async_version_; }
 }

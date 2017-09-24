@@ -12,19 +12,20 @@ namespace petuum {
 // Allow move sematic for it to be stored in STL containers.
 class ServerRow : boost::noncopyable {
 public:
-  ServerRow() : dirty_(false) {}
+  ServerRow() : dirty_(false), row_version_(0) {}
   ServerRow(AbstractRow *row_data)
-      : row_data_(row_data), num_clients_subscribed_(0), dirty_(false) {}
+      : row_data_(row_data), num_clients_subscribed_(0), dirty_(false),
+        row_version_(0) {}
 
   ~ServerRow() {
-    if (row_data_ != 0)
+    if (row_data_ != nullptr)
       delete row_data_;
   }
 
   ServerRow(ServerRow &&other)
       : row_data_(other.row_data_),
         num_clients_subscribed_(other.num_clients_subscribed_),
-        dirty_(other.dirty_) {
+        dirty_(other.dirty_), row_version_(other.row_version_) {
     other.row_data_ = 0;
   }
 
@@ -77,6 +78,10 @@ public:
       --num_clients_subscribed_;
   }
 
+  void IncrementVersion() { row_version_++; }
+
+  unsigned long GetRowVersion() { return row_version_; }
+
   bool IsDirty() { return dirty_; }
 
   void ResetDirty() { dirty_ = false; }
@@ -91,10 +96,9 @@ private:
   CallBackSubs callback_subs_;
   AbstractRow *row_data_;
   size_t num_clients_subscribed_;
-
   bool dirty_;
-
   double importance_;
+  unsigned long row_version_;
 };
 
 } // end namespace -- petuum

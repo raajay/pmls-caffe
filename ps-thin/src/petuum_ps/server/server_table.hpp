@@ -119,6 +119,7 @@ public:
     }
     ApplyRowBatchInc_(column_ids, updates, num_updates, &(row_iter->second),
                       scale);
+    row_iter->second.IncrementVersion();
     return true;
   }
 

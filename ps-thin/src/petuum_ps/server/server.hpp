@@ -56,7 +56,6 @@ public:
   // Accessors
   int32_t GetMinClock();
   int32_t GetBgVersion(int32_t bg_thread_id);
-  int32_t GetAsyncModelVersion();
   double GetElapsedTime();
 
 private:
@@ -75,8 +74,7 @@ private:
   }
 
   VectorClock bg_clock_;
-  int32_t
-      async_version_; // (raajay) we add this to maintain async version number
+  int32_t async_version_;
   boost::unordered_map<int32_t, ServerTable> tables_;
   // mapping <clock, table id> to an array of row requests
   std::map<int32_t,

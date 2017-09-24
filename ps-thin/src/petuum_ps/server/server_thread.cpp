@@ -188,15 +188,7 @@ void ServerThread::HandleRowRequest(int32_t sender_id,
   int32_t row_id = row_request_msg.get_row_id();
   int32_t clock = row_request_msg.get_clock();
   int32_t server_clock = server_obj_.GetMinClock();
-
-  uint32_t version = server_obj_.GetBgVersion(sender_id);
-  int32_t global_model_version = server_obj_.GetAsyncModelVersion();
-
-  if (row_id < 6) {
-    VLOG(2) << "Handling row request sender=" << sender_id
-            << " table_id=" << table_id << " row=" << row_id
-            << " version=" << global_model_version;
-  }
+  uint32_t bg_version = server_obj_.GetBgVersion(sender_id);
 
   if (!GlobalContext::is_asynchronous_mode()) {
     // check only in synchronous mode
@@ -211,9 +203,6 @@ void ServerThread::HandleRowRequest(int32_t sender_id,
                 "asynchronous mode";
   }
 
-  // uint32_t version = server_obj_.GetBgVersion(sender_id);
-  // int32_t global_model_version = server_obj_.GetAsyncModelVersion();
-
   ServerRow *server_row = server_obj_.FindCreateRow(table_id, row_id);
 
   // row subscribe is a null function ...
@@ -223,14 +212,14 @@ void ServerThread::HandleRowRequest(int32_t sender_id,
       (GlobalContext::is_asynchronous_mode()) ? clock : server_clock;
 
   ReplyRowRequest(sender_id, server_row, table_id, row_id, return_clock,
-                  version, global_model_version);
+                  bg_version, server_row->GetRowVersion());
 
 } // end function -- handle row request
 
 void ServerThread::ReplyRowRequest(
     int32_t bg_id, ServerRow *server_row, int32_t table_id, int32_t row_id,
     int32_t client_clock, // earlier we used to return server clock
-    uint32_t version, int32_t global_model_version) {
+    uint32_t bg_version, int32_t server_row_global_version) {
 
   size_t row_size = server_row->SerializedSize();
 
@@ -238,9 +227,9 @@ void ServerThread::ReplyRowRequest(
   server_row_request_reply_msg.get_table_id() = table_id;
   server_row_request_reply_msg.get_row_id() = row_id;
   server_row_request_reply_msg.get_clock() = client_clock;
-  server_row_request_reply_msg.get_version() = version;
+  server_row_request_reply_msg.get_version() = bg_version;
   server_row_request_reply_msg.get_global_model_version() =
-      global_model_version;
+      server_row_global_version;
 
   row_size = server_row->Serialize(server_row_request_reply_msg.get_row_data());
   server_row_request_reply_msg.get_row_size() = row_size;
@@ -296,7 +285,7 @@ void ServerThread::HandleOpLogMsg(int32_t sender_id,
                        GlobalContext::thread_id_to_client_id(bg_id));
           int32_t server_clock = server_obj_.GetMinClock();
           ReplyRowRequest(bg_id, server_row, table_id, row_id, server_clock,
-                          version, server_obj_.GetAsyncModelVersion());
+                          version, server_row->GetRowVersion());
         }
         VLOG(15) << "Successively replied to buffered requests.";
       }
