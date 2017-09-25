@@ -181,13 +181,12 @@ void Server::ApplyOpLogUpdateVersion(const void *oplog, size_t oplog_size,
     // TODO (raajay) use delayed based scaling.
     // 1. We have to decide if the scaling has to be determined per-row or on a
     // table basis.
-    // double scaling_factor = GetUpdateScalingFactor(update_model_version);
-    double scaling_factor = 1.0;
 
     // Apply or Create and apply the row op log. This will basically increment
     // the values at the server.
     server_table->FindCreateRow(row_id);
-    bool success = server_table->ApplyRowOpLog(row_id, column_ids, updates, num_updates, scaling_factor);
+    bool success = server_table->ApplyRowOpLog(row_id, column_ids, updates,
+                                               num_updates, 1.0);
     CHECK_EQ(success, true) << "Row not found. row_id=" << row_id;
 
     // get the next row update
@@ -208,8 +207,7 @@ void Server::ApplyOpLogUpdateVersion(const void *oplog, size_t oplog_size,
   }
 
   VLOG(2) << "SERVER: sender_id=" << bg_thread_id
-          << ", server_id=" << server_id_
-          << ", time=" << GetElapsedTime()
+          << ", server_id=" << server_id_ << ", time=" << GetElapsedTime()
           << ", size=" << oplog_size;
 }
 
@@ -220,5 +218,4 @@ int32_t Server::GetBgVersion(int32_t bg_thread_id) {
 }
 
 double Server::GetElapsedTime() { return from_start_timer_.elapsed(); }
-
 }

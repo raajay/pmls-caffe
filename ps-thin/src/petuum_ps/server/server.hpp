@@ -65,5 +65,4 @@ public:
   int32_t GetBgVersion(int32_t bg_thread_id);
   double GetElapsedTime();
 };
-
 }

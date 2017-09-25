@@ -52,7 +52,6 @@ public:
           new SparseRowOpLog(InitUpdateFunc(), CheckZeroUpdateFunc(),
                              sample_row_->get_update_size());
     }
-
   }
 
   /**
@@ -94,11 +93,11 @@ public:
   }
 
   ServerRow *FindCreateRow(int32_t row_id) {
-      ServerRow *row = FindRow(row_id);
-      if(nullptr == row) {
-          return CreateRow(row_id);
-      }
-      return row;
+    ServerRow *row = FindRow(row_id);
+    if (nullptr == row) {
+      return CreateRow(row_id);
+    }
+    return row;
   }
 
   /**
