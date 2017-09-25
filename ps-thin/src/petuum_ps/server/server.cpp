@@ -69,7 +69,7 @@ bool Server::ClockUntil(int32_t bg_id, int32_t clock) {
         new_clock % GlobalContext::get_snapshot_clock() != 0) {
       return true;
     }
-      TakeSnapShot(new_clock);
+    TakeSnapShot(new_clock);
     return true;
   }
   return false;
@@ -207,12 +207,13 @@ ServerTable *Server::GetServerTable(int32_t table_id) {
   return &(table_iter->second);
 }
 
-    void Server::TakeSnapShot(int32_t current_clock) {
+void Server::TakeSnapShot(int32_t current_clock) {
 
-      for (auto table_iter = tables_.begin(); table_iter != tables_.end();
-           table_iter++) {
-        table_iter->second.TakeSnapShot(GlobalContext::get_snapshot_dir(),
-                                        server_id_, table_iter->first, current_clock);
-      }
-    }
+  for (auto table_iter = tables_.begin(); table_iter != tables_.end();
+       table_iter++) {
+    table_iter->second.TakeSnapShot(GlobalContext::get_snapshot_dir(),
+                                    server_id_, table_iter->first,
+                                    current_clock);
+  }
+}
 }

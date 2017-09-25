@@ -213,7 +213,6 @@ void ServerThread::HandleRowRequest(int32_t sender_id,
 
   ReplyRowRequest(sender_id, server_row, table_id, row_id, return_clock,
                   bg_version, server_row->GetRowVersion());
-
 }
 
 void ServerThread::ReplyRowRequest(
@@ -229,7 +228,7 @@ void ServerThread::ReplyRowRequest(
   server_row_request_reply_msg.get_clock() = client_clock;
   server_row_request_reply_msg.get_version() = bg_version;
   server_row_request_reply_msg.get_global_model_version() =
-          (int32_t) server_row_global_version;
+      (int32_t)server_row_global_version;
   // TODO(raajay) change the serialization to use unsigned long and remove cast
 
   row_size = server_row->Serialize(server_row_request_reply_msg.get_row_data());

@@ -46,8 +46,8 @@ private:
   HighResolutionTimer from_start_timer_;
   bool is_replica_;
 
-    ServerTable *GetServerTable(int32_t table_id);
-    void TakeSnapShot(int32_t current_clock);
+  ServerTable *GetServerTable(int32_t table_id);
+  void TakeSnapShot(int32_t current_clock);
 
 public:
   Server();
