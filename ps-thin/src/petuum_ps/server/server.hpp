@@ -27,71 +27,45 @@ public:
 
 // 1. Manage the table storage on server;
 // 2. Manage the pending reads;
-// 3. Manage the vector clock for clients
-// 4. (TODO): manage OpLogs that need acknowledgements
+// 3. Manage the vector clock for clients;
 
 class Server {
-public:
-  Server();
-  ~Server();
-
-  void Init(int32_t server_id, const std::vector<int32_t> &bg_ids,
-            bool is_replica = false);
-
-  void CreateTable(int32_t table_id, TableInfo &table_info);
-
-  ServerRow *FindCreateRow(int32_t table_id, int32_t row_id);
-
-  bool ClockUntil(int32_t bg_id, int32_t clock);
-
-  void AddRowRequest(int32_t bg_id, int32_t table_id, int32_t row_id,
-                     int32_t clock);
-
-  void GetFulfilledRowRequests(std::vector<ServerRowRequest> *requests);
-
-  void ApplyOpLogUpdateVersion(const void *oplog, size_t oplog_size,
-                               int32_t bg_thread_id, uint32_t version,
-                               int32_t *observed_delay);
-
-  // Accessors
-  int32_t GetMinClock();
-  int32_t GetBgVersion(int32_t bg_thread_id);
-  int32_t GetAsyncModelVersion();
-  double GetElapsedTime();
-
 private:
-  double GetUpdateScalingFactor(int32_t row_update_version) {
-    if (false == GlobalContext::is_asynchronous_mode()) {
-      return 1.0;
-    }
-    int row_update_delay = async_version_ - row_update_version;
-    int corrected = std::max(1, row_update_delay);
-    return 1.0 / corrected;
-  }
-
-  void updateOplogDelay(int32_t *observed_delay, int32_t row_update_version) {
-    int row_update_delay = async_version_ - row_update_version;
-    *observed_delay = std::max(row_update_delay, *observed_delay);
-  }
-
   VectorClock bg_clock_;
-  int32_t
-      async_version_; // (raajay) we add this to maintain async version number
   boost::unordered_map<int32_t, ServerTable> tables_;
   // mapping <clock, table id> to an array of row requests
+  // Keeping track of all pending row requests. These are indexed first by the
+  // clock requested by each row and secondly by the table id.
   std::map<int32_t,
            boost::unordered_map<int32_t, std::vector<ServerRowRequest>>>
       clock_bg_row_requests_;
-  // latest oplog version that I have received from a bg thread
-  std::map<int32_t, uint32_t> bg_version_map_;
-  // Assume a single row does not exceed this size!
-  static const size_t kPushRowMsgSizeInit = 4 * k1_Mi;
-  size_t push_row_msg_data_size_;
+  // Keep track of the latest oplog version received from each bg thread
+  std::map<int32_t, int32_t> bg_version_map_;
   int32_t server_id_;
   size_t accum_oplog_count_;
-  bool is_replica_;
   HighResolutionTimer from_start_timer_;
+  bool is_replica_;
 
-}; // end class -- Server
+  ServerTable *GetServerTable(int32_t table_id);
+  void TakeSnapShot(int32_t current_clock);
 
-} // namespace petuum
+public:
+  Server();
+  ~Server();
+  void Init(int32_t server_id, const std::vector<int32_t> &bg_ids,
+            bool is_replica = false);
+  void CreateTable(int32_t table_id, TableInfo &table_info);
+  ServerRow *FindCreateRow(int32_t table_id, int32_t row_id);
+  bool ClockUntil(int32_t bg_id, int32_t clock);
+  void AddRowRequest(int32_t bg_id, int32_t table_id, int32_t row_id,
+                     int32_t clock);
+  void GetFulfilledRowRequests(std::vector<ServerRowRequest> *requests);
+  void ApplyOpLogUpdateVersion(const void *oplog, size_t oplog_size,
+                               int32_t bg_thread_id, uint32_t version,
+                               int32_t *observed_delay);
+  // Accessors
+  int32_t GetMinClock();
+  int32_t GetBgVersion(int32_t bg_thread_id);
+  double GetElapsedTime();
+};
+}

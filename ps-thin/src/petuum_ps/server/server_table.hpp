@@ -52,8 +52,7 @@ public:
           new SparseRowOpLog(InitUpdateFunc(), CheckZeroUpdateFunc(),
                              sample_row_->get_update_size());
     }
-
-  } // end function -- Constructor
+  }
 
   /**
    * Destructor.
@@ -93,6 +92,14 @@ public:
     return &(row_iter->second);
   }
 
+  ServerRow *FindCreateRow(int32_t row_id) {
+    ServerRow *row = FindRow(row_id);
+    if (nullptr == row) {
+      return CreateRow(row_id);
+    }
+    return row;
+  }
+
   /**
    * Create a sample default row based on row type.
    */
@@ -119,6 +126,7 @@ public:
     }
     ApplyRowBatchInc_(column_ids, updates, num_updates, &(row_iter->second),
                       scale);
+    row_iter->second.IncrementVersion();
     return true;
   }
 
