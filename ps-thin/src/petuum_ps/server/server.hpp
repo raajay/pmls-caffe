@@ -46,6 +46,12 @@ private:
   HighResolutionTimer from_start_timer_;
   bool is_replica_;
 
+  ServerTable *GetServerTable(int32_t table_id) {
+    auto table_iter = tables_.find(table_id);
+    CHECK(table_iter != tables_.end()) << "Not found table_id = " << table_id;
+    return &(table_iter->second);
+  }
+
 public:
   Server();
   ~Server();

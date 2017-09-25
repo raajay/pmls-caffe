@@ -3,6 +3,7 @@
 #include <petuum_ps/server/server.hpp>
 #include <petuum_ps/server/serialized_oplog_reader.hpp>
 #include <petuum_ps/util/class_register.hpp>
+#include <petuum_ps/util/utils.hpp>
 
 #include <utility>
 #include <fstream>
@@ -20,8 +21,8 @@ void Server::Init(int32_t server_id, const std::vector<int32_t> &bg_ids,
   // bg_clock is vector clock. We set it to be zero for all bg threads (one
   // from each worker client)
   for (auto iter = bg_ids.cbegin(); iter != bg_ids.cend(); iter++) {
-    bg_clock_.AddClock(*iter, 0); // the clock is 0 initially
-    bg_version_map_[*iter] = -1;  // the version -1 initially
+    bg_clock_.AddClock(*iter, 0);
+    bg_version_map_[*iter] = -1;
   }
 
   server_id_ = server_id;
@@ -138,8 +139,6 @@ void Server::ApplyOpLogUpdateVersion(const void *oplog, size_t oplog_size,
 
   if (!is_replica_) {
     CHECK_EQ(bg_version_map_[bg_thread_id] + 1, version);
-    // Update the version from a single bg thread that has been applied to the
-    // model.
     bg_version_map_[bg_thread_id] = version;
   }
 
@@ -166,13 +165,11 @@ void Server::ApplyOpLogUpdateVersion(const void *oplog, size_t oplog_size,
   const void *updates =
       oplog_reader.Next(&table_id, &row_id, &update_model_version, &column_ids,
                         &num_updates, &started_new_table);
+  CHECK_EQ(started_new_table, false);
 
   ServerTable *server_table;
   if (updates != 0) {
-    // find the pointer to the server table at the server.
-    auto table_iter = tables_.find(table_id);
-    CHECK(table_iter != tables_.end()) << "Not found table_id = " << table_id;
-    server_table = &(table_iter->second);
+    server_table = GetServerTable(table_id);
   }
 
   while (updates != 0) {
@@ -182,12 +179,11 @@ void Server::ApplyOpLogUpdateVersion(const void *oplog, size_t oplog_size,
     // 1. We have to decide if the scaling has to be determined per-row or on a
     // table basis.
 
-    // Apply or Create and apply the row op log. This will basically increment
-    // the values at the server.
     server_table->FindCreateRow(row_id);
     bool success = server_table->ApplyRowOpLog(row_id, column_ids, updates,
                                                num_updates, 1.0);
-    CHECK_EQ(success, true) << "Row not found. row_id=" << row_id;
+    CHECK_EQ(success, true) << "Row not found. "
+                            << GetTableRowStringId(table_id, row_id);
 
     // get the next row update
     updates = oplog_reader.Next(&table_id, &row_id, &update_model_version,
@@ -197,18 +193,13 @@ void Server::ApplyOpLogUpdateVersion(const void *oplog, size_t oplog_size,
       break;
     }
 
-    // if we have started a new table, change the table that is being updated
-    // internally
     if (started_new_table) {
-      auto table_iter = tables_.find(table_id);
-      CHECK(table_iter != tables_.end()) << "Not found table_id = " << table_id;
-      server_table = &(table_iter->second);
+      server_table = GetServerTable(table_id);
     }
   }
 
-  VLOG(2) << "SERVER: sender_id=" << bg_thread_id
-          << ", server_id=" << server_id_ << ", time=" << GetElapsedTime()
-          << ", size=" << oplog_size;
+  VLOG(2) << "server_id=" << server_id_ << " sender_id=" << bg_thread_id
+          << ", time=" << GetElapsedTime() << ", size=" << oplog_size;
 }
 
 int32_t Server::GetMinClock() { return bg_clock_.get_min_clock(); }
