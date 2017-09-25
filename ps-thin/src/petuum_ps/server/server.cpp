@@ -147,15 +147,15 @@ void Server::ApplyOpLogUpdateVersion(const void *oplog, size_t oplog_size,
 
   int32_t table_id;
   int32_t row_id;
-  int32_t update_model_version;
+  int32_t model_version_for_update;
   const int32_t *column_ids; // the variable pointer points to const memory
   int32_t num_updates;
   bool started_new_table;
 
   // read the first few bytes of the message. It will populate the arguments.
   const void *updates =
-      oplog_reader.Next(&table_id, &row_id, &update_model_version, &column_ids,
-                        &num_updates, &started_new_table);
+      oplog_reader.Next(&table_id, &row_id, &model_version_for_update,
+                        &column_ids, &num_updates, &started_new_table);
   CHECK_EQ(started_new_table, false);
 
   ServerTable *server_table;
@@ -177,7 +177,7 @@ void Server::ApplyOpLogUpdateVersion(const void *oplog, size_t oplog_size,
                             << GetTableRowStringId(table_id, row_id);
 
     // get the next row update
-    updates = oplog_reader.Next(&table_id, &row_id, &update_model_version,
+    updates = oplog_reader.Next(&table_id, &row_id, &model_version_for_update,
                                 &column_ids, &num_updates, &started_new_table);
 
     if (updates == 0) {
