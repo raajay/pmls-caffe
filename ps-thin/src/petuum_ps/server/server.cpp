@@ -65,22 +65,13 @@ ServerRow *Server::FindCreateRow(int32_t table_id, int32_t row_id) {
 bool Server::ClockUntil(int32_t bg_id, int32_t clock) {
   int new_clock = bg_clock_.TickUntil(bg_id, clock);
   if (new_clock) {
-
-    // take snapshot of all tables if configured to. That is all is happening
-    // here. Always returns true.
     if (GlobalContext::get_snapshot_clock() <= 0 ||
         new_clock % GlobalContext::get_snapshot_clock() != 0) {
       return true;
     }
-
-    for (auto table_iter = tables_.begin(); table_iter != tables_.end();
-         table_iter++) {
-      table_iter->second.TakeSnapShot(GlobalContext::get_snapshot_dir(),
-                                      server_id_, table_iter->first, new_clock);
-    }
+      TakeSnapShot(new_clock);
     return true;
   }
-
   return false;
 }
 
@@ -209,4 +200,19 @@ int32_t Server::GetBgVersion(int32_t bg_thread_id) {
 }
 
 double Server::GetElapsedTime() { return from_start_timer_.elapsed(); }
+
+ServerTable *Server::GetServerTable(int32_t table_id) {
+  auto table_iter = tables_.find(table_id);
+  CHECK(table_iter != tables_.end()) << "Not found table_id = " << table_id;
+  return &(table_iter->second);
+}
+
+    void Server::TakeSnapShot(int32_t current_clock) {
+
+      for (auto table_iter = tables_.begin(); table_iter != tables_.end();
+           table_iter++) {
+        table_iter->second.TakeSnapShot(GlobalContext::get_snapshot_dir(),
+                                        server_id_, table_iter->first, current_clock);
+      }
+    }
 }

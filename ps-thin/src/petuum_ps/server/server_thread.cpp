@@ -214,12 +214,12 @@ void ServerThread::HandleRowRequest(int32_t sender_id,
   ReplyRowRequest(sender_id, server_row, table_id, row_id, return_clock,
                   bg_version, server_row->GetRowVersion());
 
-} // end function -- handle row request
+}
 
 void ServerThread::ReplyRowRequest(
     int32_t bg_id, ServerRow *server_row, int32_t table_id, int32_t row_id,
     int32_t client_clock, // earlier we used to return server clock
-    uint32_t bg_version, int32_t server_row_global_version) {
+    uint32_t bg_version, unsigned long server_row_global_version) {
 
   size_t row_size = server_row->SerializedSize();
 
@@ -229,7 +229,8 @@ void ServerThread::ReplyRowRequest(
   server_row_request_reply_msg.get_clock() = client_clock;
   server_row_request_reply_msg.get_version() = bg_version;
   server_row_request_reply_msg.get_global_model_version() =
-      server_row_global_version;
+          (int32_t) server_row_global_version;
+  // TODO(raajay) change the serialization to use unsigned long and remove cast
 
   row_size = server_row->Serialize(server_row_request_reply_msg.get_row_data());
   server_row_request_reply_msg.get_row_size() = row_size;
@@ -260,9 +261,9 @@ void ServerThread::HandleOpLogMsg(int32_t sender_id,
                                       client_send_oplog_msg.get_avai_size(),
                                       sender_id, version, &observed_delay);
   STATS_SERVER_ACCUM_APPLY_OPLOG_END();
-  // STATS_MLFABRIC_SERVER_RECORD_DELAY(observed_delay);
 
   // TODO add delay to the statistics
+  // STATS_MLFABRIC_SERVER_RECORD_DELAY(observed_delay);
 
   bool clock_changed = false;
   if (is_clock) {

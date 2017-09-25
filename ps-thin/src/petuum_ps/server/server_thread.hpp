@@ -53,7 +53,7 @@ protected:
 
   void ReplyRowRequest(int32_t bg_id, ServerRow *server_row, int32_t table_id,
                        int32_t row_id, int32_t server_clock, uint32_t version,
-                       int32_t global_model_version);
+                       unsigned long global_model_version);
 
   void HandleOpLogMsg(int32_t sender_id,
                       ClientSendOpLogMsg &client_send_oplog_msg);

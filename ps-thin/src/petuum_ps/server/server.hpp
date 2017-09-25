@@ -40,17 +40,14 @@ private:
            boost::unordered_map<int32_t, std::vector<ServerRowRequest>>>
       clock_bg_row_requests_;
   // Keep track of the latest oplog version received from each bg thread
-  std::map<int32_t, uint32_t> bg_version_map_;
+  std::map<int32_t, int32_t> bg_version_map_;
   int32_t server_id_;
   size_t accum_oplog_count_;
   HighResolutionTimer from_start_timer_;
   bool is_replica_;
 
-  ServerTable *GetServerTable(int32_t table_id) {
-    auto table_iter = tables_.find(table_id);
-    CHECK(table_iter != tables_.end()) << "Not found table_id = " << table_id;
-    return &(table_iter->second);
-  }
+    ServerTable *GetServerTable(int32_t table_id);
+    void TakeSnapShot(int32_t current_clock);
 
 public:
   Server();
