@@ -53,7 +53,7 @@ public:
                              sample_row_->get_update_size());
     }
 
-  } // end function -- Constructor
+  }
 
   /**
    * Destructor.
@@ -91,6 +91,14 @@ public:
     if (row_iter == storage_.end())
       return 0;
     return &(row_iter->second);
+  }
+
+  ServerRow *FindCreateRow(int32_t row_id) {
+      ServerRow *row = FindRow(row_id);
+      if(nullptr == row) {
+          return CreateRow(row_id);
+      }
+      return row;
   }
 
   /**

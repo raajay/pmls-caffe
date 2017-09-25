@@ -24,23 +24,15 @@ void Server::Init(int32_t server_id, const std::vector<int32_t> &bg_ids,
     bg_version_map_[*iter] = -1;  // the version -1 initially
   }
 
-  // we start with async version -1, it will be incremented to 0, when we init
-  // the parameters.
-  async_version_ = -1;
-
-  push_row_msg_data_size_ = kPushRowMsgSizeInit;
   server_id_ = server_id;
   accum_oplog_count_ = 0;
   is_replica_ = is_replica;
   from_start_timer_.restart();
-
-} // end function - Init
+}
 
 void Server::CreateTable(int32_t table_id, TableInfo &table_info) {
-
   // Each Server object is responsible of different parts of all tables. Thus,
   // a copy of all tables is maintained.
-
   auto ret = tables_.emplace(table_id, ServerTable(table_info));
   CHECK(ret.second);
 
@@ -51,28 +43,24 @@ void Server::CreateTable(int32_t table_id, TableInfo &table_info) {
                                     table_id,
                                     GlobalContext::get_resume_clock());
   }
+}
 
-} // end function -- Create table
-
-// Find a row indexed by table and row id. If no row exists, create a new row
-// and return.
+/**
+ * Find a row indexed by table and row id. If no row exists, create a new row
+ * and return.
+ */
 ServerRow *Server::FindCreateRow(int32_t table_id, int32_t row_id) {
   // access ServerTable via reference to avoid copying
   auto iter = tables_.find(table_id);
   CHECK(iter != tables_.end());
-  ServerTable &server_table = iter->second;
-  ServerRow *server_row = server_table.FindRow(row_id);
-  if (server_row != 0) {
-    return server_row;
-  }
-  server_row = server_table.CreateRow(row_id);
-  return server_row;
-} // end function -- Find create row
+  return iter->second.FindCreateRow(row_id);
+}
 
-// Push the vector clock for a particular bg_id to the specified value. On
-// pushing the clock of a single bg_thread, if the min_value of th vector
-// clock changes, then return true. Also, see if we have to take a snapshot.
-
+/**
+ * Push the vector clock for a particular bg_id to the specified value. On
+ * pushing the clock of a single bg_thread, if the min_value of th vector
+ * clock changes, then return true. Also, see if we have to take a snapshot.
+ */
 bool Server::ClockUntil(int32_t bg_id, int32_t clock) {
   int new_clock = bg_clock_.TickUntil(bg_id, clock);
   if (new_clock) {
@@ -93,7 +81,7 @@ bool Server::ClockUntil(int32_t bg_id, int32_t clock) {
   }
 
   return false;
-} // end function - clock until
+}
 
 // Update an internal data structure to cache all row requests. One row
 // requests are cached, they are replied to only when the clock moves on an
@@ -189,20 +177,20 @@ void Server::ApplyOpLogUpdateVersion(const void *oplog, size_t oplog_size,
 
   while (updates != 0) {
     ++accum_oplog_count_;
-    updateOplogDelay(observed_delay, update_model_version);
-    double scaling_factor = GetUpdateScalingFactor(update_model_version);
 
-    // Apply or Create and apply the row op log. This will basically
-    // increment the values at the server.
-    bool found = server_table->ApplyRowOpLog(row_id, column_ids, updates,
-                                             num_updates, scaling_factor);
+    // TODO (raajay) use delayed based scaling.
+    // 1. We have to decide if the scaling has to be determined per-row or on a
+    // table basis.
+    // double scaling_factor = GetUpdateScalingFactor(update_model_version);
+    double scaling_factor = 1.0;
 
-    if (!found) {
-      server_table->CreateRow(row_id);
-      server_table->ApplyRowOpLog(row_id, column_ids, updates, num_updates,
-                                  scaling_factor);
-    }
-    // get the next row id worth of update
+    // Apply or Create and apply the row op log. This will basically increment
+    // the values at the server.
+    server_table->FindCreateRow(row_id);
+    bool success = server_table->ApplyRowOpLog(row_id, column_ids, updates, num_updates, scaling_factor);
+    CHECK_EQ(success, true) << "Row not found. row_id=" << row_id;
+
+    // get the next row update
     updates = oplog_reader.Next(&table_id, &row_id, &update_model_version,
                                 &column_ids, &num_updates, &started_new_table);
 
@@ -219,13 +207,10 @@ void Server::ApplyOpLogUpdateVersion(const void *oplog, size_t oplog_size,
     }
   }
 
-  VLOG(2) << "Observed delay, sender_id=" << bg_thread_id
+  VLOG(2) << "SERVER: sender_id=" << bg_thread_id
           << ", server_id=" << server_id_
-          << ", server_version=" << async_version_
-          << ", delay=" << *observed_delay << ", time=" << GetElapsedTime()
+          << ", time=" << GetElapsedTime()
           << ", size=" << oplog_size;
-
-  async_version_++; // finally, increment the global version of the model
 }
 
 int32_t Server::GetMinClock() { return bg_clock_.get_min_clock(); }
