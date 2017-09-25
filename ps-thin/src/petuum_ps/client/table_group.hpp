@@ -1,8 +1,3 @@
-/*
- * table_group.hpp
- * author: jinliang
- */
-
 #pragma once
 
 #include <map>

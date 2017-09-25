@@ -123,7 +123,7 @@ public:
        long bg_idle_milli, double bandwidth_mbps,
        size_t oplog_push_upper_bound_kb, int32_t oplog_push_staleness_tolerance,
        size_t thread_oplog_batch_size, size_t server_push_row_threshold,
-       long server_idle_milli, int32_t server_row_candidate_factor) {
+       long server_idle_milli, int32_t server_row_candidate_factor, bool is_server_asynchronous) {
 
     num_comm_channels_per_client_ = num_comm_channels_per_client;
     num_total_comm_channels_ = num_comm_channels_per_client * num_clients;
@@ -150,9 +150,7 @@ public:
     server_push_row_threshold_ = server_push_row_threshold;
     server_idle_milli_ = server_idle_milli;
     server_row_candidate_factor_ = server_row_candidate_factor;
-
-    // TODO make this a configurable parameter
-    is_asynchronous_mode_ = false;
+    is_server_asynchronous_ = is_server_asynchronous;
 
     // process host map information
     for (auto host_iter = host_map.begin(); host_iter != host_map.end();
@@ -393,9 +391,8 @@ public:
 
   static long get_server_idle_milli() { return server_idle_milli_; }
 
-  static bool is_asynchronous_mode() { return is_asynchronous_mode_; }
-
-  static void set_asynchronous(bool state) { is_asynchronous_mode_ = state; }
+  // TODO(raajay) rename this to is_server_asynchronous
+  static bool is_asynchronous_mode() { return is_server_asynchronous_; }
 
   // ********* END - Functions that depend on Init()
 
@@ -470,8 +467,8 @@ private:
   static std::vector<int32_t> server_clients_;
   static std::vector<int32_t> worker_clients_;
 
-  // (Raajay) new private variables
-  static bool is_asynchronous_mode_;
+  // (raajay) new private variables
+  static bool is_server_asynchronous_;
 
 }; // class GlobalContext
 

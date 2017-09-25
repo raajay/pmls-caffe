@@ -44,7 +44,8 @@ TableGroup::TableGroup(const TableGroupConfig &table_group_config,
       table_group_config.thread_oplog_batch_size,
       table_group_config.server_push_row_threshold,
       table_group_config.server_idle_milli,
-      table_group_config.server_row_candidate_factor);
+      table_group_config.server_row_candidate_factor,
+      table_group_config.is_asynchronous_mode);
 
   CommBus *comm_bus =
       new CommBus(local_id_min, local_id_max, num_total_clients, 6);

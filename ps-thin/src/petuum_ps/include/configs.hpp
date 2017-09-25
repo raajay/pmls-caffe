@@ -120,6 +120,11 @@ struct TableGroupConfig {
   ConsistencyModel consistency_model;
 
   /**
+   * Is the server synchronous or asynchronous?
+   */
+  bool is_asynchronous_mode;
+
+  /**
    * Determines the wait time on polling?
    */
   int32_t aggressive_cpu;

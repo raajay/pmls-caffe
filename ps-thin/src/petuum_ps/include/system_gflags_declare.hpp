@@ -18,6 +18,8 @@ DECLARE_int32(client_id);
 DECLARE_int32(num_app_threads);
 
 DECLARE_string(consistency_model);
+DECLARE_bool(is_asynchronous_mode);
+
 DECLARE_uint64(bandwidth_mbps);
 DECLARE_uint64(bg_idle_milli);
 DECLARE_uint64(oplog_push_upper_bound_kb);
