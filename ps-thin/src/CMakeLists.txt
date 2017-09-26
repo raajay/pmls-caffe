@@ -3,6 +3,7 @@ set(Bosen_SOURCE_FILES ${Bosen_SOURCE_FILES} PARENT_SCOPE)
 
 # uncomment to enable HDFS.
 set(USE_HDFS 0)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DPETUUM_STATS")
 
 # Required libraries
 find_package(Boost 1.54.0 REQUIRED COMPONENTS thread system)

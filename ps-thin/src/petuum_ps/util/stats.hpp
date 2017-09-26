@@ -13,33 +13,13 @@
 #include <iostream>
 #include <yaml-cpp/yaml.h>
 
-#ifdef PETUUM_STATS
+#ifndef PETUUM_STATS
 
 #define STATS_INIT(table_group_config) Stats::Init(table_group_config)
 
 #define STATS_REGISTER_THREAD(thread_type) Stats::RegisterThread(thread_type)
 
 #define STATS_DEREGISTER_THREAD() Stats::DeregisterThread()
-
-#define STATS_APP_LOAD_DATA_BEGIN() petuum::Stats::AppLoadDataBegin()
-
-#define STATS_APP_LOAD_DATA_END() petuum::Stats::AppLoadDataEnd()
-
-#define STATS_APP_INIT_BEGIN() petuum::Stats::AppInitBegin()
-
-#define STATS_APP_INIT_END() petuum::Stats::AppInitEnd()
-
-#define STATS_APP_BOOTSTRAP_BEGIN() petuum::Stats::AppBootstrapBegin()
-
-#define STATS_APP_BOOTSTRAP_END() petuum::Stats::AppBootstrapEnd()
-
-#define STATS_APP_ACCUM_COMP_BEGIN() petuum::Stats::AppAccumCompBegin()
-
-#define STATS_APP_ACCUM_COMP_END() petuum::Stats::AppAccumCompEnd()
-
-#define STATS_APP_ACCUM_OBJ_COMP_BEGIN() petuum::Stats::AppAccumObjCompBegin()
-
-#define STATS_APP_ACCUM_OBJ_COMP_END() petuum::Stats::AppAccumObjCompEnd()
 
 #define STATS_APP_ACCUM_TG_CLOCK_BEGIN() Stats::AppAccumTgClockBegin()
 
@@ -50,12 +30,6 @@
 
 #define STATS_APP_SAMPLE_SSP_GET_END(table_id, hit)                            \
   Stats::AppSampleSSPGetEnd(table_id, hit)
-
-#define STATS_APP_ACCUM_SSPPUSH_GET_COMM_BLOCK_BEGIN(table_id)                 \
-  Stats::AppAccumSSPPushGetCommBlockBegin(table_id)
-
-#define STATS_APP_ACCUM_SSPPUSH_GET_COMM_BLOCK_END(table_id)                   \
-  Stats::AppAccumSSPPushGetCommBlockEnd(table_id)
 
 #define STATS_APP_ACCUM_SSP_GET_SERVER_FETCH_BEGIN(table_id)                   \
   Stats::AppAccumSSPGetServerFetchBegin(table_id)
@@ -85,43 +59,11 @@
 #define STATS_APP_SAMPLE_BATCH_INC_PROCESS_STORAGE_END()                       \
   Stats::AppSampleBatchIncProcessStorageEnd()
 
-#define STATS_APP_SAMPLE_THREAD_GET_BEGIN(table_id)                            \
-  Stats::AppSampleThreadGetBegin(table_id)
-
-#define STATS_APP_SAMPLE_THREAD_GET_END(table_id)                              \
-  Stats::AppSampleThreadGetEnd(table_id)
-
-#define STATS_APP_SAMPLE_THREAD_INC_BEGIN(table_id)                            \
-  Stats::AppSampleThreadIncBegin(table_id)
-
-#define STATS_APP_SAMPLE_THREAD_INC_END(table_id)                              \
-  Stats::AppSampleThreadIncEnd(table_id)
-
-#define STATS_APP_SAMPLE_THREAD_BATCH_INC_BEGIN(table_id)                      \
-  Stats::AppSampleThreadBatchIncBegin(table_id)
-
-#define STATS_APP_SAMPLE_THREAD_BATCH_INC_END(table_id)                        \
-  Stats::AppSampleThreadBatchIncEnd(table_id)
-
 #define STATS_APP_SAMPLE_CLOCK_BEGIN(table_id)                                 \
   Stats::AppSampleTableClockBegin(table_id)
 
 #define STATS_APP_SAMPLE_CLOCK_END(table_id)                                   \
   Stats::AppSampleTableClockEnd(table_id)
-
-#define STATS_SET_APP_DEFINED_ACCUM_SEC_NAME(name)                             \
-  petuum::Stats::SetAppDefinedAccumSecName(name)
-
-#define STATS_APP_DEFINED_ACCUM_SEC_BEGIN()                                    \
-  petuum::Stats::AppDefinedAccumSecBegin()
-
-#define STATS_APP_DEFINED_ACCUM_SEC_END() petuum::Stats::AppDefinedAccumSecEnd()
-
-#define STATS_SET_APP_DEFINED_ACCUM_VAL_NAME(name)                             \
-  petuum::Stats::SetAppDefinedAccumValName(name)
-
-#define STATS_APP_DEFINED_ACCUM_VAL_INC(delta)                                 \
-  petuum::Stats::AppDefinedAccumValInc(delta)
 
 #define STATS_APP_ACCUM_APPEND_ONLY_FLUSH_OPLOG_BEGIN()                        \
   petuum::Stats::AppAccumAppendOnlyFlushOpLogBegin()
@@ -129,87 +71,22 @@
 #define STATS_APP_ACCUM_APPEND_ONLY_FLUSH_OPLOG_END()                          \
   petuum::Stats::AppAccumAppendOnlyFlushOpLogEnd()
 
-#define STATS_SET_APP_DEFINED_VEC_NAME(name)                                   \
-  petuum::Stats::SetAppDefinedVecName(name)
-
-#define STATS_APPEND_APP_DEFINED_VEC(val)                                      \
-  petuum::Stats::AppendAppDefinedVec(val)
-
-#define STATS_BG_ACCUM_OPLOG_SERIALIZE_BEGIN()                                 \
-  Stats::BgAccumOpLogSerializeBegin()
-
-#define STATS_BG_ACCUM_OPLOG_SERIALIZE_END() Stats::BgAccumOpLogSerializeEnd()
-
 #define STATS_BG_ACCUM_CLOCK_END_OPLOG_SERIALIZE_BEGIN()                       \
   Stats::BgAccumClockEndOpLogSerializeBegin()
 
 #define STATS_BG_ACCUM_CLOCK_END_OPLOG_SERIALIZE_END()                         \
   Stats::BgAccumClockEndOpLogSerializeEnd()
 
-#define STATS_BG_ACCUM_SERVER_PUSH_ROW_APPLY_BEGIN()                           \
-  Stats::BgAccumServerPushRowApplyBegin()
-
-#define STATS_BG_ACCUM_SERVER_PUSH_ROW_APPLY_END()                             \
-  Stats::BgAccumServerPushRowApplyEnd()
-
 #define STATS_BG_CLOCK() Stats::BgClock()
 
 #define STATS_BG_ADD_PER_CLOCK_OPLOG_SIZE(oplog_size)                          \
   Stats::BgAddPerClockOpLogSize(oplog_size)
-
-#define STATS_BG_ADD_PER_CLOCK_SERVER_PUSH_ROW_SIZE(server_push_row_size)      \
-  Stats::BgAddPerClockServerPushRowSize(server_push_row_size)
-
-#define STATS_BG_IDLE_INVOKE_INC_ONE() Stats::BgIdleInvokeIncOne()
-
-#define STATS_BG_IDLE_SEND_INC_ONE() Stats::BgIdleSendIncOne()
-
-#define STATS_BG_ACCUM_PUSH_ROW_MSG_RECEIVED_INC_ONE()                         \
-  Stats::BgAccumPushRowMsgReceivedIncOne()
-
-#define STATS_BG_ACCUM_IDLE_SEND_BEGIN() Stats::BgAccumIdleSendBegin()
-
-#define STATS_BG_ACCUM_IDLE_SEND_END() Stats::BgAccumIdleSendEnd()
-
-#define STATS_BG_ACCUM_IDLE_OPLOG_SENT_BYTES(num_bytes)                        \
-  Stats::BgAccumIdleOpLogSentBytes(num_bytes)
-
-#define STATS_BG_ACCUM_SERVER_PUSH_OPLOG_ROW_APPLIED_ADD_ONE()                 \
-  Stats::BgAccumServerPushOpLogRowAppliedAddOne()
-
-#define STATS_BG_ACCUM_SERVER_PUSH_UPDATE_APPLIED_ADD_ONE()                    \
-  Stats::BgAccumServerPushUpdateAppliedAddOne()
-
-#define STATS_BG_ACCUM_SERVER_PUSH_VERSION_DIFF_ADD(diff)                      \
-  Stats::BgAccumServerPushVersionDiffAdd(diff)
-
-#define STATS_BG_SAMPLE_PROCESS_CACHE_INSERT_BEGIN()                           \
-  Stats::BgSampleProcessCacheInsertBegin()
-
-#define STATS_BG_SAMPLE_PROCESS_CACHE_INSERT_END()                             \
-  Stats::BgSampleProcessCacheInsertEnd()
-
-#define STATS_BG_SAMPLE_SERVER_PUSH_DESERIALIZE_BEGIN()                        \
-  Stats::BgSampleServerPushDeserializeBegin()
-
-#define STATS_BG_SAMPLE_SERVER_PUSH_DESERIALIZE_END()                          \
-  Stats::BgSampleServerPushDeserializeEnd()
-
-#define STATS_BG_ACCUM_HANDLE_APPEND_OPLOG_BEGIN()                             \
-  Stats::BgAccumHandleAppendOpLogBegin()
-
-#define STATS_BG_ACCUM_HANDLE_APPEND_OPLOG_END()                               \
-  Stats::BgAccumHandleAppendOpLogEnd()
 
 #define STATS_BG_APPEND_ONLY_CREATE_ROW_OPLOG_INC()                            \
   Stats::BgAppendOnlyCreateRowOpLogInc()
 
 #define STATS_BG_APPEND_ONLY_RECYCLE_ROW_OPLOG_INC()                           \
   Stats::BgAppendOnlyRecycleRowOpLogInc()
-
-#define STATS_SERVER_ACCUM_PUSH_ROW_BEGIN() Stats::ServerAccumPushRowBegin()
-
-#define STATS_SERVER_ACCUM_PUSH_ROW_END() Stats::ServerAccumPushRowEnd()
 
 #define STATS_SERVER_ACCUM_APPLY_OPLOG_BEGIN()                                 \
   Stats::ServerAccumApplyOpLogBegin()
@@ -221,13 +98,7 @@
 #define STATS_SERVER_ADD_PER_CLOCK_OPLOG_SIZE(oplog_size)                      \
   Stats::ServerAddPerClockOpLogSize(oplog_size)
 
-#define STATS_SERVER_ADD_PER_CLOCK_PUSH_ROW_SIZE(push_row_size)                \
-  Stats::ServerAddPerClockPushRowSize(push_row_size)
-
 #define STATS_SERVER_OPLOG_MSG_RECV_INC_ONE() Stats::ServerOpLogMsgRecvIncOne();
-
-#define STATS_SERVER_PUSH_ROW_MSG_SEND_INC_ONE()                               \
-  Stats::ServerPushRowMsgSendIncOne()
 
 #define STATS_PRINT() petuum::Stats::PrintStats()
 
@@ -247,24 +118,10 @@
 #define STATS_INIT(table_group_config) ((void)0)
 #define STATS_REGISTER_THREAD(thread_type) ((void)0)
 #define STATS_DEREGISTER_THREAD() ((void)0)
-#define STATS_APP_LOAD_DATA_BEGIN() ((void)0)
-#define STATS_APP_LOAD_DATA_END() ((void)0)
-#define STATS_APP_INIT_BEGIN() ((void)0)
-#define STATS_APP_INIT_END() ((void)0)
-#define STATS_APP_BOOTSTRAP_BEGIN() ((void)0)
-#define STATS_APP_BOOTSTRAP_END() ((void)0)
-#define STATS_APP_ACCUM_COMP_BEGIN() ((void)0)
-#define STATS_APP_ACCUM_COMP_END() ((void)0)
-#define STATS_APP_ACCUM_OBJ_COMP_BEGIN() ((void)0)
-#define STATS_APP_ACCUM_OBJ_COMP_END() ((void)0)
 #define STATS_APP_ACCUM_TG_CLOCK_BEGIN() ((void)0)
 #define STATS_APP_ACCUM_TG_CLOCK_END() ((void)0)
 #define STATS_APP_SAMPLE_SSP_GET_BEGIN(table_id) ((void)0)
 #define STATS_APP_SAMPLE_SSP_GET_END(table_id, hit) ((void)0)
-
-#define STATS_APP_ACCUM_SSPPUSH_GET_COMM_BLOCK_BEGIN(table_id) ((void)0)
-
-#define STATS_APP_ACCUM_SSPPUSH_GET_COMM_BLOCK_END(table_id) ((void)0)
 
 #define STATS_APP_ACCUM_SSP_GET_SERVER_FETCH_BEGIN(table_id) ((void)0)
 #define STATS_APP_ACCUM_SSP_GET_SERVER_FETCH_END(table_id) ((void)0)
@@ -276,68 +133,25 @@
 #define STATS_APP_SAMPLE_BATCH_INC_OPLOG_END() ((void)0)
 #define STATS_APP_SAMPLE_BATCH_INC_PROCESS_STORAGE_BEGIN() ((void)0)
 #define STATS_APP_SAMPLE_BATCH_INC_PROCESS_STORAGE_END() ((void)0)
-#define STATS_APP_SAMPLE_THREAD_GET_BEGIN(table_id) ((void)0)
-#define STATS_APP_SAMPLE_THREAD_GET_END(table_id) ((void)0)
-#define STATS_APP_SAMPLE_THREAD_INC_BEGIN(table_id) ((void)0)
-#define STATS_APP_SAMPLE_THREAD_INC_END(table_id) ((void)0)
-#define STATS_APP_SAMPLE_THREAD_BATCH_INC_BEGIN(table_id) ((void)0)
-#define STATS_APP_SAMPLE_THREAD_BATCH_INC_END(table_id) ((void)0)
 #define STATS_APP_SAMPLE_CLOCK_BEGIN(table_id) ((void)0)
 #define STATS_APP_SAMPLE_CLOCK_END(table_id) ((void)0)
-
-#define STATS_SET_APP_DEFINED_ACCUM_SEC_NAME(name) ((void)0)
-#define STATS_APP_DEFINED_ACCUM_SEC_BEGIN() ((void)0)
-#define STATS_APP_DEFINED_ACCUM_SEC_END() ((void)0)
-
-#define STATS_SET_APP_DEFINED_ACCUM_VAL_NAME(name) ((void)0)
-#define STATS_APP_DEFINED_ACCUM_VAL_INC(delta) ((void)0)
 
 #define STATS_APP_ACCUM_APPEND_ONLY_FLUSH_OPLOG_BEGIN() ((void)0)
 #define STATS_APP_ACCUM_APPEND_ONLY_FLUSH_OPLOG_END() ((void)0)
 
-#define STATS_SET_APP_DEFINED_VEC_NAME(name) ((void)0)
-#define STATS_APPEND_APP_DEFINED_VEC(val) ((void)0)
-
-#define STATS_BG_ACCUM_OPLOG_SERIALIZE_BEGIN() ((void)0)
-#define STATS_BG_ACCUM_OPLOG_SERIALIZE_END() ((void)0)
 #define STATS_BG_ACCUM_CLOCK_END_OPLOG_SERIALIZE_BEGIN() ((void)0)
 #define STATS_BG_ACCUM_CLOCK_END_OPLOG_SERIALIZE_END() ((void)0)
-#define STATS_BG_ACCUM_SERVER_PUSH_ROW_APPLY_BEGIN() ((void)0)
-#define STATS_BG_ACCUM_SERVER_PUSH_ROW_APPLY_END() ((void)0)
 #define STATS_BG_CLOCK() ((void)0)
 #define STATS_BG_ADD_PER_CLOCK_OPLOG_SIZE(oplog_size) ((void)0)
-#define STATS_BG_ADD_PER_CLOCK_SERVER_PUSH_ROW_SIZE(server_push_row_size)      \
-  ((void)0)
 
-#define STATS_BG_ACCUM_SERVER_PUSH_OPLOG_ROW_APPLIED_ADD_ONE() ((void)0)
-#define STATS_BG_ACCUM_SERVER_PUSH_UPDATE_APPLIED_ADD_ONE() ((void)0)
-#define STATS_BG_ACCUM_SERVER_PUSH_VERSION_DIFF_ADD(diff) ((void)0)
-#define STATS_BG_SAMPLE_PROCESS_CACHE_INSERT_BEGIN() ((void)0)
-#define STATS_BG_SAMPLE_PROCESS_CACHE_INSERT_END() ((void)0)
-#define STATS_BG_SAMPLE_SERVER_PUSH_DESERIALIZE_BEGIN() ((void)0)
-#define STATS_BG_SAMPLE_SERVER_PUSH_DESERIALIZE_END() ((void)0)
-
-#define STATS_BG_IDLE_INVOKE_INC_ONE() ((void)0)
-#define STATS_BG_IDLE_SEND_INC_ONE() ((void)0)
-#define STATS_BG_ACCUM_PUSH_ROW_MSG_RECEIVED_INC_ONE() ((void)0)
-#define STATS_BG_ACCUM_IDLE_SEND_BEGIN() ((void)0)
-#define STATS_BG_ACCUM_IDLE_SEND_END() ((void)0)
-#define STATS_BG_ACCUM_IDLE_OPLOG_SENT_BYTES(num_bytes) ((void)0)
-
-#define STATS_BG_ACCUM_HANDLE_APPEND_OPLOG_BEGIN() ((void)0)
-#define STATS_BG_ACCUM_HANDLE_APPEND_OPLOG_END() ((void)0)
 #define STATS_BG_APPEND_ONLY_CREATE_ROW_OPLOG_INC() ((void)0)
 #define STATS_BG_APPEND_ONLY_RECYCLE_ROW_OPLOG_INC() ((void)0)
 
-#define STATS_SERVER_ACCUM_PUSH_ROW_BEGIN() ((void)0)
-#define STATS_SERVER_ACCUM_PUSH_ROW_END() ((void)0)
 #define STATS_SERVER_ACCUM_APPLY_OPLOG_BEGIN() ((void)0)
 #define STATS_SERVER_ACCUM_APPLY_OPLOG_END() ((void)0)
 #define STATS_SERVER_CLOCK() ((void)0)
 #define STATS_SERVER_ADD_PER_CLOCK_OPLOG_SIZE(oplog_size) ((void)0)
-#define STATS_SERVER_ADD_PER_CLOCK_PUSH_ROW_SIZE(push_row_size) ((void)0)
 #define STATS_SERVER_OPLOG_MSG_RECV_INC_ONE() ((void)0)
-#define STATS_SERVER_PUSH_ROW_MSG_SEND_INC_ONE() ((void)0)
 
 #define STATS_PRINT() petuum::Stats::DummyPrintStats()
 
@@ -362,13 +176,7 @@ struct AppThreadPerTableStats {
   HighResolutionTimer inc_timer;
   HighResolutionTimer batch_inc_timer;
 
-  HighResolutionTimer thread_get_timer;
-  HighResolutionTimer thread_inc_timer;
-  HighResolutionTimer thread_batch_inc_timer;
-
   HighResolutionTimer clock_timer;
-
-  HighResolutionTimer ssppush_get_comm_block_timer;
 
   HighResolutionTimer ssp_get_server_fetch_timer;
 
@@ -423,12 +231,6 @@ struct AppThreadPerTableStats {
 struct AppThreadStats {
   // Application timers:
   HighResolutionTimer thread_life_timer;
-  HighResolutionTimer load_data_timer;
-  HighResolutionTimer init_timer;
-  HighResolutionTimer bootstrap_timer;
-  HighResolutionTimer comp_timer;
-  HighResolutionTimer obj_comp_timer;
-
   // System timers:
   HighResolutionTimer tg_clock_timer; // tg = table group
   HighResolutionTimer batch_inc_oplog_timer;
@@ -452,7 +254,6 @@ struct AppThreadStats {
   double accum_sample_batch_inc_process_storage_sec;
 
   double app_defined_accum_sec;
-  HighResolutionTimer app_defined_accum_timer;
 
   double app_defined_accum_val;
 
@@ -477,8 +278,6 @@ struct BgThreadStats {
   double accum_clock_end_oplog_serialize_sec;
   double accum_total_oplog_serialize_sec;
 
-  HighResolutionTimer server_push_row_apply_timer;
-
   double accum_server_push_row_apply_sec;
 
   double accum_oplog_sent_kb;
@@ -493,7 +292,6 @@ struct BgThreadStats {
   size_t num_process_cache_insert;
   size_t num_process_cache_insert_sampled;
 
-  HighResolutionTimer server_push_deserialize_timer;
   double sample_server_push_deserialize_sec;
   size_t num_server_push_deserialize;
   size_t num_server_push_deserialize_sampled;
@@ -510,9 +308,6 @@ struct BgThreadStats {
 
   size_t accum_idle_send_bytes;
 
-  HighResolutionTimer idle_send_timer;
-
-  HighResolutionTimer handle_append_oplog_timer;
   double accum_handle_append_oplog_sec;
   size_t num_append_oplog_buff_handled;
 
@@ -556,7 +351,6 @@ struct BgThreadStats {
 
 struct ServerThreadStats {
   HighResolutionTimer apply_oplog_timer;
-  HighResolutionTimer push_row_timer;
 
   double accum_apply_oplog_sec;
   double accum_push_row_sec;
@@ -591,31 +385,12 @@ public:
 
   static void RegisterThread(ThreadType thread_type);
   static void DeregisterThread();
-  static void SynchronizeThreadStatistics();
-
-  static void AppLoadDataBegin();
-  static void AppLoadDataEnd();
-
-  static void AppInitBegin();
-  static void AppInitEnd();
-
-  static void AppBootstrapBegin();
-  static void AppBootstrapEnd();
-
-  static void AppAccumCompBegin();
-  static void AppAccumCompEnd();
-
-  static void AppAccumObjCompBegin();
-  static void AppAccumObjCompEnd();
 
   static void AppAccumTgClockBegin();
   static void AppAccumTgClockEnd();
 
   static void AppSampleSSPGetBegin(int32_t table_id);
   static void AppSampleSSPGetEnd(int32_t table_id, bool hit);
-
-  static void AppAccumSSPPushGetCommBlockBegin(int32_t table_id);
-  static void AppAccumSSPPushGetCommBlockEnd(int32_t table_id);
 
   static void AppAccumSSPGetServerFetchBegin(int32_t table_id);
   static void AppAccumSSPGetServerFetchEnd(int32_t table_id);
@@ -632,81 +407,31 @@ public:
   static void AppSampleBatchIncProcessStorageBegin();
   static void AppSampleBatchIncProcessStorageEnd();
 
-  static void AppSampleThreadGetBegin(int32_t table_id);
-  static void AppSampleThreadGetEnd(int32_t table_id);
-
-  static void AppSampleThreadIncBegin(int32_t table_id);
-  static void AppSampleThreadIncEnd(int32_t table_id);
-
-  static void AppSampleThreadBatchIncBegin(int32_t table_id);
-  static void AppSampleThreadBatchIncEnd(int32_t table_id);
-
   static void AppSampleTableClockBegin(int32_t table_id);
   static void AppSampleTableClockEnd(int32_t table_id);
-
-  static void AppDefinedAccumSecBegin();
-  static void AppDefinedAccumSecEnd();
 
   static void AppAccumAppendOnlyFlushOpLogBegin();
   static void AppAccumAppendOnlyFlushOpLogEnd();
 
-  // the following funcitons are not thread safe
-  static void SetAppDefinedAccumSecName(const std::string &name);
-
-  static void SetAppDefinedVecName(const std::string &name);
-  static void AppendAppDefinedVec(double val);
-
-  static void SetAppDefinedAccumValName(const std::string &name);
-  static void AppDefinedAccumValInc(double delta);
-
+  // the following functions are not thread safe
   static void BgAccumOpLogSerializeBegin();
   static void BgAccumOpLogSerializeEnd();
 
   static void BgAccumClockEndOpLogSerializeBegin();
   static void BgAccumClockEndOpLogSerializeEnd();
 
-  static void BgAccumServerPushRowApplyBegin();
-  static void BgAccumServerPushRowApplyEnd();
-
-  static void BgAccumServerPushOpLogRowAppliedAddOne();
-  static void BgAccumServerPushUpdateAppliedAddOne();
-  static void BgAccumServerPushVersionDiffAdd(size_t diff);
-
   static void BgSampleProcessCacheInsertBegin();
   static void BgSampleProcessCacheInsertEnd();
 
-  static void BgSampleServerPushDeserializeBegin();
-  static void BgSampleServerPushDeserializeEnd();
-
   static void BgClock();
   static void BgAddPerClockOpLogSize(size_t oplog_size);
-  static void BgAddPerClockServerPushRowSize(size_t server_push_row_size);
-
-  static void BgIdleInvokeIncOne();
-  static void BgIdleSendIncOne();
-  static void BgAccumPushRowMsgReceivedIncOne();
-  static void BgAccumIdleSendBegin();
-  static void BgAccumIdleSendEnd();
-  static void BgAccumIdleOpLogSentBytes(size_t num_bytes);
-
-  static void BgAccumHandleAppendOpLogBegin();
-  static void BgAccumHandleAppendOpLogEnd();
-
-  static void BgAppendOnlyCreateRowOpLogInc();
-  static void BgAppendOnlyRecycleRowOpLogInc();
-
-  static void ServerAccumPushRowBegin();
-  static void ServerAccumPushRowEnd();
-
   static void ServerAccumApplyOpLogBegin();
   static void ServerAccumApplyOpLogEnd();
 
   static void ServerClock();
   static void ServerAddPerClockOpLogSize(size_t oplog_size);
-  static void ServerAddPerClockPushRowSize(size_t push_row_size);
 
   static void ServerOpLogMsgRecvIncOne();
-  static void ServerPushRowMsgSendIncOne();
 
   static void PrintStats();
   static void DummyPrintStats();
@@ -721,8 +446,6 @@ private:
   static void DeregisterBgThread();
   static void DeregisterServerThread();
 
-  static void SynchronizeAppThreadStatistics();
-
   template <typename T>
   static void YamlPrintSequence(YAML::Emitter *yaml_out,
                                 const std::vector<T> &sequence);
@@ -734,12 +457,7 @@ private:
   static const int32_t kBatchIncProcessStorageSampleFreq = 10000;
   static const int32_t kClockSampleFreq = 1;
 
-  static const int32_t kThreadGetSampleFreq = 10000;
-  static const int32_t kThreadIncSampleFreq = 10000;
-  static const int32_t kThreadBatchIncSampleFreq = 10000;
-
   static const int32_t kProcessCacheInsertSampleFreq = 1000;
-  static const int32_t kServerPushDeserializeSampleFreq = 1000;
 
   // assuming I have received all server pushed message after this number
   // of Get()s.
@@ -850,4 +568,4 @@ private:
 // when compiling the application.
 void PrintStatsWrapper();
 
-} // namespace petuum
+}
