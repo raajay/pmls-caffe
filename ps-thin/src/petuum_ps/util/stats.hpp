@@ -82,12 +82,6 @@
 #define STATS_BG_ADD_PER_CLOCK_OPLOG_SIZE(oplog_size)                          \
   Stats::BgAddPerClockOpLogSize(oplog_size)
 
-#define STATS_BG_APPEND_ONLY_CREATE_ROW_OPLOG_INC()                            \
-  Stats::BgAppendOnlyCreateRowOpLogInc()
-
-#define STATS_BG_APPEND_ONLY_RECYCLE_ROW_OPLOG_INC()                           \
-  Stats::BgAppendOnlyRecycleRowOpLogInc()
-
 #define STATS_SERVER_ACCUM_APPLY_OPLOG_BEGIN()                                 \
   Stats::ServerAccumApplyOpLogBegin()
 
@@ -143,9 +137,6 @@
 #define STATS_BG_ACCUM_CLOCK_END_OPLOG_SERIALIZE_END() ((void)0)
 #define STATS_BG_CLOCK() ((void)0)
 #define STATS_BG_ADD_PER_CLOCK_OPLOG_SIZE(oplog_size) ((void)0)
-
-#define STATS_BG_APPEND_ONLY_CREATE_ROW_OPLOG_INC() ((void)0)
-#define STATS_BG_APPEND_ONLY_RECYCLE_ROW_OPLOG_INC() ((void)0)
 
 #define STATS_SERVER_ACCUM_APPLY_OPLOG_BEGIN() ((void)0)
 #define STATS_SERVER_ACCUM_APPLY_OPLOG_END() ((void)0)

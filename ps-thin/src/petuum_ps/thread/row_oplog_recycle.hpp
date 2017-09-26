@@ -34,12 +34,10 @@ public:
 
   AbstractRowOpLog *GetRowOpLog() {
     if (row_oplog_pool_.empty()) {
-      STATS_BG_APPEND_ONLY_CREATE_ROW_OPLOG_INC();
       return CreateRowOpLog_(update_size_, sample_row_,
                              dense_row_oplog_capacity_);
     }
 
-    STATS_BG_APPEND_ONLY_RECYCLE_ROW_OPLOG_INC();
     AbstractRowOpLog *row_oplog = row_oplog_pool_.front();
     row_oplog_pool_.pop();
     return row_oplog;
