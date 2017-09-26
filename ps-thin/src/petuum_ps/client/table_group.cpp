@@ -155,9 +155,8 @@ int32_t TableGroup::RegisterThread() {
 
   vector_clock_.AddClock(thread_id, 0);
 
-  for (auto table_iter = tables_.cbegin(); table_iter != tables_.cend();
-       table_iter++) {
-    table_iter->second->RegisterThread();
+  for (const auto &table : tables_) {
+    table.second->RegisterThread();
   }
 
   pthread_barrier_wait(&register_barrier_);
@@ -167,6 +166,7 @@ int32_t TableGroup::RegisterThread() {
 int32_t TableGroup::RegisterCaffeSyncThread(int32_t thread_offset) {
   CHECK_EQ(true, GlobalContext::am_i_worker_client())
       << "Only (application threads on) worker clients can create tables.";
+  STATS_REGISTER_THREAD(kAppThread);
   ++num_ephemeral_threads_registered_;
   int ephemeral_thread_id =
       GlobalContext::get_head_ephemeral_thread_id() + thread_offset;
@@ -203,6 +203,7 @@ void TableGroup::DeregisterCaffeSyncThread() {
   int remaining_threads = --num_ephemeral_threads_registered_;
   CHECK_GE(remaining_threads, 0)
       << "Number of ephemeral threads is less than zero";
+  STATS_DEREGISTER_THREAD();
 }
 
 // this is just a wrapper over aggressive or conservative clock.

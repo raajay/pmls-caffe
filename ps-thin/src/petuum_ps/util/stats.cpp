@@ -190,12 +190,10 @@ void Stats::DeregisterAppThread() {
 
   double my_accum_comm_block_sec = 0.0;
 
-  for (auto table_stats_iter = app_thread_stats_->table_stats.begin();
-       table_stats_iter != app_thread_stats_->table_stats.end();
-       table_stats_iter++) {
+  for (auto &table_stat : app_thread_stats_->table_stats) {
 
-    int32_t table_id = table_stats_iter->first;
-    AppThreadPerTableStats &thread_table_stats = table_stats_iter->second;
+    int32_t table_id = table_stat.first;
+    AppThreadPerTableStats &thread_table_stats = table_stat.second;
 
     table_stats_[table_id].num_get += thread_table_stats.num_get;
 
