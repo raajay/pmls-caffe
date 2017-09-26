@@ -13,7 +13,7 @@
 #include <iostream>
 #include <yaml-cpp/yaml.h>
 
-#ifndef PETUUM_STATS
+#ifdef PETUUM_STATS
 
 #define STATS_INIT(table_group_config) Stats::Init(table_group_config)
 
