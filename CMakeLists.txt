@@ -31,6 +31,7 @@ include(cmake/ConfigGen.cmake)
 
 # ---[ Options
 set(PS_VERSION "ps-thin" CACHE STRING "The type of Parameter Server to use")
+option(PS_STATS "Print stats from parameter server" OFF)
 caffe_option(CPU_ONLY  "Build Caffe without CUDA support" ON) # TODO: rename to USE_CUDA
 caffe_option(USE_CUDNN "Build Caffe with cuDNN library support" ON IF NOT CPU_ONLY)
 caffe_option(USE_NCCL "Build Caffe with NCCL library support" OFF)
