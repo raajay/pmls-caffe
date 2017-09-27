@@ -102,8 +102,8 @@ TableGroup::~TableGroup() {
   GlobalContext::comm_bus->ThreadDeregister();
   delete GlobalContext::comm_bus;
 
-  for (auto iter = tables_.begin(); iter != tables_.end(); iter++) {
-    delete iter->second;
+  for (auto &table : tables_) {
+    delete table.second;
   }
 
   STATS_DEREGISTER_THREAD();
