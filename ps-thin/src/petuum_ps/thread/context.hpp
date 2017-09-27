@@ -123,7 +123,8 @@ public:
        long bg_idle_milli, double bandwidth_mbps,
        size_t oplog_push_upper_bound_kb, int32_t oplog_push_staleness_tolerance,
        size_t thread_oplog_batch_size, size_t server_push_row_threshold,
-       long server_idle_milli, int32_t server_row_candidate_factor, bool is_server_asynchronous) {
+       long server_idle_milli, int32_t server_row_candidate_factor,
+       bool is_server_asynchronous) {
 
     num_comm_channels_per_client_ = num_comm_channels_per_client;
     num_total_comm_channels_ = num_comm_channels_per_client * num_clients;

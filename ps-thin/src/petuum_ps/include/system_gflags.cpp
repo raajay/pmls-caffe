@@ -17,7 +17,7 @@ DEFINE_int32(num_app_threads, 1, "Number of app threads in this client");
 // Execution Configs
 DEFINE_string(consistency_model, "SSP", "SSP");
 DEFINE_bool(is_asynchronous_mode, false,
-        "Indicate if the server should respond to pull asynchronously.");
+            "Indicate if the server should respond to pull asynchronously.");
 
 // SSPAggr Configs -- client side
 DEFINE_uint64(bandwidth_mbps, 40, "per-thread bandwidth limit, in mbps");

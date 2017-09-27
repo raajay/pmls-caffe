@@ -558,5 +558,4 @@ private:
 // If we have to use the macro then, the appropriate flags have to be defined
 // when compiling the application.
 void PrintStatsWrapper();
-
 }
