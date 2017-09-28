@@ -77,7 +77,7 @@ private:
   static void MergeRowOpLogMetaNoOp(RowOpLogMeta *row_oplog_meta,
                                     const RowOpLogMeta &to_merge);
 
-  boost::unordered_map<int32_t, RowOpLogMeta *> oplog_map_;
+  boost::unordered::unordered_map<int32_t, RowOpLogMeta *> oplog_map_;
   std::list<std::pair<int32_t, RowOpLogMeta *>> oplog_list_;
 
   const AbstractRow *sample_row_;

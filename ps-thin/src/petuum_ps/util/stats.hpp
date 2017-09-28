@@ -6,8 +6,8 @@
 #include <boost/thread/tss.hpp>
 #include <boost/unordered_map.hpp>
 #include <vector>
-#include <stdint.h>
-#include <stddef.h>
+#include <cstdint>
+#include <cstddef>
 #include <string>
 #include <mutex>
 #include <iostream>
@@ -227,7 +227,8 @@ struct AppThreadStats {
   HighResolutionTimer batch_inc_oplog_timer;
   HighResolutionTimer batch_inc_process_storage_timer;
 
-  boost::unordered_map<int32_t, AppThreadPerTableStats> table_stats;
+    //boost::unordered::unordered_map<int32_t, AppThreadPerTableStats> table_stats;
+  boost::unordered::unordered_map<int32_t, AppThreadPerTableStats> table_stats;
 
   double load_data_sec;
   double init_sec;
@@ -308,14 +309,14 @@ struct BgThreadStats {
   // MLfabric stats storage
 
   // indexed server_id, version_id
-  boost::unordered_map<int32_t,
-                       boost::unordered_map<int32_t, HighResolutionTimer *>>
+  boost::unordered::unordered_map<int32_t,
+                       boost::unordered::unordered_map<int32_t, HighResolutionTimer *>>
       mlfabric_client_push_timers;
-  boost::unordered_map<int32_t, boost::unordered_map<int32_t, double>>
+  boost::unordered::unordered_map<int32_t, boost::unordered::unordered_map<int32_t, double>>
       mlfabric_client_push_elapsed_time;
 
-  boost::unordered_map<int32_t,
-                       boost::unordered_map<int32_t, HighResolutionTimer *>>
+  boost::unordered::unordered_map<int32_t,
+                       boost::unordered::unordered_map<int32_t, HighResolutionTimer *>>
       mlfabric_client_pull_timers;
 
   BgThreadStats()
@@ -494,7 +495,7 @@ private:
   static std::string app_defined_accum_val_name_;
   static double app_defined_accum_val_;
 
-  static boost::unordered_map<int32_t, AppThreadPerTableStats> table_stats_;
+  static boost::unordered::unordered_map<int32_t, AppThreadPerTableStats> table_stats_;
   static double app_accum_comp_sec_;
   static double app_accum_obj_comp_sec_;
   static double app_accum_tg_clock_sec_;

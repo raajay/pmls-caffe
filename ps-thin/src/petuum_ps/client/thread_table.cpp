@@ -75,7 +75,7 @@ void ThreadTable::FlushOpLogIndex(TableOpLogIndex &table_oplog_index) {
 }
 
 AbstractRow *ThreadTable::GetRow(int32_t row_id) {
-  boost::unordered_map<int32_t, AbstractRow *>::iterator row_iter =
+  boost::unordered::unordered_map<int32_t, AbstractRow *>::iterator row_iter =
       row_storage_.find(row_id);
   if (row_iter == row_storage_.end()) {
     return nullptr;
@@ -86,7 +86,7 @@ AbstractRow *ThreadTable::GetRow(int32_t row_id) {
 void ThreadTable::InsertRow(int32_t row_id, const AbstractRow *to_insert) {
 
   AbstractRow *row = to_insert->Clone();
-  boost::unordered_map<int32_t, AbstractRow *>::iterator row_iter =
+  boost::unordered::unordered_map<int32_t, AbstractRow *>::iterator row_iter =
       row_storage_.find(row_id);
   if (row_iter != row_storage_.end()) {
     delete row_iter->second;
@@ -95,7 +95,7 @@ void ThreadTable::InsertRow(int32_t row_id, const AbstractRow *to_insert) {
     row_storage_[row_id] = row;
   }
 
-  boost::unordered_map<int32_t, AbstractRowOpLog *>::iterator oplog_iter =
+  boost::unordered::unordered_map<int32_t, AbstractRowOpLog *>::iterator oplog_iter =
       oplog_map_.find(row_id);
   if (oplog_iter != oplog_map_.end()) {
     int32_t column_id;

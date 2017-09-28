@@ -25,7 +25,7 @@ public:
 
 private:
   bool IsUniqueMin(int32_t server_id);
-  boost::unordered_map<int32_t, uint32_t> version_map_;
+  boost::unordered::unordered_map<int32_t, uint32_t> version_map_;
   uint32_t version_upper_bound_;
   uint32_t min_version_;
 };

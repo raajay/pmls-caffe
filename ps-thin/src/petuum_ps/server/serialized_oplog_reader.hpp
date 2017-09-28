@@ -20,7 +20,7 @@ public:
   // does not take ownership
   SerializedOpLogReader(
       const void *oplog_ptr,
-      const boost::unordered_map<int32_t, ServerTable> &server_tables)
+      const boost::unordered::unordered_map<int32_t, ServerTable> &server_tables)
       : serialized_oplog_ptr_(reinterpret_cast<const uint8_t *>(oplog_ptr)),
         server_tables_(server_tables) {}
   ~SerializedOpLogReader() {}
@@ -152,7 +152,7 @@ private:
   int32_t current_table_id_;
   int32_t num_rows_left_in_current_table_;
 
-  const boost::unordered_map<int32_t, ServerTable> &server_tables_;
+  const boost::unordered::unordered_map<int32_t, ServerTable> &server_tables_;
   const AbstractRowOpLog *curr_sample_row_oplog_;
   GetNextUpdateFunc GetNextUpdate_;
 
