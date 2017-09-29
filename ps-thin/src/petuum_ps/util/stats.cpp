@@ -102,7 +102,6 @@ void Stats::Init(const TableGroupConfig &table_group_config) {
   std::stringstream stats_path_ss;
   stats_path_ss << table_group_config.stats_path;
   stats_path_ss << "." << table_group_config.client_id;
-  //  stats_path_ss << "." << stats_print_version_;
   stats_path_ = stats_path_ss.str();
   std::cout << "stats path prefix=" << stats_path_ << std::endl;
 }

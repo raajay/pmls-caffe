@@ -13,7 +13,7 @@ sudo apt-get install -y libhdf5-10 libhdf5-serial-dev libhdf5-dev libhdf5-cpp-11
 
 # deps for CMake
 sudo apt-get install -y libgoogle-glog-dev \
-    libzmq3-dev \
+#    libzmq3-dev \
     libyaml-cpp-dev \
     libgoogle-perftools-dev \
     libsnappy-dev \
@@ -34,3 +34,45 @@ sudo apt-get install -y libgoogle-glog-dev \
 sudo apt-get install -y libopenblas-dev
 
 sudo apt-get install -y libtiff4-dev
+
+# install latest zeromq from source
+
+TEMP_DIR=$(mktemp -d)
+
+function install_zeromq() {
+    ZMQ_DOWNLOAD_URL="https://github.com/zeromq/libzmq/releases/download/v4.2.2/zeromq-4.2.2.tar.gz"
+    TAR_FILE_NAME=$(basename ${ZMQ_DOWNLOAD_URL})
+    BASE_NAME=$(basename ${ZMQ_DOWNLOAD_URL} .tar.gz)
+    echo $TAR_FILE_NAME
+    echo $BASE_NAME
+
+    # pull the file and extract it
+    cd $TEMP_DIR
+    wget -O ${TEMP_DIR}/${TAR_FILE_NAME} ${ZMQ_DOWNLOAD_URL} -o ${TEMP_DIR}/zeromq.wget.log
+    tar -x -v -z -f ${TAR_FILE_NAME} > /dev/null
+
+    ZMQ_INSTALL_DIR=${TEMP_DIR}/${BASE_NAME}
+    echo "Installing ZMQ from ${ZMQ_INSTALL_DIR}"
+
+    cd $ZMQ_INSTALL_DIR
+    ./configure --prefix=/nobackup/local
+    make -j20
+    make install
+}
+
+
+function install_cppzmq() {
+    git clone https://github.com/zeromq/cppzmq.git ${TEMP_DIR}/cppzmq
+    cd ${TEMP_DIR}/cppzmq
+    mkdir build && cd build
+    cmake -DCMAKE_INSTALL_PREFIX=/nobackup/local/ ../
+    make -j10 install
+}
+
+
+install_zeromq
+install_cppzmq
+
+
+# install tools
+sudo apt-get install -y clang-format-3.5

@@ -227,7 +227,6 @@ struct AppThreadStats {
   HighResolutionTimer batch_inc_oplog_timer;
   HighResolutionTimer batch_inc_process_storage_timer;
 
-    //boost::unordered::unordered_map<int32_t, AppThreadPerTableStats> table_stats;
   boost::unordered::unordered_map<int32_t, AppThreadPerTableStats> table_stats;
 
   double load_data_sec;

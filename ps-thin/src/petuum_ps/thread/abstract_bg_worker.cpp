@@ -543,9 +543,8 @@ void AbstractBgWorker::CreateOpLogMsgs(const BgOpLog *bg_oplog) {
       table_server_mem_map[table_id][server_id] =
           table_ptr + sizeof(int32_t) + sizeof(size_t);
 
-    } // end for -- over tables
-
-  } // end for -- over the servers; keys in server_table_oplog_size_map_
+    }
+  }
 
   // here the re-arranging of the different dimensions happen. We use the
   // bg_oplog data structure that partitions oplog into tables and server to
@@ -560,9 +559,8 @@ void AbstractBgWorker::CreateOpLogMsgs(const BgOpLog *bg_oplog) {
     oplog_partition->SerializeByServer(
         &(table_server_mem_map[table_id]),
         table_pair.second->oplog_dense_serialized());
-  } // end for -- over all the tables
-
-} // end for - create op logs
+  }
+}
 
 size_t AbstractBgWorker::SendOpLogMsgs(bool clock_advanced) {
   size_t accum_size = 0;
@@ -613,14 +611,14 @@ size_t AbstractBgWorker::SendOpLogMsgs(bool clock_advanced) {
       accum_size += clock_oplog_msg.get_size();
       MemTransfer::TransferMem(comm_bus_, server_id, &clock_oplog_msg);
     }
-  } // end for -- over server ids
+  }
 
   STATS_MLFABRIC_CLIENT_PUSH_END(0, per_worker_update_version_);
 
   STATS_BG_ADD_PER_CLOCK_OPLOG_SIZE(accum_size);
   return accum_size;
 
-} // end function -- send op log message
+}
 
 size_t AbstractBgWorker::CountRowOpLogToSend(
     int32_t row_id, AbstractRowOpLog *row_oplog,
