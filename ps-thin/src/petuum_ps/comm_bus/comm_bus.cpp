@@ -159,17 +159,6 @@ void CommBus::ThreadRegister(const Config &config) {
 
 void CommBus::ThreadDeregister() {
   CHECK(nullptr != thr_info_.get()) << "This thread has not been initialized";
-  zmq::socket_t *inproc_sock = thr_info_->inproc_sock_.get();
-  if (inproc_sock) {
-    delete inproc_sock;
-  }
-  zmq::socket_t *interproc_sock = thr_info_->interproc_sock_.get();
-  if (interproc_sock) {
-    delete interproc_sock;
-  }
-  // (raajay) while de-registering we will destroy the socket so that another
-  // thread with the same id can be re-registered. Deleting zmq::socket_t will
-  // hopefully close the underlying socket.
   thr_info_.reset();
 }
 
