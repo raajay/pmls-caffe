@@ -38,7 +38,7 @@ void Server::CreateTable(int32_t table_id, TableInfo &table_info) {
   CHECK(ret.second);
 
   if (GlobalContext::get_resume_clock() > 0) {
-    boost::unordered_map<int32_t, ServerTable>::iterator table_iter =
+    boost::unordered::unordered_map<int32_t, ServerTable>::iterator table_iter =
         tables_.find(table_id);
     table_iter->second.ReadSnapShot(GlobalContext::get_resume_dir(), server_id_,
                                     table_id,
@@ -89,7 +89,7 @@ void Server::AddRowRequest(int32_t bg_id, int32_t table_id, int32_t row_id,
 
   if (clock_bg_row_requests_.count(clock) == 0) {
     clock_bg_row_requests_.insert(std::make_pair(
-        clock, boost::unordered_map<int32_t, std::vector<ServerRowRequest>>()));
+        clock, boost::unordered::unordered_map<int32_t, std::vector<ServerRowRequest>>()));
   }
   if (clock_bg_row_requests_[clock].count(bg_id) == 0) {
     clock_bg_row_requests_[clock].insert(
@@ -109,7 +109,7 @@ void Server::GetFulfilledRowRequests(std::vector<ServerRowRequest> *requests) {
   if (iter == clock_bg_row_requests_.end())
     return;
 
-  boost::unordered_map<int32_t, std::vector<ServerRowRequest>> &
+  boost::unordered::unordered_map<int32_t, std::vector<ServerRowRequest>> &
       bg_row_requests = iter->second;
 
   for (auto bg_iter = bg_row_requests.begin(); bg_iter != bg_row_requests.end();

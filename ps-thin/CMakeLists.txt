@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 2.8)
 project(Bosen)
 add_compile_options(-std=c++11 -fPIC -Wall -Wno-sign-compare)
+if(PS_STATS)
+    add_compile_options(-DPETUUM_STATS)
+endif()
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules)
 MESSAGE(STATUS "CMAKE_MODULE_PATH:" ${CMAKE_MODULE_PATH})

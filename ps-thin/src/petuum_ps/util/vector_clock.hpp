@@ -45,7 +45,7 @@ private:
    */
   bool IsUniqueMin(int32_t id);
 
-  boost::unordered_map<int32_t, int32_t> vec_clock_;
+  boost::unordered::unordered_map<int32_t, int32_t> vec_clock_;
 
   /**
    * Slowest client clock

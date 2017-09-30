@@ -197,10 +197,10 @@ private:
       std::vector<CandidateServerRow> *candidate_row_vector);
 
   TableInfo table_info_;
-  boost::unordered_map<int32_t, ServerRow> storage_;
+  boost::unordered::unordered_map<int32_t, ServerRow> storage_;
 
   // used for appending rows to buffs
-  boost::unordered_map<int32_t, ServerRow>::iterator row_iter_;
+  boost::unordered::unordered_map<int32_t, ServerRow>::iterator row_iter_;
   uint8_t *tmp_row_buff_;
   size_t tmp_row_buff_size_;
   static const size_t kTmpRowBuffSizeInit = 512;

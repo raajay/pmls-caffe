@@ -1,40 +1,40 @@
 #!/bin/bash
-#
-## thirdparty deps
-#sudo apt-get install -y g++ make python-dev libxml2-dev libxslt-dev git zlibc zlib1g zlib1g-dev libbz2-1.0 libbz2-dev
-#sudo apt-get install -y libatlas-base-dev libprotobuf-dev libsnappy-dev libopencv-dev libhdf5-serial-dev
-#
-## caffe deps
-#sudo apt-get install -y libatlas-base-dev libprotobuf-dev libsnappy-dev libopencv-dev libhdf5-serial-dev
-#sudo apt-get install -y libnuma-dev uuid-dev
-#
+
+# thirdparty deps
+sudo apt-get install -y g++ make python-dev libxml2-dev libxslt-dev git zlibc zlib1g zlib1g-dev libbz2-1.0 libbz2-dev
+sudo apt-get install -y libatlas-base-dev libprotobuf-dev libsnappy-dev libopencv-dev libhdf5-serial-dev
+
+# caffe deps
+sudo apt-get install -y libatlas-base-dev libprotobuf-dev libsnappy-dev libopencv-dev libhdf5-serial-dev
+sudo apt-get install -y libnuma-dev uuid-dev
+
 sudo apt-get -y remove cmake
 sudo apt-get -y install software-properties-common
 sudo add-apt-repository ppa:george-edison55/cmake-3.x
 sudo apt-get update
 sudo apt-get -y install cmake
 ## deps for CMake
-#sudo apt-get install -y libgoogle-glog-dev \
-#    libyaml-cpp-dev \
-#    libgoogle-perftools-dev \
-#    libsnappy-dev \
-#    libsparsehash-dev \
-#    libgflags-dev \
-#    libboost-filesystem-dev \
-#    libboost-system-dev \
-#    libboost-thread-dev \
-#    libleveldb-dev \
-#    libconfig++-dev \
-#    libghc-hashtables-dev \
-#    libtcmalloc-minimal4 \
-#    libevent-pthreads-2.0-5 \
-#    libeigen3-dev \
-#    liblmdb-dev
-#
+sudo apt-get install -y libgoogle-glog-dev \
+    libyaml-cpp-dev \
+    libgoogle-perftools-dev \
+    libsnappy-dev \
+    libsparsehash-dev \
+    libgflags-dev \
+    libboost-filesystem-dev \
+    libboost-system-dev \
+    libboost-thread-dev \
+    libleveldb-dev \
+    libconfig++-dev \
+    libghc-hashtables-dev \
+    libtcmalloc-minimal4 \
+    libevent-pthreads-2.0-5 \
+    libeigen3-dev \
+    liblmdb-dev
+
 ## multi-threaded CPU support
-#sudo apt-get install -y libopenblas-dev
-#
-#sudo apt-get install -y libtiff4-dev
+sudo apt-get install -y libopenblas-dev
+
+sudo apt-get install -y libtiff4-dev
 
 # install latest zeromq from source
 

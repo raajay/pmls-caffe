@@ -42,7 +42,7 @@ std::vector<double> Stats::app_defined_vec_;
 std::string Stats::app_defined_accum_val_name_;
 double Stats::app_defined_accum_val_;
 
-boost::unordered_map<int32_t, AppThreadPerTableStats> Stats::table_stats_;
+boost::unordered::unordered_map<int32_t, AppThreadPerTableStats> Stats::table_stats_;
 double Stats::app_accum_comp_sec_ = 0;
 double Stats::app_accum_obj_comp_sec_ = 0;
 double Stats::app_accum_tg_clock_sec_ = 0;
@@ -102,7 +102,6 @@ void Stats::Init(const TableGroupConfig &table_group_config) {
   std::stringstream stats_path_ss;
   stats_path_ss << table_group_config.stats_path;
   stats_path_ss << "." << table_group_config.client_id;
-  //  stats_path_ss << "." << stats_print_version_;
   stats_path_ = stats_path_ss.str();
   std::cout << "stats path prefix=" << stats_path_ << std::endl;
 }
@@ -190,12 +189,10 @@ void Stats::DeregisterAppThread() {
 
   double my_accum_comm_block_sec = 0.0;
 
-  for (auto table_stats_iter = app_thread_stats_->table_stats.begin();
-       table_stats_iter != app_thread_stats_->table_stats.end();
-       table_stats_iter++) {
+  for (auto &table_stat : app_thread_stats_->table_stats) {
 
-    int32_t table_id = table_stats_iter->first;
-    AppThreadPerTableStats &thread_table_stats = table_stats_iter->second;
+    int32_t table_id = table_stat.first;
+    AppThreadPerTableStats &thread_table_stats = table_stat.second;
 
     table_stats_[table_id].num_get += thread_table_stats.num_get;
 
@@ -396,82 +393,6 @@ void Stats::DeregisterServerThread() {
       stats.accum_num_push_row_msg_send);
 }
 
-void Stats::SynchronizeThreadStatistics() {
-  switch (*thread_type_) {
-  case kAppThread:
-    SynchronizeAppThreadStatistics();
-    break;
-
-  case kBgThread:
-    // do nothing for now
-    break;
-
-  case kServerThread:
-    // do nothing for now
-    break;
-
-  case kNameNodeThread:
-    // there are not Name node stats
-    break;
-
-  default:
-    LOG(FATAL) << "Unrecognized thread type " << *thread_type_;
-  }
-}
-
-void Stats::SynchronizeAppThreadStatistics() {
-  // grab a lock on the stats mutex, it will be released automatically when
-  // function ends
-  VLOG(2) << "Synchronizing App Thread Statistics";
-  std::lock_guard<std::mutex> lock(stats_mtx_);
-
-  // currently to test if synchronization works correctly we are going to
-  // just synchronize a few of the thread statistics to the "static" stats
-  // variables.
-  // TODO(raajay) figure out how to avoid blowing up the push_back
-  // operations, while still gathering statistics.
-
-  app_defined_accum_val_ += app_thread_stats_->app_defined_accum_val;
-}
-
-void Stats::AppLoadDataBegin() { app_thread_stats_->load_data_timer.restart(); }
-
-void Stats::AppLoadDataEnd() {
-  AppThreadStats &stats = *app_thread_stats_;
-  stats.load_data_sec = stats.load_data_timer.elapsed();
-}
-
-void Stats::AppInitBegin() { app_thread_stats_->init_timer.restart(); }
-void Stats::AppInitEnd() {
-  AppThreadStats &stats = *app_thread_stats_;
-  stats.init_sec = stats.init_timer.elapsed();
-}
-
-void Stats::AppBootstrapBegin() {
-  app_thread_stats_->bootstrap_timer.restart();
-}
-
-void Stats::AppBootstrapEnd() {
-  AppThreadStats &stats = *app_thread_stats_;
-  stats.bootstrap_sec = stats.bootstrap_timer.elapsed();
-}
-
-void Stats::AppAccumCompBegin() { app_thread_stats_->comp_timer.restart(); }
-
-void Stats::AppAccumCompEnd() {
-  AppThreadStats &stats = *app_thread_stats_;
-  stats.accum_comp_sec += stats.comp_timer.elapsed();
-}
-
-void Stats::AppAccumObjCompBegin() {
-  app_thread_stats_->obj_comp_timer.restart();
-}
-
-void Stats::AppAccumObjCompEnd() {
-  AppThreadStats &stats = *app_thread_stats_;
-  stats.accum_obj_comp_sec += stats.obj_comp_timer.elapsed();
-}
-
 void Stats::AppAccumTgClockBegin() {
   app_thread_stats_->tg_clock_timer.restart();
 }
@@ -516,19 +437,6 @@ void Stats::AppSampleSSPGetEnd(int32_t table_id, bool hit) {
         stats.table_stats[table_id].get_timer.elapsed();
     ++stats.table_stats[table_id].num_ssp_get_miss_sampled;
   }
-}
-
-void Stats::AppAccumSSPPushGetCommBlockBegin(int32_t table_id) {
-  app_thread_stats_->table_stats[table_id]
-      .ssppush_get_comm_block_timer.restart();
-}
-
-void Stats::AppAccumSSPPushGetCommBlockEnd(int32_t table_id) {
-  AppThreadStats &stats = *app_thread_stats_;
-  stats.table_stats[table_id].accum_ssppush_get_comm_block_sec +=
-      stats.table_stats[table_id].ssppush_get_comm_block_timer.elapsed();
-
-  ++(stats.table_stats[table_id].num_ssppush_get_comm_block);
 }
 
 void Stats::AppAccumSSPGetServerFetchBegin(int32_t table_id) {
@@ -653,56 +561,6 @@ void Stats::AppSampleTableClockEnd(int32_t table_id) {
   ++stats.table_stats[table_id].num_clock_sampled;
 }
 
-void Stats::AppSampleThreadGetBegin(int32_t table_id) {
-  AppThreadStats &stats = *app_thread_stats_;
-
-  if (stats.table_stats[table_id].num_thread_get % kThreadGetSampleFreq)
-    return;
-
-  stats.table_stats[table_id].thread_get_timer.restart();
-}
-
-void Stats::AppSampleThreadGetEnd(int32_t table_id) {
-  AppThreadStats &stats = *app_thread_stats_;
-
-  uint64_t org_num_thread_get = stats.table_stats[table_id].num_thread_get;
-  ++stats.table_stats[table_id].num_thread_get;
-
-  if (org_num_thread_get % kThreadGetSampleFreq)
-    return;
-
-  stats.table_stats[table_id].accum_sample_thread_get_sec +=
-      stats.table_stats[table_id].thread_get_timer.elapsed();
-}
-
-void Stats::SetAppDefinedAccumSecName(const std::string &name) {
-  app_defined_accum_sec_name_ = name;
-}
-
-void Stats::AppDefinedAccumSecBegin() {
-  app_thread_stats_->app_defined_accum_timer.restart();
-}
-
-void Stats::AppDefinedAccumSecEnd() {
-  AppThreadStats &stats = *app_thread_stats_;
-
-  stats.app_defined_accum_sec += stats.app_defined_accum_timer.elapsed();
-}
-
-void Stats::SetAppDefinedVecName(const std::string &name) {
-  app_defined_vec_name_ = name;
-}
-
-void Stats::AppendAppDefinedVec(double val) { app_defined_vec_.push_back(val); }
-
-void Stats::SetAppDefinedAccumValName(const std::string &name) {
-  app_defined_accum_val_name_ = name;
-}
-
-void Stats::AppDefinedAccumValInc(double val) {
-  app_thread_stats_->app_defined_accum_val += val;
-}
-
 void Stats::AppAccumAppendOnlyFlushOpLogBegin() {
   app_thread_stats_->append_only_oplog_flush_timer.restart();
 }
@@ -739,17 +597,6 @@ void Stats::BgAccumClockEndOpLogSerializeEnd() {
   stats.accum_clock_end_oplog_serialize_sec += elapsed;
 }
 
-void Stats::BgAccumServerPushRowApplyBegin() {
-  bg_thread_stats_->server_push_row_apply_timer.restart();
-}
-
-void Stats::BgAccumServerPushRowApplyEnd() {
-  BgThreadStats &stats = *bg_thread_stats_;
-
-  stats.accum_server_push_row_apply_sec +=
-      stats.server_push_row_apply_timer.elapsed();
-}
-
 void Stats::BgSampleProcessCacheInsertBegin() {
   BgThreadStats &stats = *bg_thread_stats_;
 
@@ -772,28 +619,6 @@ void Stats::BgSampleProcessCacheInsertEnd() {
   ++stats.num_process_cache_insert_sampled;
 }
 
-void Stats::BgSampleServerPushDeserializeBegin() {
-  BgThreadStats &stats = *bg_thread_stats_;
-
-  if (stats.num_server_push_deserialize % kServerPushDeserializeSampleFreq)
-    return;
-
-  stats.server_push_deserialize_timer.restart();
-}
-
-void Stats::BgSampleServerPushDeserializeEnd() {
-  BgThreadStats &stats = *bg_thread_stats_;
-
-  uint64_t org_num_server_push_deserialize = stats.num_server_push_deserialize;
-  ++(stats.num_server_push_deserialize);
-  if (org_num_server_push_deserialize % kServerPushDeserializeSampleFreq)
-    return;
-
-  stats.sample_server_push_deserialize_sec +=
-      stats.server_push_deserialize_timer.elapsed();
-  ++stats.num_server_push_deserialize_sampled;
-}
-
 void Stats::BgClock() {
   ++(bg_thread_stats_->clock_num);
   bg_thread_stats_->per_clock_oplog_sent_kb.push_back(0.0);
@@ -809,71 +634,6 @@ void Stats::BgAddPerClockOpLogSize(size_t oplog_size) {
   stats.accum_oplog_sent_kb += oplog_size_kb;
 }
 
-void Stats::BgAddPerClockServerPushRowSize(size_t server_push_row_size) {
-  double server_push_row_size_kb = double(server_push_row_size) / double(k1_Ki);
-
-  BgThreadStats &stats = *bg_thread_stats_;
-
-  stats.per_clock_server_push_row_recv_kb[stats.clock_num] +=
-      server_push_row_size_kb;
-  stats.accum_server_push_row_recv_kb += server_push_row_size_kb;
-}
-
-void Stats::BgIdleInvokeIncOne() {
-  ++(bg_thread_stats_->accum_num_idle_invoke);
-}
-
-void Stats::BgIdleSendIncOne() { ++(bg_thread_stats_->accum_num_idle_send); }
-
-void Stats::BgAccumPushRowMsgReceivedIncOne() {
-  ++(bg_thread_stats_->accum_num_push_row_msg_recv);
-}
-
-void Stats::BgAccumIdleSendBegin() {
-  bg_thread_stats_->idle_send_timer.restart();
-}
-
-void Stats::BgAccumIdleSendEnd() {
-  BgThreadStats &stats = *bg_thread_stats_;
-  stats.accum_idle_send_sec += stats.idle_send_timer.elapsed();
-  stats.accum_total_oplog_serialize_sec += stats.idle_send_timer.elapsed();
-}
-
-void Stats::BgAccumIdleOpLogSentBytes(size_t num_bytes) {
-  bg_thread_stats_->accum_idle_send_bytes += num_bytes;
-}
-
-void Stats::BgAccumHandleAppendOpLogBegin() {
-  bg_thread_stats_->handle_append_oplog_timer.restart();
-}
-
-void Stats::BgAccumHandleAppendOpLogEnd() {
-  BgThreadStats &stats = *bg_thread_stats_;
-  stats.accum_handle_append_oplog_sec +=
-      stats.handle_append_oplog_timer.elapsed();
-  ++(stats.num_append_oplog_buff_handled);
-}
-
-void Stats::BgAppendOnlyCreateRowOpLogInc() {
-  ++(bg_thread_stats_->num_row_oplog_created);
-}
-
-void Stats::BgAppendOnlyRecycleRowOpLogInc() {
-  ++(bg_thread_stats_->num_row_oplog_recycled);
-}
-
-void Stats::BgAccumServerPushOpLogRowAppliedAddOne() {
-  ++(bg_thread_stats_->accum_server_push_oplog_row_applied);
-}
-
-void Stats::BgAccumServerPushUpdateAppliedAddOne() {
-  ++(bg_thread_stats_->accum_server_push_update_applied);
-}
-
-void Stats::BgAccumServerPushVersionDiffAdd(size_t diff) {
-  bg_thread_stats_->accum_server_push_version_diff += diff;
-}
-
 void Stats::ServerAccumApplyOpLogBegin() {
   server_thread_stats_->apply_oplog_timer.restart();
 }
@@ -882,16 +642,6 @@ void Stats::ServerAccumApplyOpLogEnd() {
   ServerThreadStats &stats = *server_thread_stats_;
 
   stats.accum_apply_oplog_sec += stats.apply_oplog_timer.elapsed();
-}
-
-void Stats::ServerAccumPushRowBegin() {
-  server_thread_stats_->push_row_timer.restart();
-}
-
-void Stats::ServerAccumPushRowEnd() {
-  ServerThreadStats &stats = *server_thread_stats_;
-
-  stats.accum_push_row_sec += stats.push_row_timer.elapsed();
 }
 
 void Stats::ServerClock() {
@@ -907,21 +657,8 @@ void Stats::ServerAddPerClockOpLogSize(size_t oplog_size) {
   stats.accum_oplog_recv_kb += oplog_size_kb;
 }
 
-void Stats::ServerAddPerClockPushRowSize(size_t push_row_size) {
-  double push_row_size_kb = double(push_row_size) / double(k1_Ki);
-
-  ServerThreadStats &stats = *server_thread_stats_;
-
-  stats.per_clock_push_row_kb[stats.clock_num] += push_row_size_kb;
-  stats.accum_push_row_kb += push_row_size_kb;
-}
-
 void Stats::ServerOpLogMsgRecvIncOne() {
   ++(server_thread_stats_->accum_num_oplog_msg_recv);
-}
-
-void Stats::ServerPushRowMsgSendIncOne() {
-  ++(server_thread_stats_->accum_num_push_row_msg_send);
 }
 
 void Stats::MLFabricClientPushBegin(int32_t server_id, int32_t version_id) {

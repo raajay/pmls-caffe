@@ -55,9 +55,9 @@ public:
 private:
   std::vector<std::unordered_set<int32_t>> oplog_index_;
 
-  boost::unordered_map<int32_t, AbstractRow *> row_storage_;
+  boost::unordered::unordered_map<int32_t, AbstractRow *> row_storage_;
 
-  boost::unordered_map<int32_t, AbstractRowOpLog *> oplog_map_;
+  boost::unordered::unordered_map<int32_t, AbstractRowOpLog *> oplog_map_;
 
   const AbstractRow *sample_row_;
 
