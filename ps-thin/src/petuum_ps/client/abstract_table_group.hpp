@@ -44,6 +44,8 @@ public:
 
   virtual void Clock() = 0;
 
+  virtual void ClockTable(int32_t table_id) = 0;
+
   virtual void GlobalBarrier() = 0;
 };
 

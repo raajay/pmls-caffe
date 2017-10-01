@@ -144,6 +144,17 @@ public:
   // tables.
   static void Clock() { return abstract_table_group_->Clock(); }
 
+
+  /**
+   * @brief Advance table specific clock.
+   *
+   * Note: This API should only be used when a single thread is responsible for
+   * a table.
+   */
+  static void ClockTable(int32_t table_id) {
+      return abstract_table_group_->ClockTable(table_id);
+  }
+
   /**
    * Called by application threads that access table API
    * (referred to as table threads).

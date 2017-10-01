@@ -42,10 +42,11 @@ public:
 
   void Clock();
 
+  void ClockTable(int32_t table_id);
+
   void GlobalBarrier();
 
 private:
-
   typedef void (TableGroup::*ClockFunc)();
   ClockFunc ClockInternal;
 

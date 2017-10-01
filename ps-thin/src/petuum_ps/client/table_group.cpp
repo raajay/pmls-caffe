@@ -70,7 +70,6 @@ TableGroup::TableGroup(const TableGroupConfig &table_group_config,
     ClockInternal = &TableGroup::ClockConservative;
 }
 
-
 /**
  * @brief Destructor.
  */
@@ -104,7 +103,6 @@ TableGroup::~TableGroup() {
   STATS_PRINT();
 }
 
-
 /**
  * @brief Create a table in the table group. And register the main thread to be
  * able to access the tables.
@@ -124,7 +122,6 @@ bool TableGroup::CreateTable(int32_t table_id,
   return suc;
 }
 
-
 /**
  * @brief Function to notify that the main thread is done creating all the
  * required a tables. Once tables are created, we wait for other application
@@ -139,7 +136,6 @@ void TableGroup::CreateTableDone() {
                        GlobalContext::get_num_table_threads());
 }
 
-
 /**
  * @brief Barrier to wait for all application threads to register.
  */
@@ -149,7 +145,6 @@ void TableGroup::WaitThreadRegister() {
     pthread_barrier_wait(&register_barrier_);
   }
 }
-
 
 /**
  * @brief Helper function to allow any application thread (other than the main
@@ -181,7 +176,6 @@ int32_t TableGroup::RegisterThread() {
   return thread_id;
 }
 
-
 /**
  * @brief Helper function for ephemeral threads to register. These threads, do
  * not use barriers. They can still use the table API; however, such threads
@@ -206,7 +200,6 @@ int32_t TableGroup::RegisterCaffeSyncThread(int32_t thread_offset) {
   return ephemeral_thread_id;
 }
 
-
 /**
  * @brief Deregister application thread
  */
@@ -221,7 +214,6 @@ void TableGroup::DeregisterThread() {
   GlobalContext::comm_bus->ThreadDeregister();
   STATS_DEREGISTER_THREAD();
 }
-
 
 /**
  * @brief Deregister ephemeral threads
@@ -250,11 +242,20 @@ void TableGroup::Clock() {
   STATS_APP_ACCUM_TG_CLOCK_END();
 }
 
+/**
+ */
+void TableGroup::ClockTable(int32_t table_id) {
+}
+
+
+/**
+ */
 void TableGroup::GlobalBarrier() {
   for (int i = 0; i < max_table_staleness_ + 1; ++i) {
     Clock();
   }
 }
+
 
 void TableGroup::ClockAggressive() {
   CHECK_EQ(true, GlobalContext::am_i_worker_client())
@@ -306,5 +307,4 @@ void TableGroup::ClockConservative() {
     BgWorkers::ClockAllTables();
   }
 }
-
 }

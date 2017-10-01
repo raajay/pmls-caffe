@@ -60,53 +60,41 @@ public:
 
   const AbstractRow *get_sample_row() const { return sample_row_; }
 
-
   int32_t get_row_type() const override {
-      return client_table_config_.table_info.row_type;
+    return client_table_config_.table_info.row_type;
   }
-
 
   int32_t get_staleness() const {
-      return client_table_config_.table_info.table_staleness;
+    return client_table_config_.table_info.table_staleness;
   }
-
 
   bool oplog_dense_serialized() const {
-      return client_table_config_.table_info.oplog_dense_serialized;
+    return client_table_config_.table_info.oplog_dense_serialized;
   }
 
-
-  OpLogType get_oplog_type() const {
-      return client_table_config_.oplog_type;
-  }
-
+  OpLogType get_oplog_type() const { return client_table_config_.oplog_type; }
 
   int32_t get_bg_apply_append_oplog_freq() const {
-      return client_table_config_.bg_apply_append_oplog_freq;
+    return client_table_config_.bg_apply_append_oplog_freq;
   }
-
 
   int32_t get_row_oplog_type() const {
-      return client_table_config_.table_info.row_oplog_type;
+    return client_table_config_.table_info.row_oplog_type;
   }
-
 
   size_t get_dense_row_oplog_capacity() const {
-      return client_table_config_.table_info.dense_row_oplog_capacity;
+    return client_table_config_.table_info.dense_row_oplog_capacity;
   }
-
 
   AppendOnlyOpLogType get_append_only_oplog_type() const {
-      return client_table_config_.append_only_oplog_type;
+    return client_table_config_.append_only_oplog_type;
   }
 
-
   bool get_no_oplog_replay() const {
-      return client_table_config_.no_oplog_replay;
+    return client_table_config_.no_oplog_replay;
   }
 
 private:
-
   const int32_t table_id_;
 
   const AbstractRow *const sample_row_;
@@ -126,7 +114,6 @@ private:
   ClientRow *CreateClientRow(int32_t clock);
 
   ClientRow *CreateSSPClientRow(int32_t clock);
-
 };
 
 } // namespace petuum

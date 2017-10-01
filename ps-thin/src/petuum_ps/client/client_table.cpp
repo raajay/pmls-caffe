@@ -20,17 +20,20 @@
 namespace petuum {
 
 ClientTable::ClientTable(int32_t table_id, const ClientTableConfig &config)
-    : AbstractClientTable(),
-      table_id_(table_id),
-      sample_row_(ClassRegistry<AbstractRow>::GetRegistry().CreateObject(config.table_info.row_type)),
-      oplog_index_(std::ceil(static_cast<float>(config.oplog_capacity) / GlobalContext::get_num_comm_channels_per_client())),
+    : AbstractClientTable(), table_id_(table_id),
+      sample_row_(ClassRegistry<AbstractRow>::GetRegistry().CreateObject(
+          config.table_info.row_type)),
+      oplog_index_(
+          std::ceil(static_cast<float>(config.oplog_capacity) /
+                    GlobalContext::get_num_comm_channels_per_client())),
       client_table_config_(config) {
 
   switch (config.process_storage_type) {
   case BoundedDense: {
     BoundedDenseProcessStorage::CreateClientRowFunc StorageCreateClientRow;
     if (GlobalContext::get_consistency_model() == SSP) {
-      StorageCreateClientRow = std::bind(&ClientTable::CreateSSPClientRow, this, std::placeholders::_1);
+      StorageCreateClientRow = std::bind(&ClientTable::CreateSSPClientRow, this,
+                                         std::placeholders::_1);
     } else {
       LOG(FATAL) << "Unknown consistency model "
                  << GlobalContext::get_consistency_model();
@@ -59,8 +62,7 @@ ClientTable::ClientTable(int32_t table_id, const ClientTableConfig &config)
 
   case Sparse:
 
-    oplog_ = new SparseOpLog(config.oplog_capacity,
-                             sample_row_,
+    oplog_ = new SparseOpLog(config.oplog_capacity, sample_row_,
                              config.table_info.dense_row_oplog_capacity,
                              config.table_info.row_oplog_type);
 
@@ -70,8 +72,7 @@ ClientTable::ClientTable(int32_t table_id, const ClientTableConfig &config)
     break;
 
   case AppendOnly:
-    oplog_ = new AppendOnlyOpLog(config.append_only_buff_capacity,
-                                 sample_row_,
+    oplog_ = new AppendOnlyOpLog(config.append_only_buff_capacity, sample_row_,
                                  config.append_only_oplog_type,
                                  config.table_info.dense_row_oplog_capacity,
                                  config.per_thread_append_only_buff_pool_size);
@@ -80,8 +81,7 @@ ClientTable::ClientTable(int32_t table_id, const ClientTableConfig &config)
     break;
 
   case Dense:
-    oplog_ = new DenseOpLog(config.oplog_capacity,
-                            sample_row_,
+    oplog_ = new DenseOpLog(config.oplog_capacity, sample_row_,
                             config.table_info.dense_row_oplog_capacity,
                             config.table_info.row_oplog_type);
 
@@ -107,10 +107,8 @@ ClientTable::ClientTable(int32_t table_id, const ClientTableConfig &config)
   default:
     LOG(FATAL) << "Not yet support consistency model "
                << GlobalContext::get_consistency_model();
-
   }
 }
-
 
 /**
  * @brief Destructor
@@ -204,14 +202,16 @@ size_t ClientTable::GetNumRowOpLogs(int32_t partition_num) {
 
 ClientRow *ClientTable::CreateClientRow(int32_t clock) {
   AbstractRow *row_data =
-      ClassRegistry<AbstractRow>::GetRegistry().CreateObject(client_table_config_.table_info.row_type);
+      ClassRegistry<AbstractRow>::GetRegistry().CreateObject(
+          client_table_config_.table_info.row_type);
   row_data->Init((int32_t)client_table_config_.table_info.row_capacity);
   return new ClientRow(clock, -1, row_data, false);
 }
 
 ClientRow *ClientTable::CreateSSPClientRow(int32_t clock) {
   AbstractRow *row_data =
-      ClassRegistry<AbstractRow>::GetRegistry().CreateObject(client_table_config_.table_info.row_type);
+      ClassRegistry<AbstractRow>::GetRegistry().CreateObject(
+          client_table_config_.table_info.row_type);
   row_data->Init((int32_t)client_table_config_.table_info.row_capacity);
   return static_cast<ClientRow *>(new SSPClientRow(clock, -1, row_data, false));
 }

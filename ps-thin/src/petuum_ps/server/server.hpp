@@ -36,8 +36,8 @@ private:
   // mapping <clock, table id> to an array of row requests
   // Keeping track of all pending row requests. These are indexed first by the
   // clock requested by each row and secondly by the table id.
-  std::map<int32_t,
-           boost::unordered::unordered_map<int32_t, std::vector<ServerRowRequest>>>
+  std::map<int32_t, boost::unordered::unordered_map<
+                        int32_t, std::vector<ServerRowRequest>>>
       clock_bg_row_requests_;
   // Keep track of the latest oplog version received from each bg thread
   std::map<int32_t, int32_t> bg_version_map_;
