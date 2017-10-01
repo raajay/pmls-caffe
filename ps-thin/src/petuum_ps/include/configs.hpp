@@ -54,7 +54,6 @@ enum AppendOnlyOpLogType { Inc = 0, BatchInc = 1, DenseBatchInc = 2 };
  */
 enum ProcessStorageType { BoundedDense = 0, BoundedSparse = 1 };
 
-
 /**
  * @brief Configuration for all tables in the group. Will be used to init the
  * global context.
@@ -198,7 +197,6 @@ struct TableGroupConfig {
    */
   long server_row_candidate_factor;
 
-
   /**
    * (raajay): Petuum traditionally uses one clock for an application thread (a
    * single clock will indicate updates to all tables have been applied).
@@ -249,7 +247,6 @@ struct TableGroupConfig {
     return ss.str();
   }
 };
-
 
 /**
  * TableInfo is shared between client and server; i.e., its values are used for

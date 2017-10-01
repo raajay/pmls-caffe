@@ -503,6 +503,11 @@ public:
     return table_group_config_.is_asynchronous_mode;
   }
 
+  /**
+   * @brief Check if we need pre-table clock or one clock for all tables
+   */
+  static bool use_table_clock() { return table_group_config_.use_table_clock; }
+
   static CommBus *comm_bus;
 
   // name node thread id - 0

@@ -121,7 +121,7 @@ bool TableGroup::CreateTable(int32_t table_id,
   }
 
   if (suc) {
-      table_clock_.AddClock(table_id, 0);
+    table_clock_.AddClock(table_id, 0);
   }
   return suc;
 }
@@ -248,9 +248,7 @@ void TableGroup::Clock() {
 
 /**
  */
-void TableGroup::ClockTable(int32_t table_id) {
-}
-
+void TableGroup::ClockTable(int32_t table_id) {}
 
 /**
  */
@@ -259,7 +257,6 @@ void TableGroup::GlobalBarrier() {
     Clock();
   }
 }
-
 
 void TableGroup::ClockAggressive() {
   CHECK_EQ(true, GlobalContext::am_i_worker_client())

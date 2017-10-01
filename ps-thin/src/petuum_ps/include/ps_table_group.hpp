@@ -144,7 +144,6 @@ public:
   // tables.
   static void Clock() { return abstract_table_group_->Clock(); }
 
-
   /**
    * @brief Advance table specific clock.
    *
@@ -152,7 +151,7 @@ public:
    * a table.
    */
   static void ClockTable(int32_t table_id) {
-      return abstract_table_group_->ClockTable(table_id);
+    return abstract_table_group_->ClockTable(table_id);
   }
 
   /**
