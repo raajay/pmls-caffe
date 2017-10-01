@@ -1,6 +1,3 @@
-// author: jinliang
-// author: raajay
-
 #pragma once
 
 #include <vector>
@@ -16,11 +13,15 @@
 
 namespace petuum {
 
-// In petuum PS, thread is treated as first-class citizen. Some globaly
-// shared thread information, such as ID, are stored in static variable to
-// avoid having passing some variables every where.
-
+/**
+ * @brief Class that maintains id and clock for each application thread.
+ *
+ * In petuum PS, thread is treated as first-class citizen. Some globaly
+ * shared thread information, such as ID, are stored in static variable to
+ * avoid having passing some variables every where.
+ */
 class ThreadContext {
+
 public:
   static void RegisterThread(int32_t thread_id) {
     thr_info_ = new Info(thread_id);
@@ -41,6 +42,7 @@ public:
   }
 
 private:
+
   struct Info : boost::noncopyable {
     explicit Info(int32_t entity_id)
         : entity_id_(entity_id), clock_(0), cached_system_clock_(0) {}
@@ -56,134 +58,150 @@ private:
   // g++ 4.8.1 or lower: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=55800
   static __thread Info *thr_info_;
 
-}; // class ThreadContext
+};
 
-// Init function must have "happens-before" relation with all other functions.
-// After Init(), accesses to all other functions are concurrent.
+
+
+/**
+ * @brief Class that stores context information accessible by all threads
+ * (application, worker, server) threads.
+ *
+ * Init function must have "happens-before" relation with all other functions.
+ * After Init(), accesses to all other functions are concurrent.
+ */
 class GlobalContext : boost::noncopyable {
-public:
-  // ************** START -- Functions that DO NOT depend on Init()
 
+public:
+
+  /**
+   * Get the smallest id that can be assigned to any thread in this client.
+   * This includes all application, worker, server, replica threads.
+   */
   static int32_t get_thread_id_min(int32_t client_id) {
     return client_id * kMaxNumThreadsPerClient;
   }
 
+
+  /**
+   * Get the largest id that can be assigned to any thread in this client.
+   * This includes all application, worker, server, replica threads.
+   */
   static int32_t get_thread_id_max(int32_t client_id) {
     return (client_id + 1) * kMaxNumThreadsPerClient - 1;
   }
 
+
+  /**
+   * @brief The thread id of the name node.
+   */
   static int32_t get_name_node_id() { return 0; }
 
+
+  /**
+   * @brief The client id of the name node.
+   */
   static int32_t get_name_node_client_id() { return kNameNodeClientId; }
 
+
+  /**
+   * @brief The comm_channel_idx ^th background worker thread for a client.
+   */
   static int32_t get_bg_thread_id(int32_t client_id, int32_t comm_channel_idx) {
     return get_thread_id_min(client_id) + kBgThreadIDStartOffset +
            comm_channel_idx;
   }
 
+
+  /**
+   * @brief The 0^th background worker thread for a client.
+   */
   static int32_t get_head_bg_id(int32_t client_id) {
     // the bg thread with index=0 is the head bg
     return get_bg_thread_id(client_id, 0);
   }
 
+
+  /**
+   * @brief The comm_channel_idx ^th server thread for a client
+   */
   static int32_t get_server_thread_id(int32_t client_id,
                                       int32_t comm_channel_idx) {
     return get_thread_id_min(client_id) + kServerThreadIDStartOffset +
            comm_channel_idx;
   }
 
+
+  /**
+   * @brief Return the client id based on the thread id.
+   */
   static int32_t thread_id_to_client_id(int32_t thread_id) {
     return thread_id / kMaxNumThreadsPerClient;
   }
 
+
   static int32_t get_serialized_table_separator() { return -1; }
+
 
   static int32_t get_serialized_table_end() { return -2; }
 
-  static int32_t is_server_client(int32_t client_id) {
+
+  /**
+   * @brief Check if a given client is a server
+   */
+  static bool is_server_client(int32_t client_id) {
     return client_id >= kServerClientMinId && client_id <= kServerClientMaxId;
   }
 
-  static int32_t is_worker_client(int32_t client_id) {
+
+  /**
+   * @brief Check if a given client is a worker
+   */
+  static bool is_worker_client(int32_t client_id) {
     return client_id >= kWorkerClientMinId && client_id <= kWorkerClientMaxId;
   }
 
-  // ************** END -- Functions that DO NOT depend on Init()
 
-  // "server" is different from name node.
-  // Name node is not considered as server.
-  static inline void
-  Init(int32_t num_comm_channels_per_client, int32_t num_app_threads,
-       int32_t num_table_threads, int32_t num_tables, int32_t num_clients,
-       const std::map<int32_t, HostInfo> &host_map, int32_t client_id,
-       int32_t server_ring_size, ConsistencyModel consistency_model,
-       bool aggressive_cpu, int32_t snapshot_clock,
-       const std::string &snapshot_dir, int32_t resume_clock,
-       const std::string &resume_dir, UpdateSortPolicy update_sort_policy,
-       long bg_idle_milli, double bandwidth_mbps,
-       size_t oplog_push_upper_bound_kb, int32_t oplog_push_staleness_tolerance,
-       size_t thread_oplog_batch_size, size_t server_push_row_threshold,
-       long server_idle_milli, int32_t server_row_candidate_factor,
-       bool is_server_asynchronous) {
+  /**
+   * @brief Initialize the GlobalContext with values from table config.
+   */
+  static inline void Init(const TableGroupConfig &table_group_config, bool table_access) {
+      table_group_config_ = table_group_config;
+      num_table_threads_ = table_access ?
+          table_group_config_.num_local_app_threads :
+          table_group_config_.num_local_app_threads - 1;
+      InitClientsAndThreads(table_group_config.host_map);
+  }
 
-    num_comm_channels_per_client_ = num_comm_channels_per_client;
-    num_total_comm_channels_ = num_comm_channels_per_client * num_clients;
-    num_app_threads_ = num_app_threads;
-    num_table_threads_ = num_table_threads;
-    num_tables_ = num_tables;
-    num_clients_ = num_clients;
-    host_map_ = host_map;
-    client_id_ = client_id;
-    server_ring_size_ = server_ring_size;
-    consistency_model_ = consistency_model;
-    local_id_min_ = get_thread_id_min(client_id);
-    aggressive_cpu_ = aggressive_cpu;
-    snapshot_clock_ = snapshot_clock;
-    snapshot_dir_ = snapshot_dir;
-    resume_clock_ = resume_clock;
-    resume_dir_ = resume_dir;
-    update_sort_policy_ = update_sort_policy;
-    bg_idle_milli_ = bg_idle_milli;
-    bandwidth_mbps_ = bandwidth_mbps;
-    oplog_push_upper_bound_kb_ = oplog_push_upper_bound_kb;
-    oplog_push_staleness_tolerance_ = oplog_push_staleness_tolerance;
-    thread_oplog_batch_size_ = thread_oplog_batch_size;
-    server_push_row_threshold_ = server_push_row_threshold;
-    server_idle_milli_ = server_idle_milli;
-    server_row_candidate_factor_ = server_row_candidate_factor;
-    is_server_asynchronous_ = is_server_asynchronous;
 
+  /**
+   * @brief Initialize global data structures that identify servers,
+   * workers, aggregators, etc.
+   */
+  static inline void InitClientsAndThreads(const std::map<int32_t, HostInfo> &host_map) {
     // process host map information
-    for (auto host_iter = host_map.begin(); host_iter != host_map.end();
-         ++host_iter) {
-
+    for (auto host_iter = host_map.begin(); host_iter != host_map.end(); ++host_iter) {
       if (is_server_client(host_iter->first)) {
         server_clients_.push_back(host_iter->first);
       }
-
       if (is_worker_client(host_iter->first)) {
         worker_clients_.push_back(host_iter->first);
       }
-
       HostInfo host_info = host_iter->second;
-
       // the base port num to use for the host
       int port_num = std::stoi(host_info.port, 0, 10);
-
       // update name node host info
       if (host_iter->first == get_name_node_client_id()) {
         name_node_host_info_ = host_info;
-        ++port_num; // increment the port number that can be used for that
-                    // client
+        // increment the aval. port number for the client
+        ++port_num;
         std::stringstream ss;
         ss << port_num;
         host_info.port = ss.str();
       }
-
       // to populate server ids info
       if (is_server_client(host_iter->first)) {
         // update server host info
-        for (int i = 0; i < num_comm_channels_per_client_; ++i) {
+        for (int i = 0; i < get_num_comm_channels_per_client(); ++i) {
           int32_t server_id = get_server_thread_id(host_iter->first, i);
           server_map_.insert(std::make_pair(server_id, host_info));
           ++port_num;
@@ -191,31 +209,43 @@ public:
           ss << port_num;
           host_info.port = ss.str();
           server_ids_.push_back(server_id);
-        } // end for -- over number of comm channels
+        }
       }
 
-    } // end for -- over hosts
-  }   // end function -- Init()
-
-  // ********* START - Functions that depend on Init()
-
-  static bool am_i_name_node_client() {
-    return (client_id_ == get_name_node_client_id());
+    }
   }
 
+
+  /**
+   * @brief Is the current client a name node.
+   */
+  static bool am_i_name_node_client() {
+    return (get_client_id() == get_name_node_client_id());
+  }
+
+
+  /**
+   * @brief Is the current client a server
+   */
   static bool am_i_server_client() {
     return true;
     // return is_server_client(client_id_);
   }
 
+
+  /**
+   * @brief Is the current client a worker
+   */
   static bool am_i_worker_client() {
     return true;
     // return is_worker_client(client_id_);
   }
 
+
   /**
-   * Get the server thread ids on a particular channel across all clients.
-   * Each BgWorker will connect to server threads on its own channel.
+   * @brief Get the server thread ids on a particular channel across all
+   * clients. Each worker thread (bg worker) will connect to server threads on
+   * its own channel.
    */
   static void GetServerThreadIDs(int32_t comm_channel_idx,
                                  std::vector<int32_t> *server_thread_ids) {
@@ -224,68 +254,105 @@ public:
       (*server_thread_ids)
           .push_back(get_server_thread_id(server_client_id, comm_channel_idx));
     }
-    // for (int32_t i = 0; i < num_clients_; ++i) {
-    //   (*server_thread_ids).push_back(get_server_thread_id(i,
-    //   comm_channel_idx));
-    // }
   }
+
 
   /**
-  // deprecated since we split into workers, aggregators and servers
-  static inline int32_t get_num_total_comm_channels() {
-    return num_total_comm_channels_;
-  }
-  */
-
+   * @brief Get number of bg worker, server threads to use in each client.
+   * The number of bg worker or server threads is the number of communication
+   * channels.
+   */
   static inline int32_t get_num_comm_channels_per_client() {
-    return num_comm_channels_per_client_;
+      return table_group_config_.num_comm_channels_per_client;
   }
 
-  // total number of application threads including init thread
-  static inline int32_t get_num_app_threads() { return num_app_threads_; }
 
+  /**
+   * @brief The number of application threads (includes the main thread and all
+   * the other threads that that main thread spawned).
+   */
+  static inline int32_t get_num_app_threads() {
+      return table_group_config_.num_local_app_threads;
+  }
+
+
+  /**
+   * @brief Get the total number of background threads across all the clients.
+   * It is used by name node thread to determine the number of connect messages
+   * to expect from background worker threads.
+   */
   static inline int32_t get_num_total_bg_threads() {
     return get_num_comm_channels_per_client() * get_num_worker_clients();
   }
 
+
+  /**
+   * @brief Get the total number of server threads across all the clients.
+   * It is used by name node thread to determine the number of connect messages
+   * to expect from server threads.
+   */
   static inline int32_t get_num_total_server_threads() {
     return server_ids_.size();
   }
-  /*
-  static inline int32_t get_num_total_servers() {
-    // this is the same as get_num_total_server_threads.
-    return num_comm_channels_per_client_ * server_clients_.size();
-  }
-  */
 
-  // Total number of application threads that needs table access
-  // num_app_threads = num_table_threads_ or num_app_threads_
-  // = num_table_threads_ + 1
-  static inline int32_t get_num_table_threads() { return num_table_threads_; }
+
+  /**
+   * @brief Total number of application threads that needs table access
+   * num_app_threads = num_table_threads or num_app_threads
+   * = num_table_threads + 1
+   */
+  static inline int32_t get_num_table_threads() {
+      return num_table_threads_;
+  }
+
 
   static inline int32_t get_head_table_thread_id() {
     int32_t init_thread_id =
-        get_thread_id_min(client_id_) + kInitThreadIDOffset;
-    return (num_table_threads_ == num_app_threads_) ? init_thread_id
+        get_thread_id_min(get_client_id()) + kInitThreadIDOffset;
+    return (get_num_table_threads() == get_num_app_threads()) ? init_thread_id
                                                     : init_thread_id + 1;
   }
 
   static inline int32_t get_head_ephemeral_thread_id() {
-    return get_thread_id_min(client_id_) + kEphemeralThreadIIDStartOffset;
+    return get_thread_id_min(get_client_id()) + kEphemeralThreadIIDStartOffset;
   }
 
-  static inline int32_t get_num_tables() { return num_tables_; }
 
-  static inline int32_t get_num_clients() { return num_clients_; }
+  /**
+   * @brief Get the number of tables.
+   */
+  static inline int32_t get_num_tables() {
+      return table_group_config_.num_tables;
+  }
 
+
+  /**
+   * @brief Get total number of clients.
+   */
+  static inline int32_t get_num_clients() {
+      return table_group_config_.num_total_clients;
+  }
+
+
+  /**
+   * @brief Get the total number of clients that store and serve models.
+   */
   static inline int32_t get_num_server_clients() {
     return server_clients_.size();
   }
 
+
+  /**
+   * @brief Get the number of clients that act as workers.
+   */
   static inline int32_t get_num_worker_clients() {
     return worker_clients_.size();
   }
 
+
+  /**
+   * @brief Get the address information for a particular server id
+   */
   static HostInfo get_server_info(int32_t server_id) {
     std::map<int32_t, HostInfo>::const_iterator iter =
         server_map_.find(server_id);
@@ -293,20 +360,43 @@ public:
     return iter->second;
   }
 
-  static HostInfo get_name_node_info() { return name_node_host_info_; }
 
+  /**
+   * @brief Get the address of the name node
+   */
+  static HostInfo get_name_node_info() {
+      return name_node_host_info_;
+  }
+
+
+  /**
+   * @brief Get ids of all servers across all the clients.
+   */
   static const std::vector<int32_t> &get_all_server_ids() {
     return server_ids_;
   }
 
+
+  /**
+   * @brief Get ids of all the clients that have worker threads running.
+   */
   static const std::vector<int32_t> &get_worker_client_ids() {
     return worker_clients_;
   }
 
+
+  /**
+   * @brief Get ids of all the clients that have server threads running.
+   */
   static const std::vector<int32_t> &get_server_client_ids() {
     return server_clients_;
   }
 
+
+  /**
+   * @brief Given a client get the index of the client among all the worker
+   * clients.
+   */
   static int32_t get_worker_client_index(int client_id) {
     int32_t num_worker_clients = get_num_worker_clients();
     for (int32_t index = 0; index < num_worker_clients; index++) {
@@ -317,10 +407,20 @@ public:
     return num_worker_clients;
   }
 
-  static int32_t get_client_id() { return client_id_; }
 
+  /**
+   * @brief Get id of the current client.
+   */
+  static int32_t get_client_id() {
+      return table_group_config_.client_id;
+  }
+
+
+  /**
+   * @brief Get the channel index that should handle the given row.
+   */
   static int32_t GetPartitionCommChannelIndex(int32_t row_id) {
-    return row_id % num_comm_channels_per_client_;
+    return row_id % get_num_comm_channels_per_client();
   }
 
   static int32_t GetPartitionServerID(int32_t row_id,
@@ -330,24 +430,52 @@ public:
     return get_server_thread_id(server_client_id, comm_channel_idx);
   }
 
+
+  /**
+   * @brief Get the index of the server thread.
+   */
   static int32_t GetCommChannelIndexServer(int32_t server_id) {
     int32_t index =
         server_id % kMaxNumThreadsPerClient - kServerThreadIDStartOffset;
     return index;
   }
 
-  static int32_t get_server_ring_size() { return server_ring_size_; }
 
-  static ConsistencyModel get_consistency_model() { return consistency_model_; }
+  /**
+   * @brief the consistency model used for SGD
+   */
+  static ConsistencyModel get_consistency_model() {
+      return table_group_config_.consistency_model;
+  }
 
-  static int32_t get_local_id_min() { return local_id_min_; }
+  /**
+   * @brief Get the smallest thread id for the current client.
+   */
+  static int32_t get_local_id_min() {
+      return get_thread_id_min(get_client_id());
+  }
 
-  static bool get_aggressive_cpu() { return aggressive_cpu_; }
+
+  /**
+   * @brief Get the largest thread id for the current client.
+   */
+  static int32_t get_local_id_max() {
+      return get_thread_id_max(get_client_id());
+  }
+
+
+  /**
+   * @brief Determines if the worker and the server threads should poll
+   * continuously.
+   */
+  static bool get_aggressive_cpu() {
+      return table_group_config_.aggressive_cpu;
+  }
 
   // # locks in a StripedLock pool.
   static int32_t GetLockPoolSize() {
     static const int32_t kStripedLockExpansionFactor = 20;
-    return (num_app_threads_ + num_comm_channels_per_client_) *
+    return (get_num_app_threads() + get_num_comm_channels_per_client()) *
            kStripedLockExpansionFactor;
   }
 
@@ -358,44 +486,82 @@ public:
                : table_capacity / kStripedLockReductionFactor;
   }
 
-  static int32_t get_snapshot_clock() { return snapshot_clock_; }
 
-  static const std::string &get_snapshot_dir() { return snapshot_dir_; }
+  /**
+   * @brief Get the clock of the snapshot (used when recovering from snapshot)
+   */
+  static int32_t get_snapshot_clock() {
+      return table_group_config_.snapshot_clock;
+  }
 
-  static int32_t get_resume_clock() { return resume_clock_; }
 
-  static const std::string &get_resume_dir() { return resume_dir_; }
+  /**
+   * @brief Get the directory where snapshots are stored
+   */
+  static const std::string &get_snapshot_dir() {
+      return table_group_config_.snapshot_dir;
+  }
 
+
+  /**
+   * @brief Get the clock to resume from
+   */
+  static int32_t get_resume_clock() {
+      return table_group_config_.resume_clock;
+  }
+
+
+  /**
+   * @brief Get the location of the model to resume from
+   * TODO(raajay) what is the diff between snapshot and resume dir
+   */
+  static const std::string &get_resume_dir() {
+      return table_group_config_.resume_dir;
+  }
+
+
+  /**
+   * @brief Get the order (policy) in which updates are sorted
+   * TODO(raajay) check if we have to delete this?
+   */
   static UpdateSortPolicy get_update_sort_policy() {
-    return update_sort_policy_;
+      return table_group_config_.update_sort_policy;
   }
 
-  static long get_bg_idle_milli() { return bg_idle_milli_; }
 
-  static double get_bandwidth_mbps() { return bandwidth_mbps_; }
-
-  static size_t get_oplog_push_upper_bound_kb() {
-    return oplog_push_upper_bound_kb_;
+  /**
+   * @brief The polling wait time for the background worker thread.
+   * TODO(raajay) check if we have to delete this?
+   */
+  static long get_bg_idle_milli() {
+      return table_group_config_.bg_idle_milli;
   }
 
-  static int32_t get_oplog_push_staleness_tolerance() {
-    return oplog_push_staleness_tolerance_;
+
+  /**
+   * @brief Get the bandwidth available on the NIC
+   * TODO(raajay) Check where is this used and how
+   */
+  static double get_bandwidth_mbps() {
+      return table_group_config_.bandwidth_mbps;
   }
 
-  static size_t get_thread_oplog_batch_size() {
-    return thread_oplog_batch_size_;
+
+  /**
+   * @brief The polling wiat time for server thread
+   */
+  static long get_server_idle_milli() {
+      return table_group_config_.server_idle_milli;
   }
 
-  static size_t get_server_push_row_threshold() {
-    return server_push_row_threshold_;
+
+  /**
+   * @brief Check if the servers should update model asynchronously.
+   * TODO(raajay) rename this to is_server_asynchronous
+   */
+  static bool is_asynchronous_mode() {
+      return table_group_config_.is_asynchronous_mode;
   }
-
-  static long get_server_idle_milli() { return server_idle_milli_; }
-
-  // TODO(raajay) rename this to is_server_asynchronous
-  static bool is_asynchronous_mode() { return is_server_asynchronous_; }
-
-  // ********* END - Functions that depend on Init()
 
   static CommBus *comm_bus;
 
@@ -427,50 +593,27 @@ public:
   static const int32_t kReplicaClientMaxId = 400;
 
 private:
-  // private functions
-  // get the id of the server who is responsible for holding that row
-  static int32_t GetPartitionServerClientID(int32_t row_id) {
-    int index =
-        (row_id / num_comm_channels_per_client_) % server_clients_.size();
-    return server_clients_[index];
-  }
 
-  // private variables
-  static int32_t client_id_;
-  static int32_t num_clients_;
-  static int32_t num_comm_channels_per_client_;
-  static int32_t num_total_comm_channels_;
-  static int32_t num_app_threads_;
   static int32_t num_table_threads_;
-  static int32_t num_tables_;
-  static int32_t server_ring_size_;
-  static ConsistencyModel consistency_model_;
-  static int32_t local_id_min_;
-  static bool aggressive_cpu_;
-  static int32_t snapshot_clock_;
-  static std::string snapshot_dir_;
-  static int32_t resume_clock_;
-  static std::string resume_dir_;
-  static UpdateSortPolicy update_sort_policy_;
-  static long bg_idle_milli_;
-  static double bandwidth_mbps_;
-  static size_t oplog_push_upper_bound_kb_;
-  static int32_t oplog_push_staleness_tolerance_;
-  static size_t thread_oplog_batch_size_;
-  static size_t server_oplog_push_batch_size_;
-  static size_t server_push_row_threshold_;
-  static long server_idle_milli_;
-  static int32_t server_row_candidate_factor_;
-  static std::map<int32_t, HostInfo> host_map_;
-  static std::map<int32_t, HostInfo> server_map_;
+  static TableGroupConfig table_group_config_;
+
   static HostInfo name_node_host_info_;
+  static std::map<int32_t, HostInfo> server_map_;
+
   static std::vector<int32_t> server_ids_;
   static std::vector<int32_t> server_clients_;
   static std::vector<int32_t> worker_clients_;
 
-  // (raajay) new private variables
-  static bool is_server_asynchronous_;
 
-}; // class GlobalContext
+  /**
+   * @brief Return the server id responsible for a row
+   */
+  static int32_t GetPartitionServerClientID(int32_t row_id) {
+    int index =
+        (row_id / get_num_comm_channels_per_client()) % server_clients_.size();
+    return server_clients_[index];
+  }
 
-} // namespace petuum
+};
+
+}

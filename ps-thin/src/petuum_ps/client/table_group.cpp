@@ -6,55 +6,45 @@
 
 namespace petuum {
 
+/**
+ * @brief Constructor for a Table Group.
+ *
+ * An application creates a table group. When a table group is created, a
+ * global context is populated with values from table group config; these
+ * values can then be accessible from all threads. Further, we also initialize
+ * a communication bus for threads to talk to one another using ZMQ.
+ */
 TableGroup::TableGroup(const TableGroupConfig &table_group_config,
                        bool table_access, int32_t *init_thread_id)
     : AbstractTableGroup(), max_table_staleness_(0) {
 
-  int32_t num_comm_channels_per_client =
-      table_group_config.num_comm_channels_per_client;
-  int32_t num_local_app_threads = table_group_config.num_local_app_threads;
-  int32_t num_local_table_threads =
-      table_access ? num_local_app_threads : (num_local_app_threads - 1);
-  int32_t num_tables = table_group_config.num_tables;
   int32_t num_total_clients = table_group_config.num_total_clients;
-  const std::map<int32_t, HostInfo> &host_map = table_group_config.host_map;
 
-  int32_t client_id = table_group_config.client_id;
-  int32_t server_ring_size = table_group_config.server_ring_size;
-  ConsistencyModel consistency_model = table_group_config.consistency_model;
-  int32_t local_id_min = GlobalContext::get_thread_id_min(client_id);
-  int32_t local_id_max = GlobalContext::get_thread_id_max(client_id);
-  num_app_threads_registered_ = 1; // init thread is the first one
+  // atomic int (the main thread is also registered)
+  num_app_threads_registered_ = 1;
+
+  // atomic int (ephemeral threads are sync threads)
   num_ephemeral_threads_registered_ = 0;
 
   STATS_INIT(table_group_config);
   STATS_REGISTER_THREAD(kAppThread);
 
-  // can be Inited after CommBus but must be before everything else
-  GlobalContext::Init(
-      num_comm_channels_per_client, num_local_app_threads,
-      num_local_table_threads, num_tables, num_total_clients, host_map,
-      client_id, server_ring_size, consistency_model,
-      table_group_config.aggressive_cpu, table_group_config.snapshot_clock,
-      table_group_config.snapshot_dir, table_group_config.resume_clock,
-      table_group_config.resume_dir, table_group_config.update_sort_policy,
-      table_group_config.bg_idle_milli, table_group_config.bandwidth_mbps,
-      table_group_config.oplog_push_upper_bound_kb,
-      table_group_config.oplog_push_staleness_tolerance,
-      table_group_config.thread_oplog_batch_size,
-      table_group_config.server_push_row_threshold,
-      table_group_config.server_idle_milli,
-      table_group_config.server_row_candidate_factor,
-      table_group_config.is_asynchronous_mode);
+  GlobalContext::Init(table_group_config, table_access);
+
+  int32_t local_id_min = GlobalContext::get_local_id_min();
+  int32_t local_id_max = GlobalContext::get_local_id_max();
 
   CommBus *comm_bus =
       new CommBus(local_id_min, local_id_max, num_total_clients, 6);
+
   GlobalContext::comm_bus = comm_bus;
 
   *init_thread_id = local_id_min + GlobalContext::kInitThreadIDOffset;
 
   CommBus::Config comm_config(*init_thread_id, CommBus::kNone, "");
+
   GlobalContext::comm_bus->ThreadRegister(comm_config);
+
   ThreadContext::RegisterThread(*init_thread_id);
 
   if (GlobalContext::am_i_name_node_client()) {
@@ -80,6 +70,10 @@ TableGroup::TableGroup(const TableGroupConfig &table_group_config,
     ClockInternal = &TableGroup::ClockConservative;
 }
 
+
+/**
+ * @brief Destructor.
+ */
 TableGroup::~TableGroup() {
   pthread_barrier_destroy(&register_barrier_);
 
@@ -110,6 +104,11 @@ TableGroup::~TableGroup() {
   STATS_PRINT();
 }
 
+
+/**
+ * @brief Create a table in the table group. And register the main thread to be
+ * able to access the tables.
+ */
 bool TableGroup::CreateTable(int32_t table_id,
                              const ClientTableConfig &table_config) {
   CHECK_EQ(true, GlobalContext::am_i_worker_client())
@@ -125,14 +124,25 @@ bool TableGroup::CreateTable(int32_t table_id,
   return suc;
 }
 
+
+/**
+ * @brief Function to notify that the main thread is done creating all the
+ * required a tables. Once tables are created, we wait for other application
+ * threads to register.
+ */
 void TableGroup::CreateTableDone() {
   CHECK_EQ(true, GlobalContext::am_i_worker_client())
       << "Only (application threads on) worker clients can create tables.";
   BgWorkers::WaitCreateTable();
+  // create
   pthread_barrier_init(&register_barrier_, 0,
                        GlobalContext::get_num_table_threads());
 }
 
+
+/**
+ * @brief Barrier to wait for all application threads to register.
+ */
 void TableGroup::WaitThreadRegister() {
   if (GlobalContext::get_num_table_threads() ==
       GlobalContext::get_num_app_threads()) {
@@ -140,6 +150,11 @@ void TableGroup::WaitThreadRegister() {
   }
 }
 
+
+/**
+ * @brief Helper function to allow any application thread (other than the main
+ * thread responsible for creating tables) to register.
+ */
 int32_t TableGroup::RegisterThread() {
   CHECK_EQ(true, GlobalContext::am_i_worker_client())
       << "Only (application threads on) worker clients can create tables.";
@@ -147,10 +162,12 @@ int32_t TableGroup::RegisterThread() {
   int app_thread_id_offset = num_app_threads_registered_++;
   int32_t thread_id = GlobalContext::get_local_id_min() +
                       GlobalContext::kInitThreadIDOffset + app_thread_id_offset;
+
   ThreadContext::RegisterThread(thread_id);
 
   petuum::CommBus::Config comm_config(thread_id, petuum::CommBus::kNone, "");
   GlobalContext::comm_bus->ThreadRegister(comm_config);
+
   BgWorkers::AppThreadRegister();
 
   vector_clock_.AddClock(thread_id, 0);
@@ -160,9 +177,16 @@ int32_t TableGroup::RegisterThread() {
   }
 
   pthread_barrier_wait(&register_barrier_);
+
   return thread_id;
 }
 
+
+/**
+ * @brief Helper function for ephemeral threads to register. These threads, do
+ * not use barriers. They can still use the table API; however, such threads
+ * should only created by application threads that have previously registered.
+ */
 int32_t TableGroup::RegisterCaffeSyncThread(int32_t thread_offset) {
   CHECK_EQ(true, GlobalContext::am_i_worker_client())
       << "Only (application threads on) worker clients can create tables.";
@@ -170,16 +194,22 @@ int32_t TableGroup::RegisterCaffeSyncThread(int32_t thread_offset) {
   ++num_ephemeral_threads_registered_;
   int ephemeral_thread_id =
       GlobalContext::get_head_ephemeral_thread_id() + thread_offset;
+
   // Register with comm bus
   petuum::CommBus::Config comm_config;
   comm_config.entity_id_ = ephemeral_thread_id;
   comm_config.ltype_ = petuum::CommBus::kNone;
   GlobalContext::comm_bus->ThreadRegister(comm_config);
+
   // Connect to BgWorkers -- sends a dummy message to that ZMQ is setup
   BgWorkers::SyncThreadRegister();
   return ephemeral_thread_id;
 }
 
+
+/**
+ * @brief Deregister application thread
+ */
 void TableGroup::DeregisterThread() {
   CHECK_EQ(true, GlobalContext::am_i_worker_client())
       << "Only (application threads on) worker clients can create tables.";
@@ -192,6 +222,10 @@ void TableGroup::DeregisterThread() {
   STATS_DEREGISTER_THREAD();
 }
 
+
+/**
+ * @brief Deregister ephemeral threads
+ */
 void TableGroup::DeregisterCaffeSyncThread() {
   CHECK_EQ(true, GlobalContext::am_i_worker_client())
       << "Only (application threads on) worker clients can create tables.";
@@ -254,6 +288,9 @@ void TableGroup::ClockAggressive() {
 void TableGroup::ClockConservative() {
   CHECK_EQ(true, GlobalContext::am_i_worker_client())
       << "Only (application threads on) worker clients can create tables.";
+  // Clocking the table, flushes the values in the thread_cache_ to
+  // process_storage_ and, dumps the per thread oplog_index_ into a
+  // table_oplog_index_ data structure that is visible from all the threads.
   for (const auto &table : tables_) {
     table.second->Clock();
   }
@@ -270,4 +307,4 @@ void TableGroup::ClockConservative() {
   }
 }
 
-} // end namespace -- petuum
+}
