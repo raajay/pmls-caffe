@@ -45,7 +45,6 @@ public:
   void GlobalBarrier();
 
 private:
-
   typedef void (TableGroup::*ClockFunc)();
   ClockFunc ClockInternal;
 

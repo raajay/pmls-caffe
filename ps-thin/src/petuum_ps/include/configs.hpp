@@ -11,16 +11,11 @@
 
 namespace petuum {
 
-
 /**
  * @brief The consistency model to use for updating and fetching model
  * SSP: Stale Synchronous Parallel
  */
-enum ConsistencyModel {
-  SSP = 0,
-  LocalOOC = 6
-};
-
+enum ConsistencyModel { SSP = 0, LocalOOC = 6 };
 
 /**
  * @brief The policy used to sort the updates, i.e., how to sort the oplog
@@ -33,7 +28,6 @@ enum UpdateSortPolicy {
   FIFO_N_ReMag = 3
 };
 
-
 /**
  * @brief The format of per row updates.
  */
@@ -43,37 +37,22 @@ struct RowOpLogType {
   static const int32_t kSparseVectorRowOpLog = 2;
 };
 
-
 /**
  * @brief OpLog stores the updates. If the updates can either be sparse or
  * dense. AppendOnly is a mystery!!!  TODO(raajay)
  */
-enum OpLogType {
-    Sparse = 0,
-    AppendOnly = 1,
-    Dense = 2
-};
-
+enum OpLogType { Sparse = 0, AppendOnly = 1, Dense = 2 };
 
 /**
  */
-enum AppendOnlyOpLogType {
-    Inc = 0,
-    BatchInc = 1,
-    DenseBatchInc = 2
-};
-
+enum AppendOnlyOpLogType { Inc = 0, BatchInc = 1, DenseBatchInc = 2 };
 
 /**
  * @brief ProcessStorage stores the current value of the model in the client
  * table. Bounded means that there is limited capacity (memory) to store the
  * model.
  */
-enum ProcessStorageType {
-    BoundedDense = 0,
-    BoundedSparse = 1
-};
-
+enum ProcessStorageType { BoundedDense = 0, BoundedSparse = 1 };
 
 /**
  */
@@ -81,8 +60,7 @@ struct TableGroupConfig {
 
   TableGroupConfig()
       : stats_path(""), num_comm_channels_per_client(1), num_tables(1),
-        num_total_clients(1), num_local_app_threads(2),
-        aggressive_clock(false),
+        num_total_clients(1), num_local_app_threads(2), aggressive_clock(false),
         aggressive_cpu(false), snapshot_clock(-1), resume_clock(-1),
         update_sort_policy(Random), bg_idle_milli(0), bandwidth_mbps(4000),
         oplog_push_upper_bound_kb(1000), oplog_push_staleness_tolerance(2),
@@ -242,23 +220,19 @@ struct TableGroupConfig {
   }
 };
 
-
 /**
  * TableInfo is shared between client and server; i.e., its values are used for
  * creation of Client as well as Server table
  */
 struct TableInfo {
 
-    /**
-     * @brief Constructor
-     */
+  /**
+   * @brief Constructor
+   */
 
   TableInfo()
-      : table_staleness(0),
-        row_type(-1),
-        row_capacity(0),
-        oplog_dense_serialized(false),
-        row_oplog_type(1),
+      : table_staleness(0), row_type(-1), row_capacity(0),
+        oplog_dense_serialized(false), row_oplog_type(1),
         dense_row_oplog_capacity(0) {}
 
   /**
@@ -300,26 +274,20 @@ struct TableInfo {
   }
 };
 
-
 /**
  * @brief ClientTableConfig is used by client only.
  */
 struct ClientTableConfig {
 
-    /**
-     * @brief Constructor
-     */
+  /**
+   * @brief Constructor
+   */
   ClientTableConfig()
-      : process_cache_capacity(0),
-        thread_cache_capacity(1),
-        oplog_capacity(0),
-        oplog_type(Dense),
-        append_only_oplog_type(Inc),
+      : process_cache_capacity(0), thread_cache_capacity(1), oplog_capacity(0),
+        oplog_type(Dense), append_only_oplog_type(Inc),
         append_only_buff_capacity(10 * k1_Mi),
-        per_thread_append_only_buff_pool_size(3),
-        bg_apply_append_oplog_freq(1),
-        process_storage_type(BoundedSparse),
-        no_oplog_replay(false) {}
+        per_thread_append_only_buff_pool_size(3), bg_apply_append_oplog_freq(1),
+        process_storage_type(BoundedSparse), no_oplog_replay(false) {}
 
   TableInfo table_info;
 

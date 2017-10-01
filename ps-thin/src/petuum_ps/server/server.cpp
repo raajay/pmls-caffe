@@ -88,8 +88,9 @@ void Server::AddRowRequest(int32_t bg_id, int32_t table_id, int32_t row_id,
   server_row_request.clock = clock;
 
   if (clock_bg_row_requests_.count(clock) == 0) {
-    clock_bg_row_requests_.insert(std::make_pair(
-        clock, boost::unordered::unordered_map<int32_t, std::vector<ServerRowRequest>>()));
+    clock_bg_row_requests_.insert(
+        std::make_pair(clock, boost::unordered::unordered_map<
+                                  int32_t, std::vector<ServerRowRequest>>()));
   }
   if (clock_bg_row_requests_[clock].count(bg_id) == 0) {
     clock_bg_row_requests_[clock].insert(

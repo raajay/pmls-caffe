@@ -542,7 +542,6 @@ void AbstractBgWorker::CreateOpLogMsgs(const BgOpLog *bg_oplog) {
       // server. This is the offset into oplog msg's memory.
       table_server_mem_map[table_id][server_id] =
           table_ptr + sizeof(int32_t) + sizeof(size_t);
-
     }
   }
 
@@ -617,7 +616,6 @@ size_t AbstractBgWorker::SendOpLogMsgs(bool clock_advanced) {
 
   STATS_BG_ADD_PER_CLOCK_OPLOG_SIZE(accum_size);
   return accum_size;
-
 }
 
 size_t AbstractBgWorker::CountRowOpLogToSend(

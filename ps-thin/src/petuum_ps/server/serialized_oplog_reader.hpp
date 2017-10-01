@@ -18,9 +18,9 @@ namespace petuum {
 class SerializedOpLogReader : boost::noncopyable {
 public:
   // does not take ownership
-  SerializedOpLogReader(
-      const void *oplog_ptr,
-      const boost::unordered::unordered_map<int32_t, ServerTable> &server_tables)
+  SerializedOpLogReader(const void *oplog_ptr,
+                        const boost::unordered::unordered_map<
+                            int32_t, ServerTable> &server_tables)
       : serialized_oplog_ptr_(reinterpret_cast<const uint8_t *>(oplog_ptr)),
         server_tables_(server_tables) {}
   ~SerializedOpLogReader() {}

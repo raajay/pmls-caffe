@@ -95,8 +95,8 @@ void ThreadTable::InsertRow(int32_t row_id, const AbstractRow *to_insert) {
     row_storage_[row_id] = row;
   }
 
-  boost::unordered::unordered_map<int32_t, AbstractRowOpLog *>::iterator oplog_iter =
-      oplog_map_.find(row_id);
+  boost::unordered::unordered_map<int32_t, AbstractRowOpLog *>::iterator
+      oplog_iter = oplog_map_.find(row_id);
   if (oplog_iter != oplog_map_.end()) {
     int32_t column_id;
     void *delta = oplog_iter->second->BeginIterate(&column_id);
