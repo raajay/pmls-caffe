@@ -18,6 +18,7 @@
 namespace petuum {
 
 class ClientTable : public AbstractClientTable {
+
 public:
   // Instantiate AbstractRow, TableOpLog, and ProcessStorage using config.
   ClientTable(int32_t table_id, const ClientTableConfig &config);
@@ -25,6 +26,7 @@ public:
   ~ClientTable() override;
 
   void RegisterThread() override;
+
   void DeregisterThread();
 
   void GetAsyncForced(int32_t row_id) override;
@@ -41,13 +43,15 @@ public:
   void Inc(int32_t row_id, int32_t column_id, const void *update) override;
 
   void BatchInc(int32_t row_id, const int32_t *column_ids, const void *updates,
-                int32_t num_updates, int32_t global_version = -1);
+                int32_t num_updates, int32_t global_version = -1) override;
 
   void DenseBatchInc(int32_t row_id, const void *updates, int32_t index_st,
                      int32_t num_updates) override;
 
   void Clock() override;
+
   cuckoohash_map<int32_t, bool> *GetAndResetOpLogIndex(int32_t partition_num);
+
   size_t GetNumRowOpLogs(int32_t partition_num);
 
   AbstractProcessStorage &get_process_storage() { return *process_storage_; }
@@ -56,57 +60,73 @@ public:
 
   const AbstractRow *get_sample_row() const { return sample_row_; }
 
-  int32_t get_row_type() const { return row_type_; }
 
-  int32_t get_staleness() const { return staleness_; }
+  int32_t get_row_type() const override {
+      return client_table_config_.table_info.row_type;
+  }
 
-  bool oplog_dense_serialized() const { return oplog_dense_serialized_; }
 
-  OpLogType get_oplog_type() const { return oplog_type_; }
+  int32_t get_staleness() const {
+      return client_table_config_.table_info.table_staleness;
+  }
+
+
+  bool oplog_dense_serialized() const {
+      return client_table_config_.table_info.oplog_dense_serialized;
+  }
+
+
+  OpLogType get_oplog_type() const {
+      return client_table_config_.oplog_type;
+  }
+
 
   int32_t get_bg_apply_append_oplog_freq() const {
-    return bg_apply_append_oplog_freq_;
+      return client_table_config_.bg_apply_append_oplog_freq;
   }
 
-  int32_t get_row_oplog_type() const { return row_oplog_type_; }
+
+  int32_t get_row_oplog_type() const {
+      return client_table_config_.table_info.row_oplog_type;
+  }
+
 
   size_t get_dense_row_oplog_capacity() const {
-    return dense_row_oplog_capacity_;
+      return client_table_config_.table_info.dense_row_oplog_capacity;
   }
+
 
   AppendOnlyOpLogType get_append_only_oplog_type() const {
-    return append_only_oplog_type_;
+      return client_table_config_.append_only_oplog_type;
   }
 
-  bool get_no_oplog_replay() const { return no_oplog_replay_; }
+
+  bool get_no_oplog_replay() const {
+      return client_table_config_.no_oplog_replay;
+  }
 
 private:
+
   const int32_t table_id_;
-  const int32_t row_type_;
+
   const AbstractRow *const sample_row_;
+
   AbstractOpLog *oplog_;
+
+  TableOpLogIndex oplog_index_;
+
   AbstractProcessStorage *process_storage_;
+
   AbstractConsistencyController *consistency_controller_;
 
   boost::thread_specific_ptr<ThreadTable> thread_cache_;
-  TableOpLogIndex oplog_index_;
-  int32_t staleness_;
 
-  bool oplog_dense_serialized_;
   ClientTableConfig client_table_config_;
 
-  const OpLogType oplog_type_;
-  const int32_t bg_apply_append_oplog_freq_;
-  const int32_t row_oplog_type_;
-  const size_t dense_row_oplog_capacity_;
-  const AppendOnlyOpLogType append_only_oplog_type_;
-
-  const size_t row_capacity_;
-
   ClientRow *CreateClientRow(int32_t clock);
+
   ClientRow *CreateSSPClientRow(int32_t clock);
 
-  const bool no_oplog_replay_;
 };
 
 } // namespace petuum
