@@ -119,6 +119,10 @@ bool TableGroup::CreateTable(int32_t table_id,
     auto iter = tables_.find(table_id);
     iter->second->RegisterThread();
   }
+
+  if (suc) {
+      table_clock_.AddClock(table_id, 0);
+  }
   return suc;
 }
 

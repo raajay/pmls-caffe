@@ -65,6 +65,8 @@ private:
   int32_t max_table_staleness_;
 
   VectorClockMT vector_clock_;
+
+  VectorClockMT table_clock_;
 };
 
 } // namespace petuum
