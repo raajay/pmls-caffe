@@ -54,10 +54,16 @@ enum AppendOnlyOpLogType { Inc = 0, BatchInc = 1, DenseBatchInc = 2 };
  */
 enum ProcessStorageType { BoundedDense = 0, BoundedSparse = 1 };
 
+
 /**
+ * @brief Configuration for all tables in the group. Will be used to init the
+ * global context.
  */
 struct TableGroupConfig {
 
+  /**
+   * Constructor
+   */
   TableGroupConfig()
       : stats_path(""), num_comm_channels_per_client(1), num_tables(1),
         num_total_clients(1), num_local_app_threads(2), aggressive_clock(false),
@@ -65,7 +71,7 @@ struct TableGroupConfig {
         update_sort_policy(Random), bg_idle_milli(0), bandwidth_mbps(4000),
         oplog_push_upper_bound_kb(1000), oplog_push_staleness_tolerance(2),
         thread_oplog_batch_size(100 * 1000 * 1000),
-        server_row_candidate_factor(5) {}
+        server_row_candidate_factor(5), use_table_clock(true) {}
 
   std::string stats_path;
 
@@ -172,15 +178,39 @@ struct TableGroupConfig {
    */
   size_t oplog_push_upper_bound_kb;
 
+  /**
+   */
   int32_t oplog_push_staleness_tolerance;
 
+  /**
+   */
   size_t thread_oplog_batch_size;
 
+  /**
+   */
   size_t server_push_row_threshold;
 
+  /**
+   */
   long server_idle_milli;
 
+  /**
+   */
   long server_row_candidate_factor;
+
+
+  /**
+   * (raajay): Petuum traditionally uses one clock for an application thread (a
+   * single clock will indicate updates to all tables have been applied).
+   * However, on integrating with caffe, per-table sync threads are used to Inc
+   * and Get table values. To avoid race conditions between App and Sync
+   * threads, the clocks have to be issued from the sync threads after the Inc
+   * completes. Hence we introduce per table clocks.
+   *
+   * At any given point in time, only one thread uses table API. Hence, we do
+   * not need a multi-threaded clock for each table.
+   */
+  bool use_table_clock;
 
   /**
    * Stringify table group configs
@@ -219,6 +249,7 @@ struct TableGroupConfig {
     return ss.str();
   }
 };
+
 
 /**
  * TableInfo is shared between client and server; i.e., its values are used for
