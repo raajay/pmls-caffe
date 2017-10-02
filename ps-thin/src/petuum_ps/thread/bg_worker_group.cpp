@@ -111,9 +111,9 @@ void BgWorkerGroup::ClockAllTables() {
 }
 
 void BgWorkerGroup::ClockTable(int32_t table_id) {
-    for(const auto &worker : bg_worker_vec_) {
-        worker->ClockTable(table_id);
-    }
+  for (const auto &worker : bg_worker_vec_) {
+    worker->ClockTable(table_id);
+  }
 }
 
 void BgWorkerGroup::SendOpLogsAllTables() {

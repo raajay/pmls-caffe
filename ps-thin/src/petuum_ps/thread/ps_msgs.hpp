@@ -11,15 +11,7 @@ namespace petuum {
 struct ClientConnectMsg : public NumberedMsg {
 public:
   ClientConnectMsg() {
-    if (get_size() > PETUUM_MSG_STACK_BUFF_SIZE) {
-      own_mem_ = true;
-      use_stack_buff_ = false;
-      mem_.Alloc(get_size());
-    } else {
-      own_mem_ = false;
-      use_stack_buff_ = true;
-      mem_.Reset(stack_buff_);
-    }
+    AllocateMemory();
     InitMsg();
   }
 
@@ -42,15 +34,7 @@ protected:
 struct AggregatorConnectMsg : public NumberedMsg {
 public:
   AggregatorConnectMsg() {
-    if (get_size() > PETUUM_MSG_STACK_BUFF_SIZE) {
-      own_mem_ = true;
-      use_stack_buff_ = false;
-      mem_.Alloc(get_size());
-    } else {
-      own_mem_ = false;
-      use_stack_buff_ = true;
-      mem_.Reset(stack_buff_);
-    }
+    AllocateMemory();
     InitMsg();
   }
 
@@ -73,15 +57,7 @@ protected:
 struct ServerConnectMsg : public NumberedMsg {
 public:
   ServerConnectMsg() {
-    if (get_size() > PETUUM_MSG_STACK_BUFF_SIZE) {
-      own_mem_ = true;
-      use_stack_buff_ = false;
-      mem_.Alloc(get_size());
-    } else {
-      own_mem_ = false;
-      use_stack_buff_ = true;
-      mem_.Reset(stack_buff_);
-    }
+    AllocateMemory();
     InitMsg();
   }
 
@@ -97,15 +73,7 @@ protected:
 struct AppConnectMsg : public NumberedMsg {
 public:
   AppConnectMsg() {
-    if (get_size() > PETUUM_MSG_STACK_BUFF_SIZE) {
-      own_mem_ = true;
-      use_stack_buff_ = false;
-      mem_.Alloc(get_size());
-    } else {
-      own_mem_ = false;
-      use_stack_buff_ = true;
-      mem_.Reset(stack_buff_);
-    }
+    AllocateMemory();
     InitMsg();
   }
 
@@ -121,15 +89,7 @@ protected:
 struct SyncThreadConnectMsg : public NumberedMsg {
 public:
   SyncThreadConnectMsg() {
-    if (get_size() > PETUUM_MSG_STACK_BUFF_SIZE) {
-      own_mem_ = true;
-      use_stack_buff_ = false;
-      mem_.Alloc(get_size());
-    } else {
-      own_mem_ = false;
-      use_stack_buff_ = true;
-      mem_.Reset(stack_buff_);
-    }
+    AllocateMemory();
     InitMsg();
   }
 
@@ -142,15 +102,7 @@ protected:
 struct SyncThreadDeregMsg : public NumberedMsg {
 public:
   SyncThreadDeregMsg() {
-    if (get_size() > PETUUM_MSG_STACK_BUFF_SIZE) {
-      own_mem_ = true;
-      use_stack_buff_ = false;
-      mem_.Alloc(get_size());
-    } else {
-      own_mem_ = false;
-      use_stack_buff_ = true;
-      mem_.Reset(stack_buff_);
-    }
+    AllocateMemory();
     InitMsg();
   }
 
@@ -163,15 +115,7 @@ protected:
 struct BgCreateTableMsg : public NumberedMsg {
 public:
   BgCreateTableMsg() {
-    if (get_size() > PETUUM_MSG_STACK_BUFF_SIZE) {
-      own_mem_ = true;
-      use_stack_buff_ = false;
-      mem_.Alloc(get_size());
-    } else {
-      own_mem_ = false;
-      use_stack_buff_ = true;
-      mem_.Reset(stack_buff_);
-    }
+    AllocateMemory();
     InitMsg();
   }
 
@@ -319,15 +263,7 @@ protected:
 struct CreateTableMsg : public NumberedMsg {
 public:
   CreateTableMsg() {
-    if (get_size() > PETUUM_MSG_STACK_BUFF_SIZE) {
-      own_mem_ = true;
-      use_stack_buff_ = false;
-      mem_.Alloc(get_size());
-    } else {
-      own_mem_ = false;
-      use_stack_buff_ = true;
-      mem_.Reset(stack_buff_);
-    }
+    AllocateMemory();
     InitMsg();
   }
 
@@ -390,15 +326,7 @@ protected:
 struct CreateTableReplyMsg : public NumberedMsg {
 public:
   CreateTableReplyMsg() {
-    if (get_size() > PETUUM_MSG_STACK_BUFF_SIZE) {
-      own_mem_ = true;
-      use_stack_buff_ = false;
-      mem_.Alloc(get_size());
-    } else {
-      own_mem_ = false;
-      use_stack_buff_ = true;
-      mem_.Reset(stack_buff_);
-    }
+    AllocateMemory();
     InitMsg();
   }
 
@@ -421,15 +349,7 @@ protected:
 struct RowRequestMsg : public NumberedMsg {
 public:
   RowRequestMsg() {
-    if (get_size() > PETUUM_MSG_STACK_BUFF_SIZE) {
-      own_mem_ = true;
-      use_stack_buff_ = false;
-      mem_.Alloc(get_size());
-    } else {
-      own_mem_ = false;
-      use_stack_buff_ = true;
-      mem_.Reset(stack_buff_);
-    }
+    AllocateMemory();
     InitMsg();
   }
 
@@ -472,15 +392,7 @@ protected:
 struct RowRequestReplyMsg : public NumberedMsg {
 public:
   RowRequestReplyMsg() {
-    if (get_size() > PETUUM_MSG_STACK_BUFF_SIZE) {
-      own_mem_ = true;
-      use_stack_buff_ = false;
-      mem_.Alloc(get_size());
-    } else {
-      own_mem_ = false;
-      use_stack_buff_ = true;
-      mem_.Reset(stack_buff_);
-    }
+    AllocateMemory();
     InitMsg();
   }
 
@@ -498,15 +410,7 @@ protected:
 struct CreatedAllTablesMsg : public NumberedMsg {
 public:
   CreatedAllTablesMsg() {
-    if (get_size() > PETUUM_MSG_STACK_BUFF_SIZE) {
-      own_mem_ = true;
-      use_stack_buff_ = false;
-      mem_.Alloc(get_size());
-    } else {
-      own_mem_ = false;
-      use_stack_buff_ = true;
-      mem_.Reset(stack_buff_);
-    }
+    AllocateMemory();
     InitMsg();
   }
 
@@ -522,15 +426,7 @@ protected:
 struct ConnectServerMsg : public NumberedMsg {
 public:
   ConnectServerMsg() {
-    if (get_size() > PETUUM_MSG_STACK_BUFF_SIZE) {
-      own_mem_ = true;
-      use_stack_buff_ = false;
-      mem_.Alloc(get_size());
-    } else {
-      own_mem_ = false;
-      use_stack_buff_ = true;
-      mem_.Reset(stack_buff_);
-    }
+    AllocateMemory();
     InitMsg();
   }
 
@@ -546,15 +442,7 @@ protected:
 struct ClientStartMsg : public NumberedMsg {
 public:
   ClientStartMsg() {
-    if (get_size() > PETUUM_MSG_STACK_BUFF_SIZE) {
-      own_mem_ = true;
-      use_stack_buff_ = false;
-      mem_.Alloc(get_size());
-    } else {
-      own_mem_ = false;
-      use_stack_buff_ = true;
-      mem_.Reset(stack_buff_);
-    }
+    AllocateMemory();
     InitMsg();
   }
 
@@ -570,15 +458,7 @@ protected:
 struct AppThreadDeregMsg : public NumberedMsg {
 public:
   AppThreadDeregMsg() {
-    if (get_size() > PETUUM_MSG_STACK_BUFF_SIZE) {
-      own_mem_ = true;
-      use_stack_buff_ = false;
-      mem_.Alloc(get_size());
-    } else {
-      own_mem_ = false;
-      use_stack_buff_ = true;
-      mem_.Reset(stack_buff_);
-    }
+    AllocateMemory();
     InitMsg();
   }
 
@@ -594,15 +474,7 @@ protected:
 struct ClientShutDownMsg : public NumberedMsg {
 public:
   ClientShutDownMsg() {
-    if (get_size() > PETUUM_MSG_STACK_BUFF_SIZE) {
-      own_mem_ = true;
-      use_stack_buff_ = false;
-      mem_.Alloc(get_size());
-    } else {
-      own_mem_ = false;
-      use_stack_buff_ = true;
-      mem_.Reset(stack_buff_);
-    }
+    AllocateMemory();
     InitMsg();
   }
 
@@ -618,15 +490,7 @@ protected:
 struct ServerShutDownAckMsg : public NumberedMsg {
 public:
   ServerShutDownAckMsg() {
-    if (get_size() > PETUUM_MSG_STACK_BUFF_SIZE) {
-      own_mem_ = true;
-      use_stack_buff_ = false;
-      mem_.Alloc(get_size());
-    } else {
-      own_mem_ = false;
-      use_stack_buff_ = true;
-      mem_.Reset(stack_buff_);
-    }
+    AllocateMemory();
     InitMsg();
   }
 
@@ -642,15 +506,7 @@ protected:
 struct ServerOpLogAckMsg : public NumberedMsg {
 public:
   ServerOpLogAckMsg() {
-    if (get_size() > PETUUM_MSG_STACK_BUFF_SIZE) {
-      own_mem_ = true;
-      use_stack_buff_ = false;
-      mem_.Alloc(get_size());
-    } else {
-      own_mem_ = false;
-      use_stack_buff_ = true;
-      mem_.Reset(stack_buff_);
-    }
+    AllocateMemory();
     InitMsg();
   }
 
@@ -673,15 +529,7 @@ protected:
 struct ReplicaOpLogAckMsg : public NumberedMsg {
 public:
   ReplicaOpLogAckMsg() {
-    if (get_size() > PETUUM_MSG_STACK_BUFF_SIZE) {
-      own_mem_ = true;
-      use_stack_buff_ = false;
-      mem_.Alloc(get_size());
-    } else {
-      own_mem_ = false;
-      use_stack_buff_ = true;
-      mem_.Reset(stack_buff_);
-    }
+    AllocateMemory();
     InitMsg();
   }
 
@@ -711,15 +559,7 @@ protected:
 struct BgClockMsg : public NumberedMsg {
 public:
   BgClockMsg() {
-    if (get_size() > PETUUM_MSG_STACK_BUFF_SIZE) {
-      own_mem_ = true;
-      use_stack_buff_ = false;
-      mem_.Alloc(get_size());
-    } else {
-      own_mem_ = false;
-      use_stack_buff_ = true;
-      mem_.Reset(stack_buff_);
-    }
+    AllocateMemory();
     InitMsg();
   }
 
@@ -735,15 +575,7 @@ protected:
 struct BgSendOpLogMsg : public NumberedMsg {
 public:
   BgSendOpLogMsg() {
-    if (get_size() > PETUUM_MSG_STACK_BUFF_SIZE) {
-      own_mem_ = true;
-      use_stack_buff_ = false;
-      mem_.Alloc(get_size());
-    } else {
-      own_mem_ = false;
-      use_stack_buff_ = true;
-      mem_.Reset(stack_buff_);
-    }
+    AllocateMemory();
     InitMsg();
   }
 
@@ -759,15 +591,7 @@ protected:
 struct BgHandleAppendOpLogMsg : public NumberedMsg {
 public:
   BgHandleAppendOpLogMsg() {
-    if (get_size() > PETUUM_MSG_STACK_BUFF_SIZE) {
-      own_mem_ = true;
-      use_stack_buff_ = false;
-      mem_.Alloc(get_size());
-    } else {
-      own_mem_ = false;
-      use_stack_buff_ = true;
-      mem_.Reset(stack_buff_);
-    }
+    AllocateMemory();
     InitMsg();
   }
 
@@ -854,7 +678,7 @@ protected:
     ArbitrarySizedMsg::InitMsg(avai_size);
     get_msg_type() = kServerRowRequestReply;
   }
-}; // end class - Server Row Request reply message
+};
 
 struct ClientSendOpLogMsg : public ArbitrarySizedMsg {
 
@@ -922,7 +746,7 @@ protected:
     get_msg_type() = kClientSendOpLog;
   }
 
-}; // end class - Client send operation log message
+};
 
 struct ServerSendOpLogMsg : public ArbitrarySizedMsg {
 
@@ -975,7 +799,7 @@ protected:
     get_msg_type() = kServerSendOpLog;
   }
 
-}; // end class - Server send operation log message to replica
+};
 
 struct ServerPushRowMsg : public ArbitrarySizedMsg {
 public:
@@ -1021,4 +845,4 @@ protected:
   }
 };
 
-} // namespace petuum
+}
