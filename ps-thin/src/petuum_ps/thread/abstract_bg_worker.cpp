@@ -177,7 +177,8 @@ void AbstractBgWorker::ClockAllTables() {
 }
 
 void AbstractBgWorker::ClockTable(int32_t table_id) {
-    BgTableClockMsg msg;
+    BgClockMsg msg;
+    msg.get_table_id() = table_id;
     size_t sent_size = SendMsg(reinterpret_cast<MsgBase *>(&msg));
     CHECK_EQ(sent_size, msg.get_size());
 }
