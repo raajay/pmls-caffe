@@ -1013,9 +1013,6 @@ void *AbstractBgWorker::operator()() {
               << worker_clock_;
       STATS_BG_CLOCK();
     } break;
-    case kBgTableClock: {
-                            VLOG(20) << "Recvd table clock msg";
-    } break;
     case kBgSendOpLog: {
       timeout_milli = HandleClockMsg(false);
     } break;
