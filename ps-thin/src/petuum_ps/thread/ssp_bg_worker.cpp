@@ -56,8 +56,6 @@ BgOpLog *SSPBgWorker::PrepareOpLogsToSend() {
     if (table_pair.second->get_oplog_type() == Sparse ||
         table_pair.second->get_oplog_type() == Dense) {
       bg_table_oplog = PrepareOpLogsNormal(table_id, table_pair.second);
-    } else if (table_pair.second->get_oplog_type() == AppendOnly) {
-      bg_table_oplog = PrepareOpLogsAppendOnly(table_id, table_pair.second);
     } else {
       LOG(FATAL) << "Unknown oplog type = "
                  << table_pair.second->get_oplog_type();
@@ -141,47 +139,6 @@ BgOpLogPartition *SSPBgWorker::PrepareOpLogsNormal(int32_t table_id,
   return bg_table_oplog;
 }
 
-
-/**
- * Each thread updates oplog without any locking; hence, the name.
- */
-BgOpLogPartition *SSPBgWorker::PrepareOpLogsAppendOnly(int32_t table_id,
-                                                       ClientTable *table) {
-  VLOG(2) << "In PrepareOpLogsAppendOnly";
-  GetSerializedRowOpLogSizeFunc GetSerializedRowOpLogSize;
-
-  if (table->oplog_dense_serialized()) {
-    GetSerializedRowOpLogSize = GetDenseSerializedRowOpLogSize;
-  } else {
-    GetSerializedRowOpLogSize = GetSparseSerializedRowOpLogSize;
-  }
-
-  size_t table_update_size = table->get_sample_row()->get_update_size();
-
-  auto *bg_table_oplog =
-      new BgOpLogPartition(table_id, table_update_size, my_comm_channel_idx_);
-
-  for (const auto &server_id : server_ids_) {
-    // Reset size to 0
-    table_num_bytes_by_server_[server_id] = 0;
-  }
-
-  auto buff_iter = append_only_row_oplog_buffer_map_.find(table_id);
-  if (buff_iter != append_only_row_oplog_buffer_map_.end()) {
-    AppendOnlyRowOpLogBuffer *append_only_row_oplog_buffer = buff_iter->second;
-    append_only_row_oplog_buffer->MergeTmpOpLog();
-
-    int32_t row_id;
-    AbstractRowOpLog *row_oplog =
-        append_only_row_oplog_buffer->InitReadRmOpLog(&row_id);
-    while (row_oplog != nullptr) {
-      CountRowOpLogToSend(row_id, row_oplog, &table_num_bytes_by_server_,
-                          bg_table_oplog, GetSerializedRowOpLogSize);
-      row_oplog = append_only_row_oplog_buffer->NextReadRmOpLog(&row_id);
-    }
-  }
-  return bg_table_oplog;
-}
 
 void SSPBgWorker::TrackBgOpLog(BgOpLog *bg_oplog) {
   bool tracked =

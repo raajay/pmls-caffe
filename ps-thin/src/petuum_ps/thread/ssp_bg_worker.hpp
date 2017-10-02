@@ -48,8 +48,6 @@ protected:
 
   virtual BgOpLogPartition *PrepareOpLogsNormal(int32_t table_id,
                                                 ClientTable *table);
-  virtual BgOpLogPartition *PrepareOpLogsAppendOnly(int32_t table_id,
-                                                    ClientTable *table);
 
   void TrackBgOpLog(BgOpLog *bg_oplog);
   /* Handles Sending OpLogs -- END */
