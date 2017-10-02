@@ -37,12 +37,16 @@ ClientRow *SSPBgWorker::CreateClientRow(int32_t clock, int32_t global_version,
       new SSPClientRow(clock, global_version, row_data, true));
 }
 
-BgOpLog *SSPBgWorker::PrepareOpLogsToSend() {
+BgOpLog *SSPBgWorker::PrepareOpLogsToSend(int32_t table_id) {
   auto *bg_oplog = new BgOpLog;
 
   // Prepare oplogs prepares each table separately.
   for (const auto &table_pair : (*tables_)) {
-    int32_t table_id = table_pair.first;
+    int32_t curr_table_id = table_pair.first;
+
+    if(table_id !=1 && table_id != curr_table_id) {
+      continue;
+    }
 
     // why are we creating a oplog partition? This is the most common case.
     // Answer: BgOpLog contains all the oplogs that the current worker is
@@ -51,20 +55,20 @@ BgOpLog *SSPBgWorker::PrepareOpLogsToSend() {
 
     // stores op logs responsible for the current workers filtered by the
     // current table id
-    BgOpLogPartition *bg_table_oplog = 0;
+    BgOpLogPartition *bg_table_oplog = nullptr;
 
     if (table_pair.second->get_oplog_type() == Sparse ||
         table_pair.second->get_oplog_type() == Dense) {
-      bg_table_oplog = PrepareOpLogsNormal(table_id, table_pair.second);
+      bg_table_oplog = PrepareTableOpLogsNormal(curr_table_id, table_pair.second);
     } else {
       LOG(FATAL) << "Unknown oplog type = "
                  << table_pair.second->get_oplog_type();
     }
 
     // we add each tables oplog to the overall oplog
-    bg_oplog->Add(table_id, bg_table_oplog);
+    bg_oplog->Add(curr_table_id, bg_table_oplog);
 
-    FinalizeOpLogMsgStats(table_id, &table_num_bytes_by_server_,
+    FinalizeOpLogMsgStats(curr_table_id, &table_num_bytes_by_server_,
                           &server_table_oplog_size_map_);
 
   }
@@ -73,8 +77,8 @@ BgOpLog *SSPBgWorker::PrepareOpLogsToSend() {
   return bg_oplog;
 }
 
-BgOpLogPartition *SSPBgWorker::PrepareOpLogsNormal(int32_t table_id,
-                                                   ClientTable *table) {
+BgOpLogPartition *SSPBgWorker::PrepareTableOpLogsNormal(int32_t table_id,
+                                                        ClientTable *table) {
 
   AbstractOpLog &table_oplog = table->get_oplog();
 
@@ -128,14 +132,14 @@ BgOpLogPartition *SSPBgWorker::PrepareOpLogsNormal(int32_t table_id,
     // this function
     // 1. updates the bytes per server dict,
     // 2. adds the oplog to bg_table_oplog, indexed by row_id
-    CountRowOpLogToSend(row_id, row_oplog, &table_num_bytes_by_server_,
-                        bg_table_oplog, GetSerializedRowOpLogSize);
+    CountRowOpLogToSend(row_id, row_oplog, &table_num_bytes_by_server_, bg_table_oplog, GetSerializedRowOpLogSize);
 
-  } // end for -- over all rows that have oplog (i.e., those which are modified;
-    // obtained from oplog index)
+  }
+  // end for -- over all rows that have oplog (i.e., those which are modified;
+  // obtained from oplog index)
 
-  // no one else points to this struct, see earlier GetAndResetOpLogIndex
-  // function  delete new_table_oplog_index_ptr;
+  // no one else points to this struct, see earlier GetAndResetOpLogIndex function
+  delete new_table_oplog_index_ptr;
   return bg_table_oplog;
 }
 

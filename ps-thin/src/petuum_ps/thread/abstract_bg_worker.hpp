@@ -87,8 +87,7 @@ protected:
 
   /* Handles Sending OpLogs -- BEGIN */
   virtual long HandleClockMsg(int32_t table_id, bool clock_advanced);
-
-  virtual BgOpLog *PrepareOpLogsToSend() = 0;
+  virtual BgOpLog *PrepareOpLogsToSend(int32_t table_id) = 0;
   void CreateOpLogMsgs(const BgOpLog *bg_oplog);
   size_t SendOpLogMsgs(bool clock_advanced);
 

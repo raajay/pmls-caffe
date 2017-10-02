@@ -27,29 +27,27 @@ public:
   virtual ~SSPBgWorker();
 
 protected:
-  virtual void CreateRowRequestOpLogMgr();
+    void CreateRowRequestOpLogMgr() override;
 
   virtual bool GetRowOpLog(AbstractOpLog &table_oplog, int32_t row_id,
                            AbstractRowOpLog **row_oplog_ptr);
 
   /* Functions Called From Main Loop -- BEGIN */
-  virtual void PrepareBeforeInfiniteLoop();
+  void PrepareBeforeInfiniteLoop() override;
   // invoked after all tables have been created
-  virtual void FinalizeTableStats();
-  virtual long ResetBgIdleMilli();
-  virtual long BgIdleWork();
+  void FinalizeTableStats() override;
+  long ResetBgIdleMilli() override;
+  long BgIdleWork() override;
   /* Functions Called From Main Loop -- END */
 
-  virtual ClientRow *CreateClientRow(int32_t clock, int32_t global_version,
-                                     AbstractRow *row_data);
+  ClientRow *CreateClientRow(int32_t clock, int32_t global_version,
+                                     AbstractRow *row_data) override;
+
 
   /* Handles Sending OpLogs -- BEGIN */
-  virtual BgOpLog *PrepareOpLogsToSend();
-
-  virtual BgOpLogPartition *PrepareOpLogsNormal(int32_t table_id,
-                                                ClientTable *table);
-
-  void TrackBgOpLog(BgOpLog *bg_oplog);
+  BgOpLog *PrepareOpLogsToSend(int32_t table_id) override;
+  void TrackBgOpLog(BgOpLog *bg_oplog) override;
+  virtual BgOpLogPartition *PrepareTableOpLogsNormal(int32_t table_id, ClientTable *table);
   /* Handles Sending OpLogs -- END */
 
 }; // end class -- ssp bg worker
