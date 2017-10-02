@@ -412,7 +412,7 @@ void AbstractBgWorker::HandleCreateTables() {
   }
 }
 
-long AbstractBgWorker::HandleClockMsg(bool clock_advanced) {
+long AbstractBgWorker::HandleClockMsg(int32_t table_id, bool clock_advanced) {
 
   STATS_BG_ACCUM_CLOCK_END_OPLOG_SERIALIZE_BEGIN();
   petuum::HighResolutionTimer begin_clock;
@@ -1007,7 +1007,8 @@ void *AbstractBgWorker::operator()() {
     case kBgClock: {
       // clock message is sent from the app thread using the static function
       // defined in bgworkers.
-      timeout_milli = HandleClockMsg(true);
+      BgClockMsg clock_msg(msg_mem);
+      timeout_milli = HandleClockMsg(clock_msg.get_table_id(), true);
       ++worker_clock_;
       VLOG(5) << "THREAD-" << my_id_ << ": "
               << "Increment client clock in bgworker:" << my_id_ << " to "
@@ -1015,7 +1016,8 @@ void *AbstractBgWorker::operator()() {
       STATS_BG_CLOCK();
     } break;
     case kBgSendOpLog: {
-      timeout_milli = HandleClockMsg(false);
+      BgSendOpLogMsg oplog_msg(msg_mem);
+      timeout_milli = HandleClockMsg(oplog_msg.get_table_id(), false);
     } break;
     case kServerPushRow: {
       // this is required only for SSP Push (ignore for our setting)
