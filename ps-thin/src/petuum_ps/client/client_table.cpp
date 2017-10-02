@@ -123,11 +123,12 @@ ClientTable::~ClientTable() {
 // each individual thread is responsible for invoking this function to get
 // access to the table.
 void ClientTable::RegisterThread() {
-  if (thread_cache_.get() == nullptr) {
+  CHECK_EQ(thread_cache_.get() == nullptr, true);
+  if (false == GlobalContext::use_table_clock()) {
     thread_cache_.reset(new ThreadTable(
         sample_row_, client_table_config_.table_info.row_oplog_type,
         client_table_config_.table_info.row_capacity));
-    VLOG(1) << "Create an new thread table cache for thread: "
+    VLOG(0) << "Create an new thread table cache for thread: "
             << ThreadContext::get_id();
   }
   oplog_->RegisterThread();

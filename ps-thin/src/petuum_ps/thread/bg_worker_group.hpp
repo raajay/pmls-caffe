@@ -29,6 +29,7 @@ public:
   void GetAsyncRowRequestReply();
 
   void ClockAllTables();
+  void ClockTable(int32_t table_id);
   void SendOpLogsAllTables();
 
   virtual int32_t GetSystemClock();

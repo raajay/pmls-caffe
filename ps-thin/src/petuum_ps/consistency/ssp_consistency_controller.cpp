@@ -14,9 +14,7 @@ SSPConsistencyController::SSPConsistencyController(
     const AbstractRow *sample_row,
     boost::thread_specific_ptr<ThreadTable> &thread_cache,
     TableOpLogIndex &oplog_index, int32_t row_oplog_type)
-    :
-
-      AbstractConsistencyController(table_id, process_storage, sample_row),
+    : AbstractConsistencyController(table_id, process_storage, sample_row),
       staleness_(info.table_staleness), thread_cache_(thread_cache),
       oplog_index_(oplog_index), oplog_(oplog) {
 

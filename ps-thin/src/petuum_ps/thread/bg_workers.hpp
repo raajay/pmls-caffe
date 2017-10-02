@@ -27,6 +27,7 @@ public:
                               bool forced);
   static void GetAsyncRowRequestReply();
   static void ClockAllTables();
+  static void ClockTable(int32_t table_id);
   static void SendOpLogsAllTables();
 
   static int32_t GetSystemClock();

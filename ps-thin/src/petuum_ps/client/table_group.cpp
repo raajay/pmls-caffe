@@ -248,7 +248,15 @@ void TableGroup::Clock() {
 
 /**
  */
-void TableGroup::ClockTable(int32_t table_id) {}
+void TableGroup::ClockTable(int32_t table_id) {
+  CHECK_EQ(true, GlobalContext::am_i_worker_client())
+      << "Only (application threads on) worker clients can create tables.";
+  // clock the table
+  auto iter = tables_.find(table_id);
+  iter->second->Clock();
+  //
+  int32_t min_clock = table_clock_.Tick(table_id);
+}
 
 /**
  */
