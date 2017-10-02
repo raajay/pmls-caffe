@@ -556,6 +556,13 @@ protected:
   }
 };
 
+
+/**
+ * A message structure sent from app thread to bg worker thread, indicating
+ * that the app thread has clocked. Other than the identifier, the message
+ * also includes the id of the table that clocked. If we are clocking all
+ * tables, then the id is set to -1.
+ */
 struct BgClockMsg : public NumberedMsg {
 public:
   BgClockMsg() {
@@ -565,10 +572,17 @@ public:
 
   explicit BgClockMsg(void *msg) : NumberedMsg(msg) {}
 
+  size_t get_size() { return NumberedMsg::get_size() + sizeof(int32_t); }
+
+  int32_t &get_table_id() {
+      return *(reinterpret_cast<int32_t *>(mem_.get_mem() + NumberedMsg::get_size()));
+  }
+
 protected:
   void InitMsg() {
     NumberedMsg::InitMsg();
     get_msg_type() = kBgClock;
+    get_table_id() = -1;
   }
 };
 
@@ -588,6 +602,12 @@ struct BgTableClockMsg : public NumberedMsg {
         }
 };
 
+
+/**
+ * A message structure sent from app thread to bg worker thread, indicating
+ * that the worker has to send oplogs for all or a particular table.
+ * table_id is set to -1 if oplogs for all tables need to be sent.
+ */
 struct BgSendOpLogMsg : public NumberedMsg {
 public:
   BgSendOpLogMsg() {
@@ -597,10 +617,17 @@ public:
 
   explicit BgSendOpLogMsg(void *msg) : NumberedMsg(msg) {}
 
+  size_t get_size() { return NumberedMsg::get_size() + sizeof(int32_t); }
+
+  int32_t &get_table_id() {
+      return *(reinterpret_cast<int32_t *>(mem_.get_mem() + NumberedMsg::get_size()));
+  }
+
 protected:
   void InitMsg() {
     NumberedMsg::InitMsg();
     get_msg_type() = kBgSendOpLog;
+    get_table_id() = -1;
   }
 };
 

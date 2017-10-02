@@ -167,4 +167,4 @@ protected:
   HighResolutionTimer from_start_timer_;
 };
 
-} // end namespace -- petuum
+}
