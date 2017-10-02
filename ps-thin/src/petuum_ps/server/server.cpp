@@ -15,36 +15,51 @@ Server::Server() {}
 
 Server::~Server() {}
 
-// Each server thread has its own copy of Server object.
+/**
+ * Each server thread has its own copy of Server object.
+ */
 void Server::Init(int32_t server_id, const std::vector<int32_t> &bg_ids,
                   bool is_replica) {
   // bg_clock is vector clock. We set it to be zero for all bg threads (one
   // from each worker client)
-  for (auto iter = bg_ids.cbegin(); iter != bg_ids.cend(); iter++) {
-    bg_clock_.AddClock(*iter, 0);
-    bg_version_map_[*iter] = -1;
+  for (auto bg : bg_ids) {
+    bg_clock_.AddClock(bg, 0);
+    bg_version_map_[bg] = -1;
+    // TODO(raajay) is there an easier way to copy vectors?
+    bg_ids_.push_back(bg);
   }
-
   server_id_ = server_id;
   accum_oplog_count_ = 0;
   is_replica_ = is_replica;
   from_start_timer_.restart();
 }
 
+
+/**
+ */
 void Server::CreateTable(int32_t table_id, TableInfo &table_info) {
   // Each Server object is responsible of different parts of all tables. Thus,
   // a copy of all tables is maintained.
   auto ret = tables_.emplace(table_id, ServerTable(table_info));
   CHECK(ret.second);
 
+  // Add vector clock for each table
+  auto ret1 = table_vector_clock_.emplace(table_id, VectorClock());
+  CHECK(ret1.second);
   if (GlobalContext::get_resume_clock() > 0) {
-    boost::unordered::unordered_map<int32_t, ServerTable>::iterator table_iter =
-        tables_.find(table_id);
+    TableIter table_iter = tables_.find(table_id);
     table_iter->second.ReadSnapShot(GlobalContext::get_resume_dir(), server_id_,
                                     table_id,
                                     GlobalContext::get_resume_clock());
   }
+
+  // Initialize the vector clocks
+  TableClockIter iter = table_vector_clock_.find(table_id);
+  for(auto bg : bg_ids_) {
+      iter->second.AddClock(bg, std::max(GlobalContext::get_resume_clock(), 0));
+  }
 }
+
 
 /**
  * Find a row indexed by table and row id. If no row exists, create a new row
@@ -56,6 +71,7 @@ ServerRow *Server::FindCreateRow(int32_t table_id, int32_t row_id) {
   CHECK(iter != tables_.end());
   return iter->second.FindCreateRow(row_id);
 }
+
 
 /**
  * Push the vector clock for a particular bg_id to the specified value. On
@@ -75,9 +91,12 @@ bool Server::ClockUntil(int32_t bg_id, int32_t clock) {
   return false;
 }
 
-// Update an internal data structure to cache all row requests. One row
-// requests are cached, they are replied to only when the clock moves on an
-// update.
+
+/**
+ * Update an internal data structure to cache all row requests. One row
+ * requests are cached, they are replied to only when the clock moves on an
+ * update.
+ */
 void Server::AddRowRequest(int32_t bg_id, int32_t table_id, int32_t row_id,
                            int32_t clock) {
 
@@ -99,8 +118,11 @@ void Server::AddRowRequest(int32_t bg_id, int32_t table_id, int32_t row_id,
   clock_bg_row_requests_[clock][bg_id].push_back(server_row_request);
 }
 
-// Look at the cache of row request, and return those that are satisfied upon
-// the clock moving.
+
+/**
+ * Look at the cache of row request, and return those that are satisfied upon
+ * the clock moving.
+ */
 void Server::GetFulfilledRowRequests(std::vector<ServerRowRequest> *requests) {
 
   int32_t clock = bg_clock_.get_min_clock();
@@ -122,9 +144,12 @@ void Server::GetFulfilledRowRequests(std::vector<ServerRowRequest> *requests) {
   clock_bg_row_requests_.erase(clock);
 }
 
-// (raajay) This is a key function, one where the internal tables are updated
-// with values sent from the client. It is important to note that the client
-// message will contain updates to all the tables.
+
+/**
+ * (raajay) This is a key function, one where the internal tables are updated
+ * with values sent from the client. It is important to note that the client
+ * message will contain updates to all the tables.
+ */
 void Server::ApplyOpLogUpdateVersion(const void *oplog, size_t oplog_size,
                                      int32_t bg_thread_id, uint32_t version,
                                      int32_t *observed_delay) {
@@ -194,22 +219,36 @@ void Server::ApplyOpLogUpdateVersion(const void *oplog, size_t oplog_size,
           << ", time=" << GetElapsedTime() << ", size=" << oplog_size;
 }
 
+
+/**
+ */
 int32_t Server::GetMinClock() { return bg_clock_.get_min_clock(); }
 
+
+/**
+ */
 int32_t Server::GetBgVersion(int32_t bg_thread_id) {
   return bg_version_map_[bg_thread_id];
 }
 
+
+/**
+ */
 double Server::GetElapsedTime() { return from_start_timer_.elapsed(); }
 
+
+/**
+ */
 ServerTable *Server::GetServerTable(int32_t table_id) {
   auto table_iter = tables_.find(table_id);
   CHECK(table_iter != tables_.end()) << "Not found table_id = " << table_id;
   return &(table_iter->second);
 }
 
-void Server::TakeSnapShot(int32_t current_clock) {
 
+/**
+ */
+void Server::TakeSnapShot(int32_t current_clock) {
   for (auto table_iter = tables_.begin(); table_iter != tables_.end();
        table_iter++) {
     table_iter->second.TakeSnapShot(GlobalContext::get_snapshot_dir(),
@@ -217,4 +256,21 @@ void Server::TakeSnapShot(int32_t current_clock) {
                                     current_clock);
   }
 }
+
+
+/**
+ */
+bool Server::ClockTableUntil(int32_t table_id, int32_t bg_id, int32_t clock) {
+    TableClockIter iter = table_vector_clock_.find(table_id);
+    return (0 != iter->second.TickUntil(bg_id, clock));
+}
+
+
+/**
+ */
+int32_t Server::GetTableMinClock(int32_t table_id) {
+    TableClockIter iter = table_vector_clock_.find(table_id);
+    return iter->second.get_min_clock();
+}
+
 }

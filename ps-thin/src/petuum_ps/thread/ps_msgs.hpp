@@ -572,6 +572,22 @@ protected:
   }
 };
 
+struct BgTableClockMsg : public NumberedMsg {
+    public:
+        BgTableClockMsg() {
+            AllocateMemory();
+            InitMsg();
+        }
+
+        explicit BgTableClockMsg(void *msg) : NumberedMsg(msg) {}
+
+    protected:
+        void InitMsg() {
+            NumberedMsg::InitMsg();
+            get_msg_type() = kBgTableClock;
+        }
+};
+
 struct BgSendOpLogMsg : public NumberedMsg {
 public:
   BgSendOpLogMsg() {

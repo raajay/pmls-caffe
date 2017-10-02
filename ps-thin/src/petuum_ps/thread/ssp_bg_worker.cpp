@@ -69,12 +69,11 @@ BgOpLog *SSPBgWorker::PrepareOpLogsToSend() {
     FinalizeOpLogMsgStats(table_id, &table_num_bytes_by_server_,
                           &server_table_oplog_size_map_);
 
-  } // end for loop over tables
+  }
 
   VLOG(5) << "Total number of rows modified = " << bg_oplog->num_rows();
   return bg_oplog;
-
-} // end function -- prepare op logs to send
+}
 
 BgOpLogPartition *SSPBgWorker::PrepareOpLogsNormal(int32_t table_id,
                                                    ClientTable *table) {
@@ -137,10 +136,11 @@ BgOpLogPartition *SSPBgWorker::PrepareOpLogsNormal(int32_t table_id,
   } // end for -- over all rows that have oplog (i.e., those which are modified;
     // obtained from oplog index)
 
-  delete new_table_oplog_index_ptr; // no one else points to this struct, see
-                                    // earlier GetAndResetOpLogIndex function
+  // no one else points to this struct, see earlier GetAndResetOpLogIndex
+  // function  delete new_table_oplog_index_ptr;
   return bg_table_oplog;
 }
+
 
 /**
  * Each thread updates oplog without any locking; hence, the name.

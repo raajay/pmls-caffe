@@ -176,7 +176,11 @@ void AbstractBgWorker::ClockAllTables() {
   CHECK_EQ(sent_size, bg_clock_msg.get_size());
 }
 
-void AbstractBgWorker::ClockTable(int32_t table_id) {}
+void AbstractBgWorker::ClockTable(int32_t table_id) {
+    BgTableClockMsg msg;
+    size_t sent_size = SendMsg(reinterpret_cast<MsgBase *>(&msg));
+    CHECK_EQ(sent_size, msg.get_size());
+}
 
 void AbstractBgWorker::SendOpLogsAllTables() {
   BgSendOpLogMsg bg_send_oplog_msg;
@@ -479,8 +483,7 @@ void AbstractBgWorker::FinalizeOpLogMsgStats(
 void AbstractBgWorker::CreateOpLogMsgs(const BgOpLog *bg_oplog) {
 
   // bg_oplog contains the collection of oplogs that needs to be sent from this
-  // bg worker.
-  // the data structure arranges oplogs on a per table basis.
+  // bg worker.  the data structure arranges oplogs on a per table basis.
 
   // prepare oplogs function, would have calculated how much data needs to be
   // sent to each server. This value is stored in server_table_oplog_size_map
@@ -598,12 +601,12 @@ size_t AbstractBgWorker::SendOpLogMsgs(bool clock_advanced) {
     } else {
 
       // If there is no gradient update to be sent to the server, then we just
-      // send them
-      // a clock message notifying the server that client has moved its clock
-      // (we also tell
-      // the server the iteration (clock) that generated the data).
-      ClientSendOpLogMsg clock_oplog_msg(
-          0); // create a message with zero data size
+      // send them a clock message notifying the server that client has moved
+      // its clock (we also tell the server the iteration (clock) that
+      // generated the data).
+
+      // create a message with zero data size
+      ClientSendOpLogMsg clock_oplog_msg(0);
       clock_oplog_msg.get_is_clock() = clock_advanced;
       clock_oplog_msg.get_client_id() = GlobalContext::get_client_id();
       clock_oplog_msg.get_version() = per_worker_update_version_;
@@ -1009,6 +1012,9 @@ void *AbstractBgWorker::operator()() {
               << "Increment client clock in bgworker:" << my_id_ << " to "
               << worker_clock_;
       STATS_BG_CLOCK();
+    } break;
+    case kBgTableClock: {
+                            VLOG(20) << "Recvd table clock msg";
     } break;
     case kBgSendOpLog: {
       timeout_milli = HandleClockMsg(false);
