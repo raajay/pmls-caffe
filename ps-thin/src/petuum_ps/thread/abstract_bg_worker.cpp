@@ -445,13 +445,7 @@ long AbstractBgWorker::HandleClockMsg(int32_t table_id, bool clock_advanced) {
   // completes
 }
 
-void AbstractBgWorker::HandleServerPushRow(int32_t sender_id, void *msg_mem) {
-  LOG(FATAL) << "THREAD-" << my_id_ << ": Consistency model = "
-             << GlobalContext::get_consistency_model()
-             << " does not support HandleServerPushRow";
-}
-
-void AbstractBgWorker::PrepareBeforeInfiniteLoop() {}
+    void AbstractBgWorker::PrepareBeforeInfiniteLoop() {}
 
 void AbstractBgWorker::FinalizeTableStats() {}
 
@@ -464,20 +458,18 @@ void AbstractBgWorker::FinalizeOpLogMsgStats(
     std::map<int32_t, std::map<int32_t, size_t>> *server_table_oplog_size_map) {
 
   // add the size used to represent the number of rows in an update to stats
-  for (auto server_iter = (*table_num_bytes_by_server).begin();
-       server_iter != (*table_num_bytes_by_server).end(); ++server_iter) {
+  for (auto &server_iter : (*table_num_bytes_by_server)) {
     // 1. int32_t: number of rows
-    if (server_iter->second != 0)
-      server_iter->second += sizeof(int32_t);
+    if (server_iter.second != 0)
+        server_iter.second += sizeof(int32_t);
   }
 
-  for (auto server_iter = (*table_num_bytes_by_server).begin();
-       server_iter != (*table_num_bytes_by_server).end(); server_iter++) {
-    if (server_iter->second == 0)
-      (*server_table_oplog_size_map)[server_iter->first].erase(table_id);
+  for (auto &server_iter : (*table_num_bytes_by_server)) {
+    if (server_iter.second == 0)
+      (*server_table_oplog_size_map)[server_iter.first].erase(table_id);
     else
-      (*server_table_oplog_size_map)[server_iter->first][table_id] =
-          server_iter->second;
+      (*server_table_oplog_size_map)[server_iter.first][table_id] =
+              server_iter.second;
   }
 }
 
@@ -496,15 +488,14 @@ void AbstractBgWorker::CreateOpLogMsgs(const BgOpLog *bg_oplog) {
 
   std::map<int32_t, std::map<int32_t, void *>> table_server_mem_map;
 
-  for (auto server_iter = server_table_oplog_size_map_.begin();
-       server_iter != server_table_oplog_size_map_.end(); server_iter++) {
+  for (auto &server_iter : server_table_oplog_size_map_) {
 
     // a class that helps serialize all data destined to a server.
     OpLogSerializer oplog_serializer;
-    int32_t server_id = server_iter->first;
+    int32_t server_id = server_iter.first;
     // we initialize it with the total size of data that will be sent to a
     // specific server.
-    size_t server_oplog_msg_size = oplog_serializer.Init(server_iter->second);
+    size_t server_oplog_msg_size = oplog_serializer.Init(server_iter.second);
 
     if (server_oplog_msg_size == 0) {
       server_oplog_msg_map_.erase(server_id);
@@ -526,7 +517,7 @@ void AbstractBgWorker::CreateOpLogMsgs(const BgOpLog *bg_oplog) {
       uint8_t *table_ptr =
           reinterpret_cast<uint8_t *>(oplog_serializer.GetTablePtr(table_id));
 
-      if (table_ptr == 0) {
+      if (table_ptr == nullptr) {
         table_server_mem_map[table_id].erase(server_id);
         continue;
       }
@@ -918,7 +909,7 @@ void *AbstractBgWorker::operator()() {
   // messages
   // initiated by either the AppThread (eg. RequestRow) or server thread (e.g. )
   // Further, it also creates new handle clock messages I guess.
-  while (1) {
+  while (true) {
     bool received = WaitMsg_(&sender_id, &zmq_msg, timeout_milli);
 
     if (!received) {
@@ -1019,10 +1010,6 @@ void *AbstractBgWorker::operator()() {
       BgSendOpLogMsg oplog_msg(msg_mem);
       timeout_milli = HandleClockMsg(oplog_msg.get_table_id(), false);
     } break;
-    case kServerPushRow: {
-      // this is required only for SSP Push (ignore for our setting)
-      HandleServerPushRow(sender_id, msg_mem);
-    } break;
     case kServerOpLogAck: {
       // this is sent by the server to acknowledge the receipt of an oplog
       ServerOpLogAckMsg server_oplog_ack_msg(msg_mem);
@@ -1042,6 +1029,5 @@ void *AbstractBgWorker::operator()() {
 
   return 0;
 
-} // end class -- abstract bg worker
-
-} // end namespace -- petuum
+}
+}

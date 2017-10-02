@@ -115,10 +115,7 @@ protected:
       ServerRowRequestReplyMsg &server_row_request_reply_msg);
   /* Handles Row Requests -- END */
 
-  // Handles server pushed rows
-  virtual void HandleServerPushRow(int32_t sender_id, void *msg_mem);
-
-  /* Helper Functions */
+    /* Helper Functions */
   size_t SendMsg(MsgBase *msg);
   void RecvMsg(zmq::message_t &zmq_msg);
   void ConnectToNameNodeOrServer(int32_t server_id);
@@ -159,11 +156,7 @@ protected:
   // size of oplog per table, reused across multiple tables
   std::map<int32_t, size_t> table_num_bytes_by_server_;
 
-  std::unordered_map<int32_t, AppendOnlyRowOpLogBuffer *>
-      append_only_row_oplog_buffer_map_;
-  std::unordered_map<int32_t, int32_t> append_only_buff_proc_count_;
-
-  std::unordered_map<int32_t, RowOpLogSerializer *> row_oplog_serializer_map_;
+    std::unordered_map<int32_t, RowOpLogSerializer *> row_oplog_serializer_map_;
   HighResolutionTimer from_start_timer_;
 };
 
