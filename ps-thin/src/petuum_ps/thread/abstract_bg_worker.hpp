@@ -17,6 +17,7 @@
 #include <petuum_ps/client/client_table.hpp>
 #include <petuum_ps/thread/append_only_row_oplog_buffer.hpp>
 #include <petuum_ps/thread/row_oplog_serializer.hpp>
+#include <petuum_ps/stats/OneDimCounter.hpp>
 
 namespace petuum {
 class AbstractBgWorker : public Thread {
@@ -94,10 +95,10 @@ protected:
   size_t SendOpLogMsgs(bool clock_advanced);
 
   size_t
-  CountRowOpLogToSend(int32_t row_id, AbstractRowOpLog *row_oplog,
-                      std::map<int32_t, size_t> *table_num_bytes_by_server,
-                      BgOpLogPartition *bg_table_oplog,
-                      GetSerializedRowOpLogSizeFunc GetSerializedRowOpLogSize);
+  AddOplogAndCountPerServerSize(int32_t row_id,
+                                AbstractRowOpLog *row_oplog,
+                                BgOpLogPartition *bg_table_oplog,
+                                GetSerializedRowOpLogSizeFunc GetSerializedRowOpLogSize);
 
   void
   FinalizeOpLogMsgStats(int32_t table_id,
@@ -152,8 +153,10 @@ protected:
   std::map<int32_t, std::map<int32_t, size_t>> server_table_oplog_size_map_;
   // The OpLog msg to each server
   std::map<int32_t, ClientSendOpLogMsg *> server_oplog_msg_map_;
+
   // size of oplog per table, reused across multiple tables
   std::map<int32_t, size_t> table_num_bytes_by_server_;
+  OneDimCounter<int32_t, size_t> ephemeral_server_byte_counter_;
 
     std::unordered_map<int32_t, RowOpLogSerializer *> row_oplog_serializer_map_;
   HighResolutionTimer from_start_timer_;

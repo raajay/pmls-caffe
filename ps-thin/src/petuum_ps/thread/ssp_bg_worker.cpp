@@ -104,10 +104,7 @@ BgOpLogPartition *SSPBgWorker::PrepareTableOpLogsNormal(int32_t table_id,
   auto *bg_table_oplog =
       new BgOpLogPartition(table_id, table_update_size, my_comm_channel_idx_);
 
-  for (const auto &server_id : server_ids_) {
-    // Reset size to 0
-    table_num_bytes_by_server_[server_id] = 0;
-  }
+  ephemeral_server_byte_counter_.Reset();
 
   // iterate over all rows that are potentially modified
   for (auto oplog_index_iter = new_table_oplog_index_ptr->cbegin();
@@ -116,24 +113,16 @@ BgOpLogPartition *SSPBgWorker::PrepareTableOpLogsNormal(int32_t table_id,
     int32_t row_id = oplog_index_iter->first;
 
     AbstractRowOpLog *row_oplog = nullptr;
-
     bool found = GetRowOpLog(table_oplog, row_id, &row_oplog);
-
     // if not found, row_id has not been modified in this table
-    if (!found) {
+    if (!found || row_oplog == nullptr) {
       continue;
     }
 
-    // if row_oplog is null, nothing more to do
-    if (row_oplog == nullptr) {
-      continue;
-    }
-
-    // this function
+    // the function
     // 1. updates the bytes per server dict,
     // 2. adds the oplog to bg_table_oplog, indexed by row_id
-    CountRowOpLogToSend(row_id, row_oplog, &table_num_bytes_by_server_, bg_table_oplog, GetSerializedRowOpLogSize);
-
+    AddOplogAndCountPerServerSize(row_id, row_oplog, bg_table_oplog, GetSerializedRowOpLogSize);
   }
   // end for -- over all rows that have oplog (i.e., those which are modified;
   // obtained from oplog index)

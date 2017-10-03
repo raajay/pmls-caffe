@@ -28,38 +28,38 @@ public:
    * Set values of all keys to zero
    */
   void Reset() {
-      data_.clear();
+    data_.clear();
   }
 
   /**
    * Get counter value or a key
    */
   V Get(K key) {
-  DataIter iter = data_.find(key);
-  return (nullptr == iter) ? 0 : iter->second;
+    DataIter iter = data_.find(key);
+    return (iter == data_.end()) ? 0 : iter->second;
   }
 
   /**
    * Get cumulative counter
    */
   V GetAll() {
-  V return_val = 0;
-  for (auto &it : data_) {
-    return_val += it.second;
-  }
-  return return_val;
+    V return_val = 0;
+    for (auto &it : data_) {
+      return_val += it.second;
+    }
+    return return_val;
   }
 
   /**
    * Increment counter
    */
   void Increment(K key, V value) {
-  DataIter iter = data_.find(key);
-  if (nullptr == iter) {
-    data_.emplace(key, value);
-  } else {
-    data_[key] += value;
-  }
+    DataIter iter = data_.find(key);
+    if (data_.end() == iter) {
+      data_.emplace(key, value);
+    } else {
+      data_[key] += value;
+    }
   }
 
 private:

@@ -615,13 +615,11 @@ size_t AbstractBgWorker::SendOpLogMsgs(bool clock_advanced) {
   return accum_size;
 }
 
-size_t AbstractBgWorker::CountRowOpLogToSend(
-    int32_t row_id, AbstractRowOpLog *row_oplog,
-    std::map<int32_t, size_t> *table_num_bytes_by_server,
-    BgOpLogPartition *bg_table_oplog,
-    GetSerializedRowOpLogSizeFunc GetSerializedRowOpLogSize) {
-
-  // update oplog message size
+size_t AbstractBgWorker::AddOplogAndCountPerServerSize(int32_t row_id,
+                                                       AbstractRowOpLog *row_oplog,
+                                                       BgOpLogPartition *bg_table_oplog,
+                                                       GetSerializedRowOpLogSizeFunc GetSerializedRowOpLogSize) {
+  // row oplog message size includes allocation for
   // 1) row id
   // 2) global version id
   // 3) serialized row size
@@ -630,7 +628,8 @@ size_t AbstractBgWorker::CountRowOpLogToSend(
 
   int32_t server_id =
       GlobalContext::GetPartitionServerID(row_id, my_comm_channel_idx_);
-  (*table_num_bytes_by_server)[server_id] += serialized_size;
+
+  ephemeral_server_byte_counter_.Increment(server_id, serialized_size);
 
   bg_table_oplog->InsertOpLog(row_id, row_oplog);
 
