@@ -86,8 +86,10 @@ protected:
   /* Functions Called From Main Loop -- END */
 
   /* Handles Sending OpLogs -- BEGIN */
-  virtual long HandleClockMsg(int32_t table_id, bool clock_advanced);
   virtual BgOpLog *PrepareOpLogsToSend(int32_t table_id) = 0;
+  virtual void TrackBgOpLog(BgOpLog *bg_oplog) = 0;
+
+  virtual long HandleClockMsg(int32_t table_id, bool clock_advanced);
   void CreateOpLogMsgs(const BgOpLog *bg_oplog);
   size_t SendOpLogMsgs(bool clock_advanced);
 
@@ -96,8 +98,6 @@ protected:
                       std::map<int32_t, size_t> *table_num_bytes_by_server,
                       BgOpLogPartition *bg_table_oplog,
                       GetSerializedRowOpLogSizeFunc GetSerializedRowOpLogSize);
-
-  virtual void TrackBgOpLog(BgOpLog *bg_oplog) = 0;
 
   void
   FinalizeOpLogMsgStats(int32_t table_id,
