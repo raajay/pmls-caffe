@@ -423,7 +423,7 @@ long AbstractBgWorker::HandleClockMsg(int32_t table_id, bool clock_advanced) {
   // server. We will also know how the data being sent to the server is split
   // across tables.
 
-  BgOpLog *bg_oplog = PrepareOpLogsToSend();
+  BgOpLog *bg_oplog = PrepareOpLogsToSend(table_id);
   CreateOpLogMsgs(bg_oplog);
   STATS_BG_ACCUM_CLOCK_END_OPLOG_SERIALIZE_END();
 
