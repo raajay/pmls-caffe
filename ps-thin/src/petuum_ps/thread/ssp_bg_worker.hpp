@@ -27,7 +27,7 @@ public:
   virtual ~SSPBgWorker();
 
 protected:
-    void CreateRowRequestOpLogMgr() override;
+  void CreateRowRequestOpLogMgr() override;
 
   virtual bool GetRowOpLog(AbstractOpLog &table_oplog, int32_t row_id,
                            AbstractRowOpLog **row_oplog_ptr);
@@ -41,13 +41,13 @@ protected:
   /* Functions Called From Main Loop -- END */
 
   ClientRow *CreateClientRow(int32_t clock, int32_t global_version,
-                                     AbstractRow *row_data) override;
-
+                             AbstractRow *row_data) override;
 
   /* Handles Sending OpLogs -- BEGIN */
   BgOpLog *PrepareOpLogsToSend(int32_t table_id) override;
   void TrackBgOpLog(BgOpLog *bg_oplog) override;
-  virtual BgOpLogPartition *PrepareTableOpLogsNormal(int32_t table_id, ClientTable *table);
+  virtual BgOpLogPartition *PrepareTableOpLogsNormal(int32_t table_id,
+                                                     ClientTable *table);
   /* Handles Sending OpLogs -- END */
 
 }; // end class -- ssp bg worker

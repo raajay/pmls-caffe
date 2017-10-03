@@ -9,6 +9,10 @@ public:
   ServerOpLogSerializer() = default;
   ~ServerOpLogSerializer() = default;
 
+  size_t Init2(int32_t server_id, const TwoDimCounter &server_table_byte_counter) {
+
+  }
+
   size_t Init(const std::map<int32_t, size_t> &table_size_map) {
     num_tables_ = table_size_map.size();
     if (num_tables_ == 0)
@@ -17,7 +21,8 @@ public:
     // space for num of tables
     size_t total_size = sizeof(int32_t);
 
-    for (auto iter = table_size_map.cbegin(); iter != table_size_map.cend(); iter++) {
+    for (auto iter = table_size_map.cbegin(); iter != table_size_map.cend();
+         iter++) {
 
       int32_t table_id = iter->first;
       size_t table_size = iter->second;

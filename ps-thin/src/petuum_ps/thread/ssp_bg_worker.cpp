@@ -44,7 +44,7 @@ BgOpLog *SSPBgWorker::PrepareOpLogsToSend(int32_t table_id) {
   for (const auto &table_pair : (*tables_)) {
     int32_t curr_table_id = table_pair.first;
 
-    if(table_id !=1 && table_id != curr_table_id) {
+    if (table_id != 1 && table_id != curr_table_id) {
       continue;
     }
 
@@ -59,7 +59,8 @@ BgOpLog *SSPBgWorker::PrepareOpLogsToSend(int32_t table_id) {
 
     if (table_pair.second->get_oplog_type() == Sparse ||
         table_pair.second->get_oplog_type() == Dense) {
-      bg_table_oplog = PrepareTableOpLogsNormal(curr_table_id, table_pair.second);
+      bg_table_oplog =
+          PrepareTableOpLogsNormal(curr_table_id, table_pair.second);
     } else {
       LOG(FATAL) << "Unknown oplog type = "
                  << table_pair.second->get_oplog_type();
@@ -69,7 +70,6 @@ BgOpLog *SSPBgWorker::PrepareOpLogsToSend(int32_t table_id) {
     bg_oplog->Add(curr_table_id, bg_table_oplog);
 
     FinalizeOpLogMsgStats(curr_table_id);
-
   }
 
   VLOG(5) << "Total number of rows modified = " << bg_oplog->num_rows();
@@ -121,16 +121,17 @@ BgOpLogPartition *SSPBgWorker::PrepareTableOpLogsNormal(int32_t table_id,
     // the function
     // 1. updates the bytes per server dict,
     // 2. adds the oplog to bg_table_oplog, indexed by row_id
-    AddOplogAndCountPerServerSize(row_id, row_oplog, bg_table_oplog, GetSerializedRowOpLogSize);
+    AddOplogAndCountPerServerSize(row_id, row_oplog, bg_table_oplog,
+                                  GetSerializedRowOpLogSize);
   }
   // end for -- over all rows that have oplog (i.e., those which are modified;
   // obtained from oplog index)
 
-  // no one else points to this struct, see earlier GetAndResetOpLogIndex function
+  // no one else points to this struct, see earlier GetAndResetOpLogIndex
+  // function
   delete new_table_oplog_index_ptr;
   return bg_table_oplog;
 }
-
 
 void SSPBgWorker::TrackBgOpLog(BgOpLog *bg_oplog) {
   bool tracked =

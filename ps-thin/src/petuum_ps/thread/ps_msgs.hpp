@@ -556,7 +556,6 @@ protected:
   }
 };
 
-
 /**
  * A message structure sent from app thread to bg worker thread, indicating
  * that the app thread has clocked. Other than the identifier, the message
@@ -575,7 +574,8 @@ public:
   size_t get_size() { return NumberedMsg::get_size() + sizeof(int32_t); }
 
   int32_t &get_table_id() {
-      return *(reinterpret_cast<int32_t *>(mem_.get_mem() + NumberedMsg::get_size()));
+    return *(reinterpret_cast<int32_t *>(mem_.get_mem() +
+                                         NumberedMsg::get_size()));
   }
 
 protected:
@@ -587,21 +587,20 @@ protected:
 };
 
 struct BgTableClockMsg : public NumberedMsg {
-    public:
-        BgTableClockMsg() {
-            AllocateMemory();
-            InitMsg();
-        }
+public:
+  BgTableClockMsg() {
+    AllocateMemory();
+    InitMsg();
+  }
 
-        explicit BgTableClockMsg(void *msg) : NumberedMsg(msg) {}
+  explicit BgTableClockMsg(void *msg) : NumberedMsg(msg) {}
 
-    protected:
-        void InitMsg() {
-            NumberedMsg::InitMsg();
-            get_msg_type() = kBgTableClock;
-        }
+protected:
+  void InitMsg() {
+    NumberedMsg::InitMsg();
+    get_msg_type() = kBgTableClock;
+  }
 };
-
 
 /**
  * A message structure sent from app thread to bg worker thread, indicating
@@ -620,7 +619,8 @@ public:
   size_t get_size() { return NumberedMsg::get_size() + sizeof(int32_t); }
 
   int32_t &get_table_id() {
-      return *(reinterpret_cast<int32_t *>(mem_.get_mem() + NumberedMsg::get_size()));
+    return *(reinterpret_cast<int32_t *>(mem_.get_mem() +
+                                         NumberedMsg::get_size()));
   }
 
 protected:
@@ -788,7 +788,6 @@ protected:
     ArbitrarySizedMsg::InitMsg(avai_size);
     get_msg_type() = kClientSendOpLog;
   }
-
 };
 
 struct ServerSendOpLogMsg : public ArbitrarySizedMsg {
@@ -841,7 +840,6 @@ protected:
     ArbitrarySizedMsg::InitMsg(avai_size);
     get_msg_type() = kServerSendOpLog;
   }
-
 };
 
 struct ServerPushRowMsg : public ArbitrarySizedMsg {
@@ -887,5 +885,4 @@ protected:
     get_msg_type() = kServerPushRow;
   }
 };
-
 }

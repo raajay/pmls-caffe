@@ -174,10 +174,10 @@ void AbstractBgWorker::ClockAllTables() {
 }
 
 void AbstractBgWorker::ClockTable(int32_t table_id) {
-    BgClockMsg msg;
-    msg.get_table_id() = table_id;
-    size_t sent_size = SendMsg(reinterpret_cast<MsgBase *>(&msg));
-    CHECK_EQ(sent_size, msg.get_size());
+  BgClockMsg msg;
+  msg.get_table_id() = table_id;
+  size_t sent_size = SendMsg(reinterpret_cast<MsgBase *>(&msg));
+  CHECK_EQ(sent_size, msg.get_size());
 }
 
 void AbstractBgWorker::SendOpLogsAllTables() {
@@ -442,7 +442,7 @@ long AbstractBgWorker::HandleClockMsg(int32_t table_id, bool clock_advanced) {
   // completes
 }
 
-    void AbstractBgWorker::PrepareBeforeInfiniteLoop() {}
+void AbstractBgWorker::PrepareBeforeInfiniteLoop() {}
 
 void AbstractBgWorker::FinalizeTableStats() {}
 
@@ -451,12 +451,12 @@ long AbstractBgWorker::ResetBgIdleMilli() { return 0; }
 long AbstractBgWorker::BgIdleWork() { return 0; }
 
 void AbstractBgWorker::FinalizeOpLogMsgStats(int32_t table_id) {
-  for(auto server_id : ephemeral_server_byte_counter_.GetKeysPosValue()) {
+  for (auto server_id : ephemeral_server_byte_counter_.GetKeysPosValue()) {
     // add the size used to represent the number of rows in an update to stats
     ephemeral_server_byte_counter_.Increment(server_id, sizeof(int32_t));
 
-    ephemeral_server_table_size_counter_.Increment(server_id, table_id,
-                                                   ephemeral_server_byte_counter_.Get(server_id));
+    ephemeral_server_table_size_counter_.Increment(
+        server_id, table_id, ephemeral_server_byte_counter_.Get(server_id));
   }
 }
 
@@ -468,12 +468,15 @@ void AbstractBgWorker::CreateOpLogMsgs(const BgOpLog *bg_oplog) {
   // prepare oplogs function, would have calculated how much data needs to be
   // sent to each server. This value is stored in server_table_oplog_size_map
   // which is a two-dimensional hashmap. the first dimension is the server and
-  // second dimension is server. Thus, we can split the total data sent to a
+  // second dimension is table. Thus, we can split the total data sent to a
   // server along the table dimension. what we are doing below is, converting
   // the oplogs organized per table and then per server (in bg oplog
   // partition) into one giant message that can be sent to the server.
 
   std::map<int32_t, std::map<int32_t, void *>> table_server_mem_map;
+
+
+
 
   for (auto &server_iter : server_table_oplog_size_map_) {
 
@@ -602,10 +605,10 @@ size_t AbstractBgWorker::SendOpLogMsgs(bool clock_advanced) {
   return accum_size;
 }
 
-size_t AbstractBgWorker::AddOplogAndCountPerServerSize(int32_t row_id,
-                                                       AbstractRowOpLog *row_oplog,
-                                                       BgOpLogPartition *bg_table_oplog,
-                                                       GetSerializedRowOpLogSizeFunc GetSerializedRowOpLogSize) {
+size_t AbstractBgWorker::AddOplogAndCountPerServerSize(
+    int32_t row_id, AbstractRowOpLog *row_oplog,
+    BgOpLogPartition *bg_table_oplog,
+    GetSerializedRowOpLogSizeFunc GetSerializedRowOpLogSize) {
   // row oplog message size includes allocation for
   // 1) row id
   // 2) global version id
@@ -1014,6 +1017,5 @@ void *AbstractBgWorker::operator()() {
   }
 
   return 0;
-
 }
 }

@@ -38,7 +38,5 @@ public:
 
 private:
   std::map<int32_t, BgOpLogPartition *> table_oplog_map_;
-
 };
-
 }

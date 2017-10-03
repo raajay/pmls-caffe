@@ -34,10 +34,12 @@ private:
   VectorClock bg_clock_;
 
   boost::unordered::unordered_map<int32_t, VectorClock> table_vector_clock_;
-  typedef boost::unordered::unordered_map<int32_t, VectorClock>::iterator TableClockIter;
+  typedef boost::unordered::unordered_map<int32_t, VectorClock>::iterator
+      TableClockIter;
 
   boost::unordered::unordered_map<int32_t, ServerTable> tables_;
-  typedef boost::unordered::unordered_map<int32_t, ServerTable>::iterator TableIter;
+  typedef boost::unordered::unordered_map<int32_t, ServerTable>::iterator
+      TableIter;
 
   std::vector<int32_t> bg_ids_;
 
@@ -61,8 +63,6 @@ private:
   ServerTable *GetServerTable(int32_t table_id);
 
   void TakeSnapShot(int32_t current_clock);
-
-
 
 public:
   Server();
@@ -96,6 +96,5 @@ public:
   int32_t GetBgVersion(int32_t bg_thread_id);
 
   double GetElapsedTime();
-
 };
 }

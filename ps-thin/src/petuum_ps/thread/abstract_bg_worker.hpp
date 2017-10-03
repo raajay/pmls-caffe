@@ -95,14 +95,12 @@ protected:
   void CreateOpLogMsgs(const BgOpLog *bg_oplog);
   size_t SendOpLogMsgs(bool clock_advanced);
 
-  size_t
-  AddOplogAndCountPerServerSize(int32_t row_id,
-                                AbstractRowOpLog *row_oplog,
-                                BgOpLogPartition *bg_table_oplog,
-                                GetSerializedRowOpLogSizeFunc GetSerializedRowOpLogSize);
+  size_t AddOplogAndCountPerServerSize(
+      int32_t row_id, AbstractRowOpLog *row_oplog,
+      BgOpLogPartition *bg_table_oplog,
+      GetSerializedRowOpLogSizeFunc GetSerializedRowOpLogSize);
 
-  void
-  FinalizeOpLogMsgStats(int32_t table_id);
+  void FinalizeOpLogMsgStats(int32_t table_id);
   /* Handles Sending OpLogs -- END */
 
   /* Handles Row Requests -- BEGIN */
@@ -113,7 +111,7 @@ protected:
       ServerRowRequestReplyMsg &server_row_request_reply_msg);
   /* Handles Row Requests -- END */
 
-    /* Helper Functions */
+  /* Helper Functions */
   size_t SendMsg(MsgBase *msg);
   void RecvMsg(zmq::message_t &zmq_msg);
   void ConnectToNameNodeOrServer(int32_t server_id);
@@ -159,5 +157,4 @@ protected:
   std::unordered_map<int32_t, RowOpLogSerializer *> row_oplog_serializer_map_;
   HighResolutionTimer from_start_timer_;
 };
-
 }

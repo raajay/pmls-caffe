@@ -10,10 +10,8 @@
 
 namespace petuum {
 
-template<class K, class V>
-class OneDimCounter {
+template <class K, class V> class OneDimCounter {
 public:
-
   /**
    * Constructor
    */
@@ -27,9 +25,7 @@ public:
   /**
    * Set values of all keys to zero
    */
-  void Reset() {
-    data_.clear();
-  }
+  void Reset() { data_.clear(); }
 
   /**
    * Get counter value or a key
@@ -62,7 +58,10 @@ public:
     }
   }
 
-  const std::vector<K> &GetKeysPosValue() {
+  /**
+   * Return keys with pos values
+   */
+  const std::vector<K> GetKeysPosValue() {
     std::vector<K> return_value;
     for (auto &it : data_) {
       if (it.second > 0) {
@@ -73,11 +72,9 @@ public:
   }
 
 private:
-
   boost::unordered::unordered_map<K, V> data_;
   typedef typename boost::unordered::unordered_map<K, V>::iterator DataIter;
 };
-
 }
 
-#endif //CAFFE_BYTECOUNTER_HPP
+#endif // CAFFE_BYTECOUNTER_HPP

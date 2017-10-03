@@ -9,8 +9,7 @@
 #include <glog/logging.h>
 namespace petuum {
 
-template<class K1, class K2, class V>
-class TwoDimCounter {
+template <class K1, class K2, class V> class TwoDimCounter {
 public:
   TwoDimCounter() = default;
 
@@ -69,7 +68,7 @@ public:
     }
   }
 
-  const std::vector<K2> &GetKeysPosValue(K1 key1) {
+  const std::vector<K2> GetKeysPosValue(K1 key1) {
     std::vector<K2> return_value;
     Dim1Iter iter1 = data_.find(key1);
 
@@ -92,4 +91,4 @@ private:
 };
 }
 
-#endif //CAFFE_TWODIMCOUNTER_HPP
+#endif // CAFFE_TWODIMCOUNTER_HPP
