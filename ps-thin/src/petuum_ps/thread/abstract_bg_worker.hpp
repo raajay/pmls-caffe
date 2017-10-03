@@ -18,6 +18,7 @@
 #include <petuum_ps/thread/append_only_row_oplog_buffer.hpp>
 #include <petuum_ps/thread/row_oplog_serializer.hpp>
 #include <petuum_ps/stats/OneDimCounter.hpp>
+#include <petuum_ps/stats/TwoDimCounter.hpp>
 
 namespace petuum {
 class AbstractBgWorker : public Thread {
@@ -101,10 +102,7 @@ protected:
                                 GetSerializedRowOpLogSizeFunc GetSerializedRowOpLogSize);
 
   void
-  FinalizeOpLogMsgStats(int32_t table_id,
-                        std::map<int32_t, size_t> *table_num_bytes_by_server,
-                        std::map<int32_t, std::map<int32_t, size_t>> *
-                            server_table_oplog_size_map);
+  FinalizeOpLogMsgStats(int32_t table_id);
   /* Handles Sending OpLogs -- END */
 
   /* Handles Row Requests -- BEGIN */
@@ -124,7 +122,7 @@ protected:
                                      AbstractRow *row_data) = 0;
 
   virtual void UpdateExistingRow(int32_t table_id, int32_t row_id,
-                                 ClientRow *clien_row,
+                                 ClientRow *client_row,
                                  ClientTable *client_table, const void *data,
                                  size_t row_size, uint32_t version);
 
@@ -151,14 +149,14 @@ protected:
   // initialized at Creation time, used in CreateSendOpLogs()
   // For server x, table y, the size of serialized OpLog is ...
   std::map<int32_t, std::map<int32_t, size_t>> server_table_oplog_size_map_;
+  TwoDimCounter<int32_t, int32_t, size_t> ephemeral_server_table_size_counter_;
+
   // The OpLog msg to each server
   std::map<int32_t, ClientSendOpLogMsg *> server_oplog_msg_map_;
 
-  // size of oplog per table, reused across multiple tables
-  std::map<int32_t, size_t> table_num_bytes_by_server_;
   OneDimCounter<int32_t, size_t> ephemeral_server_byte_counter_;
 
-    std::unordered_map<int32_t, RowOpLogSerializer *> row_oplog_serializer_map_;
+  std::unordered_map<int32_t, RowOpLogSerializer *> row_oplog_serializer_map_;
   HighResolutionTimer from_start_timer_;
 };
 

@@ -9,7 +9,7 @@
 #include <glog/logging.h>
 namespace petuum {
 
-template <class K1, class K2, class V>
+template<class K1, class K2, class V>
 class TwoDimCounter {
 public:
   TwoDimCounter() = default;
@@ -17,7 +17,7 @@ public:
   ~TwoDimCounter() = default;
 
   void Reset() {
-    for(auto &iter1 : data_) {
+    for (auto &iter1 : data_) {
       iter1.second.clear();
     }
     data_.clear();
@@ -46,8 +46,8 @@ public:
 
   V GetAll() {
     V return_value = 0;
-    for(auto &iter1 : data_) {
-      for(auto &iter2 : iter1.second) {
+    for (auto &iter1 : data_) {
+      for (auto &iter2 : iter1.second) {
         return_value += iter2.second;
       }
     }
@@ -69,6 +69,21 @@ public:
     }
   }
 
+  const std::vector<K2> &GetKeysPosValue(K1 key1) {
+    std::vector<K2> return_value;
+    Dim1Iter iter1 = data_.find(key1);
+
+    if (iter1 == data_.end()) {
+      return return_value;
+    }
+
+    for (auto &it2 : iter1->second) {
+      if (it2.second > 0) {
+        return_value.push_back(it2.first);
+      }
+    }
+    return return_value;
+  }
 
 private:
   std::map<K1, std::map<K2, V>> data_;
