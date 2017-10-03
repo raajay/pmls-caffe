@@ -8,8 +8,8 @@ namespace petuum {
 TEST(TestTwoDimCounter, Test1) {
 
   TwoDimCounter<int32_t, int32_t, int32_t> counter;
-  //counter.Increment(0, 1, 2);
-  //counter.Increment(0, 1, 2);
+  counter.Increment(0, 1, 2);
+  counter.Increment(0, 1, 2);
   EXPECT_EQ(counter.Get(0), 4);
 }
 }

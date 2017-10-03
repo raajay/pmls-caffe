@@ -59,7 +59,7 @@ public:
       data_.insert(std::make_pair(key1, std::map<K2, V>()));
     }
     Dim1Iter iter1 = data_.find(key1);
-    CHECK_NE(iter1, data_.end());
+    CHECK_NE(iter1 == data_.end(), false);
 
     Dim2Iter iter2 = iter1->second.find(key2);
     if (iter1->second.end() == iter2) {
