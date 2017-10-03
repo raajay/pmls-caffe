@@ -68,8 +68,7 @@ BgOpLog *SSPBgWorker::PrepareOpLogsToSend(int32_t table_id) {
     // we add each tables oplog to the overall oplog
     bg_oplog->Add(curr_table_id, bg_table_oplog);
 
-    FinalizeOpLogMsgStats(curr_table_id, &table_num_bytes_by_server_,
-                          &server_table_oplog_size_map_);
+    FinalizeOpLogMsgStats(curr_table_id);
 
   }
 

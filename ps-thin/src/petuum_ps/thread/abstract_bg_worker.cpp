@@ -20,10 +20,7 @@ AbstractBgWorker::AbstractBgWorker(int32_t id, int32_t comm_channel_idx,
   GlobalContext::GetServerThreadIDs(my_comm_channel_idx_, &(server_ids_));
 
   for (const auto &server_id : server_ids_) {
-    server_table_oplog_size_map_.insert(
-        std::make_pair(server_id, std::map<int32_t, size_t>()));
     server_oplog_msg_map_.insert({server_id, 0});
-    table_num_bytes_by_server_.insert({server_id, 0});
   }
 
 } // end function -- constructor
@@ -453,23 +450,13 @@ long AbstractBgWorker::ResetBgIdleMilli() { return 0; }
 
 long AbstractBgWorker::BgIdleWork() { return 0; }
 
-void AbstractBgWorker::FinalizeOpLogMsgStats(
-    int32_t table_id, std::map<int32_t, size_t> *table_num_bytes_by_server,
-    std::map<int32_t, std::map<int32_t, size_t>> *server_table_oplog_size_map) {
+void AbstractBgWorker::FinalizeOpLogMsgStats(int32_t table_id) {
+  for(auto server_id : ephemeral_server_byte_counter_.GetKeysPosValue()) {
+    // add the size used to represent the number of rows in an update to stats
+    ephemeral_server_byte_counter_.Increment(server_id, sizeof(int32_t));
 
-  // add the size used to represent the number of rows in an update to stats
-  for (auto &server_iter : (*table_num_bytes_by_server)) {
-    // 1. int32_t: number of rows
-    if (server_iter.second != 0)
-        server_iter.second += sizeof(int32_t);
-  }
-
-  for (auto &server_iter : (*table_num_bytes_by_server)) {
-    if (server_iter.second == 0)
-      (*server_table_oplog_size_map)[server_iter.first].erase(table_id);
-    else
-      (*server_table_oplog_size_map)[server_iter.first][table_id] =
-              server_iter.second;
+    ephemeral_server_table_size_counter_.Increment(server_id, table_id,
+                                                   ephemeral_server_byte_counter_.Get(server_id));
   }
 }
 
@@ -491,7 +478,7 @@ void AbstractBgWorker::CreateOpLogMsgs(const BgOpLog *bg_oplog) {
   for (auto &server_iter : server_table_oplog_size_map_) {
 
     // a class that helps serialize all data destined to a server.
-    OpLogSerializer oplog_serializer;
+    ServerOpLogSerializer oplog_serializer;
     int32_t server_id = server_iter.first;
     // we initialize it with the total size of data that will be sent to a
     // specific server.

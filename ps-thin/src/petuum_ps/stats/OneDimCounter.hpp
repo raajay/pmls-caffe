@@ -62,6 +62,16 @@ public:
     }
   }
 
+  const std::vector<K> &GetKeysPosValue() {
+    std::vector<K> return_value;
+    for (auto &it : data_) {
+      if (it.second > 0) {
+        return_value.push_back(it.first);
+      }
+    }
+    return return_value;
+  }
+
 private:
 
   boost::unordered::unordered_map<K, V> data_;
