@@ -8,6 +8,8 @@
 #include <cstdint>
 #include <boost/unordered/unordered_map.hpp>
 
+namespace petuum {
+
 template<class K, class V>
 class OneDimCounter {
 public:
@@ -15,37 +17,57 @@ public:
   /**
    * Constructor
    */
-  OneDimCounter();
+  OneDimCounter() = default;
 
   /**
    * Destructor
    */
-  ~OneDimCounter();
+  ~OneDimCounter() = default;
 
   /**
    * Set values of all keys to zero
    */
-  void Reset();
+  void Reset() {
+      data_.clear();
+  }
 
   /**
    * Get counter value or a key
    */
-  V Get(K key);
+  V Get(K key) {
+  DataIter iter = data_.find(key);
+  return (nullptr == iter) ? 0 : iter->second;
+  }
 
   /**
    * Get cumulative counter
    */
-  V GetAll();
+  V GetAll() {
+  V return_val = 0;
+  for (auto &it : data_) {
+    return_val += it.second;
+  }
+  return return_val;
+  }
 
   /**
    * Increment counter
    */
-  void Increment(K key, V value);
+  void Increment(K key, V value) {
+  DataIter iter = data_.find(key);
+  if (nullptr == iter) {
+    data_.emplace(key, value);
+  } else {
+    data_[key] += value;
+  }
+  }
 
 private:
 
   boost::unordered::unordered_map<K, V> data_;
-  typedef boost::unordered::unordered_map<K, V>::iterator DataIter;
+  typedef typename boost::unordered::unordered_map<K, V>::iterator DataIter;
 };
+
+}
 
 #endif //CAFFE_BYTECOUNTER_HPP

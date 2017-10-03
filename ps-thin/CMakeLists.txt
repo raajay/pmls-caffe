@@ -23,8 +23,9 @@ target_link_libraries(petuum_ps PUBLIC ${Bosen_LIBRARIES})
 
 # ps tests
 add_executable(ps_tests ${Bosen_TEST_SOURCE_FILES})
-target_include_directories(ps_tests PUBLIC ${Bosen_TEST_INCLUDE_DIRS})
-target_link_libraries(ps_tests ${Bosen_TEST_LIBRARIES})
+target_include_directories(ps_tests PUBLIC ${Bosen_TEST_INCLUDE_DIRS} ${Bosen_INCLUDE_DIRS})
+target_link_libraries(ps_tests ${Bosen_TEST_LIBRARIES} ${Bosen_LIBRARIES})
+#add_dependencies(ps_tests petuum_ps)
 
 # clang based format
 add_custom_target(ps-clangformat
