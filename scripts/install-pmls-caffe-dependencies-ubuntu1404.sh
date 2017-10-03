@@ -76,3 +76,4 @@ install_cppzmq
 
 # install tools
 sudo apt-get install -y clang-format-3.5
+sudo apt-get install -y libgtest-dev
