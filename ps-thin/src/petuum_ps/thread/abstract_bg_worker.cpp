@@ -19,11 +19,8 @@ AbstractBgWorker::AbstractBgWorker(int32_t id, int32_t comm_channel_idx,
 
   GlobalContext::GetServerThreadIDs(my_comm_channel_idx_, &(server_ids_));
 
-  for (const auto &server_id : server_ids_) {
-    server_oplog_msg_map_.insert({server_id, 0});
-  }
+}
 
-} // end function -- constructor
 
 AbstractBgWorker::~AbstractBgWorker() {
   for (auto &serializer_pair : row_oplog_serializer_map_) {
@@ -421,13 +418,16 @@ long AbstractBgWorker::HandleClockMsg(int32_t table_id, bool clock_advanced) {
   // across tables.
 
   BgOpLog *bg_oplog = PrepareOpLogsToSend(table_id);
+  VLOG(20) << "PrepareOplogs successful";
   CreateOpLogMsgs(bg_oplog);
+  VLOG(20) << "CreateOplogs successful";
   STATS_BG_ACCUM_CLOCK_END_OPLOG_SERIALIZE_END();
 
   clock_has_pushed_ = worker_clock_;
   // send the information to the server with info on whether the clock has
   // advanced (or) if the client is just pushing updates aggressively.
   SendOpLogMsgs(clock_advanced);
+  VLOG(20) << "SendOpLogs successful";
   // increments the current version of the bgworker, and keeps track of the
   // oplog in ssp_row_request_oplog_manager
   // note that the version number is incremented even if the clock has not
@@ -450,7 +450,11 @@ long AbstractBgWorker::ResetBgIdleMilli() { return 0; }
 
 long AbstractBgWorker::BgIdleWork() { return 0; }
 
+
+/**
+ */
 void AbstractBgWorker::FinalizeOpLogMsgStats(int32_t table_id) {
+    VLOG(20) << "eph_server_byte_counter_: " << ephemeral_server_byte_counter_.ToString();
   for (auto server_id : ephemeral_server_byte_counter_.GetKeysPosValue()) {
     // add the size used to represent the number of rows in an update to stats
     ephemeral_server_byte_counter_.Increment(server_id, sizeof(int32_t));
@@ -460,36 +464,39 @@ void AbstractBgWorker::FinalizeOpLogMsgStats(int32_t table_id) {
   }
 }
 
+
 void AbstractBgWorker::CreateOpLogMsgs(const BgOpLog *bg_oplog) {
 
   std::map<int32_t, std::map<int32_t, void *>> table_server_mem_map;
 
-  std::vector<int32_t> servers = ephemeral_server_table_size_counter_.GetDim1Keys();
+  std::vector<int32_t> servers =
+      ephemeral_server_table_size_counter_.GetDim1Keys();
+  VLOG(20) << "server_Table_size_counter_: "
+      << ephemeral_server_table_size_counter_.ToString();
+  VLOG(20) << "Num servers to send data " << servers.size();
 
   for (auto server_id : servers) {
 
     ServerOpLogSerializer oplog_serializer;
-    size_t msg_size = oplog_serializer.Init(server_id, ephemeral_server_table_size_counter_);
+    size_t msg_size = oplog_serializer.Init(server_id,
+            ephemeral_server_table_size_counter_);
 
-    if (msg_size == 0) {
-      server_oplog_msg_map_.erase(server_id);
-      continue;
-    }
+    if (msg_size == 0) { continue; }
 
-    server_oplog_msg_map_[server_id] =
-        new ClientSendOpLogMsg(msg_size);
+    ClientSendOpLogMsg *msg = new ClientSendOpLogMsg(msg_size);
+    ephemeral_server_oplog_msg_.Put(server_id, msg);
 
     // if we look at oplog serializer code, it basically sets and internal
     // pointer to memory location in ClientSendOpLogMsg's data field.
-    oplog_serializer.AssignMem(server_oplog_msg_map_[server_id]->get_data());
+    oplog_serializer.AssignMem(ephemeral_server_oplog_msg_.Get(server_id)->get_data());
 
     // oplog serializer helps write the correct information to data field in the
     // oplog message
     for (const auto &table_pair : (*tables_)) {
 
       int32_t table_id = table_pair.first;
-      uint8_t *table_ptr =
-          reinterpret_cast<uint8_t *>(oplog_serializer.GetTablePtr(table_id));
+      uint8_t *table_ptr = reinterpret_cast<uint8_t *>
+          (oplog_serializer.GetTablePtr(table_id));
 
       if (table_ptr == nullptr) {
         table_server_mem_map[table_id].erase(server_id);
@@ -514,6 +521,7 @@ void AbstractBgWorker::CreateOpLogMsgs(const BgOpLog *bg_oplog) {
       table_server_mem_map[table_id][server_id] =
           table_ptr + sizeof(int32_t) + sizeof(size_t);
     }
+    VLOG(20) << "Created oplog for server_id=" << server_id;
   }
 
   // here the re-arranging of the different dimensions happen. We use the
@@ -522,12 +530,14 @@ void AbstractBgWorker::CreateOpLogMsgs(const BgOpLog *bg_oplog) {
 
   for (const auto &table_pair : (*tables_)) {
     int32_t table_id = table_pair.first;
+    VLOG(20) << "Serializing all data for table_id=" << table_id;
     BgOpLogPartition *oplog_partition = bg_oplog->Get(table_id);
     // the second argument to function is an indicator to notify is the
     // serialization is dense or sparse
     oplog_partition->SerializeByServer(
         &(table_server_mem_map[table_id]),
         table_pair.second->oplog_dense_serialized());
+    VLOG(20) << "Serializing DONE table_id" << table_id;
   }
 }
 
@@ -537,25 +547,22 @@ size_t AbstractBgWorker::SendOpLogMsgs(bool clock_advanced) {
   STATS_MLFABRIC_CLIENT_PUSH_BEGIN(0, per_worker_update_version_);
 
   for (const auto &server_id : server_ids_) {
-
     // server_oplog_msg_msp will be populated in Create Op Log Msgs
-    auto oplog_msg_iter = server_oplog_msg_map_.find(server_id);
+    ClientSendOpLogMsg *msg = ephemeral_server_oplog_msg_.Get(server_id);
     STATS_MLFABRIC_CLIENT_PUSH_BEGIN(server_id, per_worker_update_version_);
 
-    if (oplog_msg_iter != server_oplog_msg_map_.end()) {
-
+    if (msg != nullptr) {
       // if there is data that needs to be sent to the server, we send it along
       // with clock information.
-      oplog_msg_iter->second->get_is_clock() = clock_advanced;
-      oplog_msg_iter->second->get_client_id() = GlobalContext::get_client_id();
-      oplog_msg_iter->second->get_version() = per_worker_update_version_;
-      oplog_msg_iter->second->get_bg_clock() = clock_has_pushed_ + 1;
+      msg->get_is_clock() = clock_advanced;
+      msg->get_client_id() = GlobalContext::get_client_id();
+      msg->get_version() = per_worker_update_version_;
+      msg->get_bg_clock() = clock_has_pushed_ + 1;
 
-      accum_size += oplog_msg_iter->second->get_size();
-      MemTransfer::TransferMem(comm_bus_, server_id, oplog_msg_iter->second);
+      accum_size += msg->get_size();
+      MemTransfer::TransferMem(comm_bus_, server_id, msg);
       // delete message after send
-      delete oplog_msg_iter->second;
-      oplog_msg_iter->second = 0;
+      delete msg;
 
       VLOG(2) << "THREAD-" << my_id_
               << ": Oplog sent: client_clock=" << worker_clock_
@@ -569,7 +576,6 @@ size_t AbstractBgWorker::SendOpLogMsgs(bool clock_advanced) {
       // send them a clock message notifying the server that client has moved
       // its clock (we also tell the server the iteration (clock) that
       // generated the data).
-
       // create a message with zero data size
       ClientSendOpLogMsg clock_oplog_msg(0);
       clock_oplog_msg.get_is_clock() = clock_advanced;
@@ -588,6 +594,9 @@ size_t AbstractBgWorker::SendOpLogMsgs(bool clock_advanced) {
   return accum_size;
 }
 
+
+/**
+ */
 size_t AbstractBgWorker::AddOplogAndCountPerServerSize(
     int32_t row_id, AbstractRowOpLog *row_oplog,
     BgOpLogPartition *bg_table_oplog,
@@ -596,11 +605,11 @@ size_t AbstractBgWorker::AddOplogAndCountPerServerSize(
   // 1) row id
   // 2) global version id
   // 3) serialized row size
-  size_t serialized_size =
-      sizeof(int32_t) + sizeof(int32_t) + GetSerializedRowOpLogSize(row_oplog);
+  size_t serialized_size = sizeof(int32_t)
+      + sizeof(int32_t) + GetSerializedRowOpLogSize(row_oplog);
 
-  int32_t server_id =
-      GlobalContext::GetPartitionServerID(row_id, my_comm_channel_idx_);
+  int32_t server_id = GlobalContext::GetPartitionServerID(row_id,
+          my_comm_channel_idx_);
 
   ephemeral_server_byte_counter_.Increment(server_id, serialized_size);
 
@@ -608,6 +617,7 @@ size_t AbstractBgWorker::AddOplogAndCountPerServerSize(
 
   return serialized_size;
 }
+
 
 void AbstractBgWorker::RecvAppInitThreadConnection(
     int32_t *num_connected_app_threads) {

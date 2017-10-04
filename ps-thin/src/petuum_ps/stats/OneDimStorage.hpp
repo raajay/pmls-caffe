@@ -17,9 +17,23 @@ namespace petuum {
 
         ~OneDimStorage() = default;
 
+        void Reset() {
+            data_.clear();
+        }
+
+        V Get(K key) const {
+            auto iter = data_.find(key);
+            return (iter == data_.end()) ? nullptr : iter->second;
+        }
+
+        void Put(K key, V value) {
+            auto iter = data_.find(key);
+            CHECK_EQ(iter == data_.end(), true) << "Value " << value << " for key " << key << " already exists";
+            data_[key] = value;
+        }
+
     private:
         boost::unordered::unordered_map<K, V> data_;
-        typedef typename boost::unordered::unordered_map<K, V>::iterator DataIter;
 };
 }
 

@@ -19,6 +19,7 @@
 #include <petuum_ps/thread/row_oplog_serializer.hpp>
 #include <petuum_ps/stats/OneDimCounter.hpp>
 #include <petuum_ps/stats/TwoDimCounter.hpp>
+#include <petuum_ps/stats/OneDimStorage.hpp>
 
 namespace petuum {
 class AbstractBgWorker : public Thread {
@@ -150,7 +151,7 @@ protected:
   TwoDimCounter<int32_t, int32_t, size_t> ephemeral_server_table_size_counter_;
 
   // The OpLog msg to each server
-  std::map<int32_t, ClientSendOpLogMsg *> server_oplog_msg_map_;
+  OneDimStorage<int32_t, ClientSendOpLogMsg*> ephemeral_server_oplog_msg_;
 
   OneDimCounter<int32_t, size_t> ephemeral_server_byte_counter_;
 

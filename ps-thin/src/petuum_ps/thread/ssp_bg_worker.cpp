@@ -37,37 +37,41 @@ ClientRow *SSPBgWorker::CreateClientRow(int32_t clock, int32_t global_version,
       new SSPClientRow(clock, global_version, row_data, true));
 }
 
-BgOpLog *SSPBgWorker::PrepareOpLogsToSend(int32_t table_id) {
-  auto *bg_oplog = new BgOpLog;
 
-  // Prepare oplogs prepares each table separately.
+/**
+ */
+BgOpLog *SSPBgWorker::PrepareOpLogsToSend(int32_t table_id) {
+
+  auto *bg_oplog = new BgOpLog;
+  ephemeral_server_table_size_counter_.Reset();
+  ephemeral_server_oplog_msg_.Reset();
+
+  // Prepare oplog for each table and add it to BgOpLog
   for (const auto &table_pair : (*tables_)) {
     int32_t curr_table_id = table_pair.first;
 
-    if (table_id != 1 && table_id != curr_table_id) {
+    if (table_id != -1 && table_id != curr_table_id) {
       continue;
     }
 
-    // why are we creating a oplog partition? This is the most common case.
-    // Answer: BgOpLog contains all the oplogs that the current worker is
-    // responsible for; it includes oplogs across all tables which are
-    // partitioned by the table id.
-
-    // stores op logs responsible for the current workers filtered by the
-    // current table id
-    BgOpLogPartition *bg_table_oplog = nullptr;
-
-    if (table_pair.second->get_oplog_type() == Sparse ||
-        table_pair.second->get_oplog_type() == Dense) {
-      bg_table_oplog =
-          PrepareTableOpLogsNormal(curr_table_id, table_pair.second);
-    } else {
+    auto oplog_type = table_pair.second->get_oplog_type();
+    if(oplog_type != Sparse && oplog_type != Dense) {
       LOG(FATAL) << "Unknown oplog type = "
                  << table_pair.second->get_oplog_type();
     }
 
-    // we add each tables oplog to the overall oplog
-    bg_oplog->Add(curr_table_id, bg_table_oplog);
+    // Reset the data structures used for prepping the OpLogMsgs
+    ephemeral_server_byte_counter_.Reset();
+
+    // why are we creating a oplog partition?
+    // Answer: BgOpLog contains all the oplogs that the current worker is
+    // responsible for; it includes oplogs across all tables which are
+    // partitioned by the table id.
+    auto table_oplog_partition = PrepareTableOpLogsNormal(curr_table_id,
+            table_pair.second);
+
+    // we add each table's oplog to the overall oplog
+    bg_oplog->Add(curr_table_id, table_oplog_partition);
 
     FinalizeOpLogMsgStats(curr_table_id);
   }
@@ -76,34 +80,33 @@ BgOpLog *SSPBgWorker::PrepareOpLogsToSend(int32_t table_id) {
   return bg_oplog;
 }
 
+
+/**
+ */
 BgOpLogPartition *SSPBgWorker::PrepareTableOpLogsNormal(int32_t table_id,
-                                                        ClientTable *table) {
+        ClientTable *table) {
 
   AbstractOpLog &table_oplog = table->get_oplog();
 
   GetSerializedRowOpLogSizeFunc GetSerializedRowOpLogSize;
-
   if (table->oplog_dense_serialized()) {
     GetSerializedRowOpLogSize = GetDenseSerializedRowOpLogSize;
   } else {
     GetSerializedRowOpLogSize = GetSparseSerializedRowOpLogSize;
   }
 
-  // Get OpLog index. The index will tell which rows have been modified. So
-  // the function below, will query an oplog index -- maintained per table at
-  // the process level -- and get all the rows that have been modified. Note
-  // that it will find modified rows from among the rows for each table that
-  // the current bg_thread is responsible for.
+  // Get OpLog index. The index will tell which rows have been modified. So the
+  // function below, will query an oplog index -- maintained per table at the
+  // process level -- and get all the rows that have been modified. Note that
+  // it will find modified rows from among the rows for each table that the
+  // current bg_thread is responsible for.
 
   cuckoohash_map<int32_t, bool> *new_table_oplog_index_ptr =
       table->GetAndResetOpLogIndex(my_comm_channel_idx_);
 
-  size_t table_update_size = table->get_sample_row()->get_update_size();
-
-  auto *bg_table_oplog =
-      new BgOpLogPartition(table_id, table_update_size, my_comm_channel_idx_);
-
-  ephemeral_server_byte_counter_.Reset();
+  // create an empty partition
+  auto *bg_table_oplog = new BgOpLogPartition(table_id,
+          table->get_sample_row()->get_update_size(), my_comm_channel_idx_);
 
   // iterate over all rows that are potentially modified
   for (auto oplog_index_iter = new_table_oplog_index_ptr->cbegin();
@@ -113,6 +116,7 @@ BgOpLogPartition *SSPBgWorker::PrepareTableOpLogsNormal(int32_t table_id,
 
     AbstractRowOpLog *row_oplog = nullptr;
     bool found = GetRowOpLog(table_oplog, row_id, &row_oplog);
+
     // if not found, row_id has not been modified in this table
     if (!found || row_oplog == nullptr) {
       continue;
@@ -124,14 +128,13 @@ BgOpLogPartition *SSPBgWorker::PrepareTableOpLogsNormal(int32_t table_id,
     AddOplogAndCountPerServerSize(row_id, row_oplog, bg_table_oplog,
                                   GetSerializedRowOpLogSize);
   }
-  // end for -- over all rows that have oplog (i.e., those which are modified;
-  // obtained from oplog index)
 
-  // no one else points to this struct, see earlier GetAndResetOpLogIndex
-  // function
+  // no one else points to this struct, see GetAndResetOpLogIndex function
   delete new_table_oplog_index_ptr;
   return bg_table_oplog;
 }
+
+
 
 void SSPBgWorker::TrackBgOpLog(BgOpLog *bg_oplog) {
   bool tracked =

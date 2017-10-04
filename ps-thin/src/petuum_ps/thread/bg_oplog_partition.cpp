@@ -49,7 +49,6 @@ BgOpLogPartition::SerializeByServer(std::map<int32_t, void *> *bytes_by_server,
     // Init number of rows to 0 - the first element in table update to the
     // server is the number of rows
     *((int32_t *)iter->second) = 0;
-
   }
 
   for (auto iter = oplog_map_.cbegin(); iter != oplog_map_.cend(); iter++) {
@@ -57,6 +56,7 @@ BgOpLogPartition::SerializeByServer(std::map<int32_t, void *> *bytes_by_server,
     int32_t row_id = iter->first;
     int32_t server_id =
         GlobalContext::GetPartitionServerID(row_id, comm_channel_idx_);
+    VLOG(20) << "serializing oplog for server_id=" << server_id << ", table_id=" << table_id_;
 
     auto server_iter = (*bytes_by_server).find(server_id);
     CHECK(server_iter != (*bytes_by_server).end());
@@ -71,14 +71,17 @@ BgOpLogPartition::SerializeByServer(std::map<int32_t, void *> *bytes_by_server,
     int32_t &mem_row_id = *((int32_t *)mem);
     mem_row_id = row_id;
     mem += sizeof(int32_t);
+    VLOG(20) << "Wrote row id";
 
     // 2. write the global version of the row into memory
     int32_t &mem_global_version = *((int32_t *)mem);
     mem_global_version = row_oplog_ptr->GetGlobalVersion();
     mem += sizeof(int32_t);
+    VLOG(20) << "Wrote global version";
 
     // 3. write oplog data
     size_t serialized_size = (row_oplog_ptr->*SerializeOpLog)(mem);
+    VLOG(20) << "Wrote oplog data";
 
     // increment offset by the total space taken for a single row:
     // 1. row id, 2. global version, 3. serialized size
@@ -87,9 +90,7 @@ BgOpLogPartition::SerializeByServer(std::map<int32_t, void *> *bytes_by_server,
 
     // increment number of rows by 1
     *((int32_t *)server_iter->second) += 1;
-
+    VLOG(20) << "..Done.";
   }
-
 }
-
 }

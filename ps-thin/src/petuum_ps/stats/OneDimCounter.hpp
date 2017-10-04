@@ -31,7 +31,7 @@ public:
    * Get counter value or a key
    */
   V Get(K key) {
-    DataIter iter = data_.find(key);
+    auto iter = data_.find(key);
     return (iter == data_.end()) ? 0 : iter->second;
   }
 
@@ -50,7 +50,7 @@ public:
    * Increment counter
    */
   void Increment(K key, V value) {
-    DataIter iter = data_.find(key);
+    auto iter = data_.find(key);
     if (data_.end() == iter) {
       data_.emplace(key, value);
     } else {
@@ -71,9 +71,16 @@ public:
     return return_value;
   }
 
+  std::string ToString() {
+      std::stringstream ss;
+      for(auto &it : data_) {
+          ss << "(" << it.first << "," << it.second << ")  ";
+      }
+      return ss.str();
+  }
+
 private:
   boost::unordered::unordered_map<K, V> data_;
-  typedef typename boost::unordered::unordered_map<K, V>::iterator DataIter;
 };
 }
 
