@@ -462,38 +462,22 @@ void AbstractBgWorker::FinalizeOpLogMsgStats(int32_t table_id) {
 
 void AbstractBgWorker::CreateOpLogMsgs(const BgOpLog *bg_oplog) {
 
-  // bg_oplog contains the collection of oplogs that needs to be sent from this
-  // bg worker.  the data structure arranges oplogs on a per table basis.
-
-  // prepare oplogs function, would have calculated how much data needs to be
-  // sent to each server. This value is stored in server_table_oplog_size_map
-  // which is a two-dimensional hashmap. the first dimension is the server and
-  // second dimension is table. Thus, we can split the total data sent to a
-  // server along the table dimension. what we are doing below is, converting
-  // the oplogs organized per table and then per server (in bg oplog
-  // partition) into one giant message that can be sent to the server.
-
   std::map<int32_t, std::map<int32_t, void *>> table_server_mem_map;
 
+  std::vector<int32_t> servers = ephemeral_server_table_size_counter_.GetDim1Keys();
 
+  for (auto server_id : servers) {
 
-
-  for (auto &server_iter : server_table_oplog_size_map_) {
-
-    // a class that helps serialize all data destined to a server.
     ServerOpLogSerializer oplog_serializer;
-    int32_t server_id = server_iter.first;
-    // we initialize it with the total size of data that will be sent to a
-    // specific server.
-    size_t server_oplog_msg_size = oplog_serializer.Init(server_iter.second);
+    size_t msg_size = oplog_serializer.Init(server_id, ephemeral_server_table_size_counter_);
 
-    if (server_oplog_msg_size == 0) {
+    if (msg_size == 0) {
       server_oplog_msg_map_.erase(server_id);
       continue;
     }
 
     server_oplog_msg_map_[server_id] =
-        new ClientSendOpLogMsg(server_oplog_msg_size);
+        new ClientSendOpLogMsg(msg_size);
 
     // if we look at oplog serializer code, it basically sets and internal
     // pointer to memory location in ClientSendOpLogMsg's data field.
@@ -538,7 +522,6 @@ void AbstractBgWorker::CreateOpLogMsgs(const BgOpLog *bg_oplog) {
 
   for (const auto &table_pair : (*tables_)) {
     int32_t table_id = table_pair.first;
-    // ClientTable *table = table_pair.second;
     BgOpLogPartition *oplog_partition = bg_oplog->Get(table_id);
     // the second argument to function is an indicator to notify is the
     // serialization is dense or sparse

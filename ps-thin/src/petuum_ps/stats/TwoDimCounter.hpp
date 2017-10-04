@@ -22,7 +22,7 @@ public:
     data_.clear();
   }
 
-  V Get(K1 key1, K2 key2) {
+  V Get(K1 key1, K2 key2) const {
     Dim1Iter iter1 = data_.find(key1);
     if (data_.end() == iter1) {
       return 0;
@@ -31,7 +31,7 @@ public:
     return (iter1->second.end() == iter2) ? 0 : iter2->second;
   }
 
-  V Get(K1 key1) {
+  V Get(K1 key1) const {
     Dim1Iter iter1 = data_.find(key1);
     if (data_.end() == iter1) {
       return 0;
@@ -43,7 +43,7 @@ public:
     return return_value;
   }
 
-  V GetAll() {
+  V GetAll() const {
     V return_value = 0;
     for (auto &iter1 : data_) {
       for (auto &iter2 : iter1.second) {
@@ -68,7 +68,7 @@ public:
     }
   }
 
-  const std::vector<K2> GetKeysPosValue(K1 key1) {
+  std::vector<K2> GetKeysPosValue(K1 key1) const {
     std::vector<K2> return_value;
     Dim1Iter iter1 = data_.find(key1);
 
@@ -83,6 +83,14 @@ public:
     }
     return return_value;
   }
+
+    std::vector<K1> GetDim1Keys() const {
+      std::vector<K1> return_value;
+      for(auto &it : data_) {
+        return_value.push_back(it.first);
+      }
+      return return_value;
+    }
 
 private:
   std::map<K1, std::map<K2, V>> data_;

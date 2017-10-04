@@ -20,7 +20,7 @@ AbstractRowOpLog *BgOpLogPartition::FindOpLog(int row_id) {
   auto oplog_iter = oplog_map_.find(row_id);
   if (oplog_iter != oplog_map_.end())
     return oplog_iter->second;
-  return 0;
+  return nullptr;
 }
 
 void BgOpLogPartition::InsertOpLog(int row_id, AbstractRowOpLog *row_oplog) {
@@ -50,7 +50,7 @@ BgOpLogPartition::SerializeByServer(std::map<int32_t, void *> *bytes_by_server,
     // server is the number of rows
     *((int32_t *)iter->second) = 0;
 
-  } // end for - over the mapping from server to num bytes
+  }
 
   for (auto iter = oplog_map_.cbegin(); iter != oplog_map_.cend(); iter++) {
 
@@ -88,8 +88,8 @@ BgOpLogPartition::SerializeByServer(std::map<int32_t, void *> *bytes_by_server,
     // increment number of rows by 1
     *((int32_t *)server_iter->second) += 1;
 
-  } // end for -- over all the oplogs indexed by row id
+  }
 
-} // end function -- SerializeByServer
+}
 
-} // end namespace -- petuum
+}
