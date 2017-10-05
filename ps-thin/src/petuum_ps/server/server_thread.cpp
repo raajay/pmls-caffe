@@ -270,7 +270,10 @@ void ServerThread::HandleOpLogMsg(int32_t sender_id,
       server_obj_.ClockUntil(sender_id, bg_clock) :
       server_obj_.ClockTableUntil(table_id, sender_id, bg_clock);
 
+  // If clock is not changed then we will not be releasing any row requests
   if (false == clock_changed) { return; }
+
+  // if we are using asynchronous mode, then row requests are not buffered.
   if (GlobalContext::is_asynchronous_mode()) { return; }
 
   int32_t new_clock = table_id == -1 ?
