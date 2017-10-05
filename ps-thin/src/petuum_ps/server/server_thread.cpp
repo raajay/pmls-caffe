@@ -196,7 +196,9 @@ void ServerThread::HandleRowRequest(int32_t sender_id,
     if (server_clock < request_clock) {
       // not fresh enough, wait
       server_obj_.AddRowRequest(sender_id, table_id, row_id, request_clock);
-      VLOG(15) << "Buffering row request";
+      VLOG(20) << "Buffering row request: table_id=" << table_id << " row_id="
+          << row_id << " request_clock=" << request_clock << " server_clock=" <<
+          server_clock;
       return;
     }
   } else {
@@ -259,6 +261,7 @@ void ServerThread::HandleOpLogMsg(int32_t sender_id,
               client_send_oplog_msg.get_avai_size(), sender_id, version,
               &observed_delay);
   STATS_SERVER_ACCUM_APPLY_OPLOG_END();
+  VLOG(20) << "Number of tables updated = " << num_tables_updated;
 
   if (table_id != ALL_TABLES) { CHECK_EQ(num_tables_updated, 1); }
 
@@ -270,6 +273,8 @@ void ServerThread::HandleOpLogMsg(int32_t sender_id,
   bool clock_changed = table_id == ALL_TABLES ?
       server_obj_.ClockAllTablesUntil(sender_id, bg_clock) :
       server_obj_.ClockTableUntil(table_id, sender_id, bg_clock);
+
+  VLOG(20) << "Clocked tables. " << server_obj_.DisplayClock();
 
   // If clock is not changed then we will not be releasing any row requests
   if (false == clock_changed) { return; }

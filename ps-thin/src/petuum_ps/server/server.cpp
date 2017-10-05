@@ -81,8 +81,8 @@ bool Server::ClockAllTablesUntil(int32_t bg_id, int32_t clock) {
     // clock moves ahead. As long as tables are clocked together, this
     // assumptions should be fine.
     for(auto &it : table_vector_clock_) {
-        did_overall_clock_move = did_overall_clock_move ||
-            (0 != it.second.TickUntil(bg_id, clock));
+        bool did_table_clock_move = ClockTableUntil(it.first, bg_id, clock);
+        did_overall_clock_move |= did_table_clock_move;
     }
     return did_overall_clock_move;
 }
@@ -207,8 +207,6 @@ int32_t Server::ApplyOpLogUpdateVersion(const void *oplog, size_t oplog_size,
     }
   }
   CHECK_EQ(oplog_reader.GetCurrentOffset(), oplog_size);
-  VLOG(2) << "server_id=" << server_id_ << " sender_id=" << bg_thread_id
-          << ", time=" << GetElapsedTime() << ", size=" << oplog_size;
   return num_tables_updated;
 }
 
@@ -256,6 +254,7 @@ void Server::TakeSnapShot(int32_t current_clock) {
  * Clock a single table.
  */
 bool Server::ClockTableUntil(int32_t table_id, int32_t bg_id, int32_t clock) {
+    VLOG(20) << "Clock table=" << table_id << " from bg_id=" << bg_id <<  " until " << clock;
   TableClockIter iter = table_vector_clock_.find(table_id);
   return (0 != iter->second.TickUntil(bg_id, clock));
 }
@@ -267,4 +266,17 @@ int32_t Server::GetTableMinClock(int32_t table_id) {
   TableClockIter iter = table_vector_clock_.find(table_id);
   return iter->second.get_min_clock();
 }
+
+/**
+ */
+std::string Server::DisplayClock() {
+    std::stringstream ss;
+    ss << "Min clock=" << GetAllTablesMinClock() << " [";
+    for (auto &it : table_vector_clock_) {
+        ss << it.first << " : " << it.second.get_min_clock() << ", ";
+    }
+    ss << "]";
+    return ss.str();
+}
+
 }
