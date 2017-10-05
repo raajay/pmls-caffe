@@ -23,9 +23,6 @@ AbstractBgWorker::AbstractBgWorker(int32_t id, int32_t comm_channel_idx,
 
 
 AbstractBgWorker::~AbstractBgWorker() {
-  for (auto &serializer_pair : row_oplog_serializer_map_) {
-    delete serializer_pair.second;
-  }
 }
 
 void AbstractBgWorker::ShutDown() { Join(); }

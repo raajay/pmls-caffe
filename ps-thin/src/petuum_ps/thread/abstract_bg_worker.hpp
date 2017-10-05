@@ -132,7 +132,6 @@ protected:
   TwoDimCounter<int32_t, int32_t, size_t> ephemeral_server_table_size_counter_;
   OneDimStorage<int32_t, ClientSendOpLogMsg*> ephemeral_server_oplog_msg_;
 
-  std::unordered_map<int32_t, RowOpLogSerializer *> row_oplog_serializer_map_;
   HighResolutionTimer from_start_timer_;
 };
 }
