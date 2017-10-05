@@ -144,7 +144,7 @@ void Server::GetFulfilledRowRequests(std::vector<ServerRowRequest> *requests) {
  * with values sent from the client. It is important to note that the client
  * message will contain updates to all the tables.
  */
-void Server::ApplyOpLogUpdateVersion(const void *oplog, size_t oplog_size,
+int32_t Server::ApplyOpLogUpdateVersion(const void *oplog, size_t oplog_size,
                                      int32_t bg_thread_id, uint32_t version,
                                      int32_t *observed_delay) {
   if (!is_replica_) {
@@ -152,19 +152,21 @@ void Server::ApplyOpLogUpdateVersion(const void *oplog, size_t oplog_size,
     bg_version_map_[bg_thread_id] = version;
   }
 
-  if (0 == oplog_size) { return; }
+  if (0 == oplog_size) { return 0; }
 
   SerializedOpLogReader oplog_reader(oplog, tables_);
   if (false == oplog_reader.Restart()) {
-      return;
+      return 0;
   }
 
-  *observed_delay = -1; // init the observed delay
+  int32_t num_tables_updated = 1;
+
+  *observed_delay = -1;
 
   int32_t table_id;
   int32_t row_id;
   int32_t model_version_for_update;
-  const int32_t *column_ids; // the variable pointer points to const memory
+  const int32_t *column_ids;
   int32_t num_updates;
   bool started_new_table;
 
@@ -196,17 +198,17 @@ void Server::ApplyOpLogUpdateVersion(const void *oplog, size_t oplog_size,
     updates = oplog_reader.Next(&table_id, &row_id, &model_version_for_update,
                                 &column_ids, &num_updates, &started_new_table);
 
-    if (updates == 0) {
-      break;
-    }
+    if (updates == 0) { break; }
 
     if (started_new_table) {
       server_table = GetServerTable(table_id);
+      num_tables_updated++;
     }
   }
   CHECK_EQ(oplog_reader.GetCurrentOffset(), oplog_size);
   VLOG(2) << "server_id=" << server_id_ << " sender_id=" << bg_thread_id
           << ", time=" << GetElapsedTime() << ", size=" << oplog_size;
+  return num_tables_updated;
 }
 
 /**

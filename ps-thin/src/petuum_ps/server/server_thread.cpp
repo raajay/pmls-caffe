@@ -236,18 +236,17 @@ void ServerThread::ReplyRowRequest(
   MemTransfer::TransferMem(comm_bus_, bg_id, &server_row_request_reply_msg);
 }
 
+
+/**
+ */
 void ServerThread::HandleOpLogMsg(int32_t sender_id,
                                   ClientSendOpLogMsg &client_send_oplog_msg) {
 
   STATS_SERVER_OPLOG_MSG_RECV_INC_ONE();
 
-  bool is_clock =
-      client_send_oplog_msg
-          .get_is_clock(); // if the oplog also says that client has clocked
-  int32_t bg_clock =
-      client_send_oplog_msg.get_bg_clock(); // the value of clock at client
-  uint32_t version =
-      client_send_oplog_msg.get_version(); // the bg version of the oplog update
+  bool is_clock = client_send_oplog_msg.get_is_clock();
+  int32_t bg_clock = client_send_oplog_msg.get_bg_clock();
+  uint32_t version = client_send_oplog_msg.get_version();
 
   VLOG(5) << "Received client oplog msg from " << sender_id
           << " orig_version=" << version << " orig_sender=" << sender_id;
@@ -256,9 +255,10 @@ void ServerThread::HandleOpLogMsg(int32_t sender_id,
 
   int32_t observed_delay;
   STATS_SERVER_ACCUM_APPLY_OPLOG_BEGIN();
-  server_obj_.ApplyOpLogUpdateVersion(client_send_oplog_msg.get_data(),
-                                      client_send_oplog_msg.get_avai_size(),
-                                      sender_id, version, &observed_delay);
+  int32_t num_tables_updated =
+      server_obj_.ApplyOpLogUpdateVersion(client_send_oplog_msg.get_data(),
+              client_send_oplog_msg.get_avai_size(), sender_id, version,
+              &observed_delay);
   STATS_SERVER_ACCUM_APPLY_OPLOG_END();
 
   // TODO add delay to the statistics
@@ -308,6 +308,10 @@ long ServerThread::ServerIdleWork() { return 0; }
 
 long ServerThread::ResetServerIdleMilli() { return 0; }
 
+
+/**
+ * The operator that runs infinitely receiving and processing messages
+ */
 void *ServerThread::operator()() {
 
   ThreadContext::RegisterThread(my_id_);
@@ -330,12 +334,12 @@ void *ServerThread::operator()() {
   bool destroy_mem = false;
   long timeout_milli = GlobalContext::get_server_idle_milli();
 
-  // like the bg thread, the server thread also goes on an infinite loop.
-  // It processes one message at a time; TODO (raajay) shouldn't we have
-  // separate queues for
-  // control and data messages.
+  // like the bg thread, the server thread also goes on an infinite loop.  It
+  // processes one message at a time; TODO (raajay) shouldn't we have separate
+  // queues for control and data messages.
 
-  while (1) {
+  while (true) {
+
     bool received = WaitMsg_(&sender_id, &zmq_msg, timeout_milli);
     if (!received) {
       timeout_milli = ServerIdleWork();
@@ -357,6 +361,7 @@ void *ServerThread::operator()() {
     }
 
     switch (msg_type) {
+
     case kClientShutDown: {
       bool shutdown = HandleShutDownMsg();
       if (shutdown) {
@@ -366,22 +371,26 @@ void *ServerThread::operator()() {
       }
       break;
     }
+
     case kCreateTable: {
       CreateTableMsg create_table_msg(msg_mem);
       HandleCreateTable(sender_id, create_table_msg);
       break;
     }
+
     case kApplicationThreadRowRequest: {
       // here, handle a clients request for new data
       RowRequestMsg row_request_msg(msg_mem);
       HandleRowRequest(sender_id, row_request_msg);
     } break;
+
     case kClientSendOpLog: {
       // here, we decide what to do with the oplog (update) that the client
       // sends.
       ClientSendOpLogMsg client_send_oplog_msg(msg_mem);
       HandleOpLogMsg(sender_id, client_send_oplog_msg);
     } break;
+
     case kReplicaOpLogAck: {
       ReplicaOpLogAckMsg replica_ack_msg(msg_mem);
       ServerOpLogAckMsg server_oplog_ack_msg;
@@ -398,12 +407,15 @@ void *ServerThread::operator()() {
       delete replica_timers_[0];
       replica_timers_.pop_front();
     } break;
+
     default:
       LOG(FATAL) << "Unrecognized message type " << msg_type;
     }
 
-    if (destroy_mem)
+    if (destroy_mem) {
       MemTransfer::DestroyTransferredMem(msg_mem);
+    }
+
   }
 }
 }
