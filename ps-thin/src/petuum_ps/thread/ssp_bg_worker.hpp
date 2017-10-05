@@ -32,10 +32,6 @@ protected:
   virtual bool GetRowOpLog(AbstractOpLog &table_oplog, int32_t row_id,
                            AbstractRowOpLog **row_oplog_ptr);
 
-  /* Functions Called From Main Loop -- BEGIN */
-  void PrepareBeforeInfiniteLoop() override;
-  // invoked after all tables have been created
-  void FinalizeTableStats() override;
   long ResetBgIdleMilli() override;
   long BgIdleWork() override;
   /* Functions Called From Main Loop -- END */
@@ -44,10 +40,10 @@ protected:
                              AbstractRow *row_data) override;
 
   /* Handles Sending OpLogs -- BEGIN */
-  BgOpLog *PrepareOpLogsToSend(int32_t table_id) override;
+  BgOpLog *PrepareOpLogs(int32_t table_id) override;
   void TrackBgOpLog(BgOpLog *bg_oplog) override;
-  virtual BgOpLogPartition *PrepareTableOpLogsNormal(int32_t table_id,
-                                                     ClientTable *table);
+  virtual BgOpLogPartition *PrepareTableOpLogs(int32_t table_id,
+                                               ClientTable *table);
   /* Handles Sending OpLogs -- END */
 
 }; // end class -- ssp bg worker

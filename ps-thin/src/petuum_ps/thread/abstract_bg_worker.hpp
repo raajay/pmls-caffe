@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
 #include <map>
 #include <vector>
 #include <condition_variable>
@@ -56,10 +56,6 @@ protected:
   virtual void SetWaitMsg();
   virtual long ResetBgIdleMilli();
 
-  typedef size_t (*GetSerializedRowOpLogSizeFunc)(AbstractRowOpLog *row_oplog);
-  static size_t GetDenseSerializedRowOpLogSize(AbstractRowOpLog *row_oplog);
-  static size_t GetSparseSerializedRowOpLogSize(AbstractRowOpLog *row_oplog);
-
   void BgServerHandshake();
   void RecvAppInitThreadConnection(int32_t *num_connected_app_threads);
   void ConnectToNameNodeOrServer(int32_t server_id);
@@ -68,25 +64,17 @@ protected:
 
   virtual void InitWhenStart();
   void InitCommBus();
-  virtual void PrepareBeforeInfiniteLoop();
 
   void HandleCreateTables();
   virtual long HandleClockMsg(int32_t table_id, bool clock_advanced);
 
   virtual long BgIdleWork();
 
-  virtual void FinalizeTableStats();
-
-  virtual BgOpLog *PrepareOpLogsToSend(int32_t table_id) = 0;
-  void FinalizeOpLogMsgStats(int32_t table_id);
+  virtual BgOpLog *PrepareOpLogs(int32_t table_id) = 0;
+  void FinalizeTableOplogSize(int32_t table_id);
   void CreateOpLogMsgs(int32_t table_id, const BgOpLog *bg_oplog);
   size_t SendOpLogMsgs(int32_t table_id, bool clock_advanced);
   virtual void TrackBgOpLog(BgOpLog *bg_oplog) = 0;
-  size_t AddOplogAndCountPerServerSize(
-      int32_t row_id, AbstractRowOpLog *row_oplog,
-      BgOpLogPartition *bg_table_oplog,
-      GetSerializedRowOpLogSizeFunc GetSerializedRowOpLogSize);
-
 
   void HandleServerRowRequestReply(
       int32_t server_id,

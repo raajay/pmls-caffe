@@ -214,17 +214,6 @@ bool AbstractBgWorker::WaitMsgTimeOut(int32_t *sender_id,
   return received;
 }
 
-size_t
-AbstractBgWorker::GetDenseSerializedRowOpLogSize(AbstractRowOpLog *row_oplog) {
-  return row_oplog->GetDenseSerializedSize();
-}
-
-size_t
-AbstractBgWorker::GetSparseSerializedRowOpLogSize(AbstractRowOpLog *row_oplog) {
-  row_oplog->ClearZerosAndGetNoneZeroSize();
-  return row_oplog->GetSparseSerializedSize();
-}
-
 void AbstractBgWorker::SetWaitMsg() {
   if (GlobalContext::get_aggressive_cpu()) {
     WaitMsg_ = WaitMsgBusy;
@@ -414,17 +403,14 @@ long AbstractBgWorker::HandleClockMsg(int32_t table_id, bool clock_advanced) {
   // server. We will also know how the data being sent to the server is split
   // across tables.
 
-  BgOpLog *bg_oplog = PrepareOpLogsToSend(table_id);
-  VLOG(20) << "PrepareOplogs successful";
+  BgOpLog *bg_oplog = PrepareOpLogs(table_id);
   CreateOpLogMsgs(table_id, bg_oplog);
-  VLOG(20) << "CreateOplogs successful";
   STATS_BG_ACCUM_CLOCK_END_OPLOG_SERIALIZE_END();
 
   clock_has_pushed_ = worker_clock_;
   // send the information to the server with info on whether the clock has
   // advanced (or) if the client is just pushing updates aggressively.
   SendOpLogMsgs(table_id, clock_advanced);
-  VLOG(20) << "SendOpLogs successful";
   // increments the current version of the bgworker, and keeps track of the
   // oplog in ssp_row_request_oplog_manager
   // note that the version number is incremented even if the clock has not
@@ -439,10 +425,6 @@ long AbstractBgWorker::HandleClockMsg(int32_t table_id, bool clock_advanced) {
   // completes
 }
 
-void AbstractBgWorker::PrepareBeforeInfiniteLoop() {}
-
-void AbstractBgWorker::FinalizeTableStats() {}
-
 long AbstractBgWorker::ResetBgIdleMilli() { return 0; }
 
 long AbstractBgWorker::BgIdleWork() { return 0; }
@@ -450,7 +432,7 @@ long AbstractBgWorker::BgIdleWork() { return 0; }
 
 /**
  */
-void AbstractBgWorker::FinalizeOpLogMsgStats(int32_t table_id) {
+void AbstractBgWorker::FinalizeTableOplogSize(int32_t table_id) {
   for (auto server_id : ephemeral_server_byte_counter_.GetKeysPosValue()) {
     // add the size used to represent the number of rows in an update to stats
     ephemeral_server_byte_counter_.Increment(server_id, sizeof(int32_t));
@@ -556,12 +538,6 @@ size_t AbstractBgWorker::SendOpLogMsgs(int32_t table_id, bool clock_advanced) {
       // delete message after send
       delete msg;
 
-      VLOG(2) << "THREAD-" << my_id_
-              << ": Oplog sent: client_clock=" << worker_clock_
-              << " server=" << server_id
-              << " clientversion=" << per_worker_update_version_
-              << " size=" << accum_size << " time=" << GetElapsedTime();
-
     } else {
 
       // If there is no gradient update to be sent to the server, then we just
@@ -586,29 +562,6 @@ size_t AbstractBgWorker::SendOpLogMsgs(int32_t table_id, bool clock_advanced) {
   STATS_BG_ADD_PER_CLOCK_OPLOG_SIZE(accum_size);
   return accum_size;
 }
-
-
-/**
- */
-size_t AbstractBgWorker::AddOplogAndCountPerServerSize(
-    int32_t row_id, AbstractRowOpLog *row_oplog,
-    BgOpLogPartition *bg_table_oplog,
-    GetSerializedRowOpLogSizeFunc GetSerializedRowOpLogSize) {
-  // row oplog message size includes allocation for
-  // 1) row id
-  // 2) global version id
-  // 3) serialized row size
-  size_t serialized_size = sizeof(int32_t) + sizeof(int32_t) + GetSerializedRowOpLogSize(row_oplog);
-
-  int32_t server_id = GlobalContext::GetPartitionServerID(row_id, my_comm_channel_idx_);
-
-  ephemeral_server_byte_counter_.Increment(server_id, serialized_size);
-
-  bg_table_oplog->InsertOpLog(row_id, row_oplog);
-
-  return serialized_size;
-}
-
 
 void AbstractBgWorker::RecvAppInitThreadConnection(
     int32_t *num_connected_app_threads) {
@@ -869,15 +822,13 @@ void *AbstractBgWorker::operator()() {
   }
   pthread_barrier_wait(create_table_barrier_);
 
-  FinalizeTableStats();
-
   zmq::message_t zmq_msg;
   int32_t sender_id;
   MsgType msg_type;
   void *msg_mem;
   bool destroy_mem = false;
   long timeout_milli = GlobalContext::get_bg_idle_milli();
-  PrepareBeforeInfiniteLoop();
+
   // here, the BgWorker runs an infinite loop and processes the different
   // messages
   // initiated by either the AppThread (eg. RequestRow) or server thread (e.g. )
