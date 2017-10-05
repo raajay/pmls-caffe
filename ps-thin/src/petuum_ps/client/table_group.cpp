@@ -254,8 +254,8 @@ void TableGroup::ClockTable(int32_t table_id) {
   // clock the table
   auto iter = tables_.find(table_id);
   iter->second->Clock();
-  //
-  int32_t min_clock = table_clock_.Tick(table_id);
+  table_clock_.Tick(table_id);
+  BgWorkers::ClockTable(table_id);
 }
 
 /**
@@ -266,7 +266,7 @@ void TableGroup::GlobalBarrier() {
   }
 }
 
-void TableGroup::ClockAggressive() {
+void TableGroup::ClockAggressive() { //{{{
   CHECK_EQ(true, GlobalContext::am_i_worker_client())
       << "Only (application threads on) worker clients can create tables.";
   // Clocking the table, flushes the values in the thread_cache_ to
@@ -293,7 +293,7 @@ void TableGroup::ClockAggressive() {
     // to update values at the server.
     BgWorkers::SendOpLogsAllTables();
   }
-}
+} //}}}
 
 void TableGroup::ClockConservative() {
   CHECK_EQ(true, GlobalContext::am_i_worker_client())
