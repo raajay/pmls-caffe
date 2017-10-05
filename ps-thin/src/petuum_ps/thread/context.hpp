@@ -11,6 +11,8 @@
 #include <petuum_ps/include/configs.hpp>
 #include <petuum_ps/util/vector_clock_mt.hpp>
 
+#define ALL_TABLES -1
+
 namespace petuum {
 
 /**

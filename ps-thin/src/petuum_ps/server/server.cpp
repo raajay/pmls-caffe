@@ -5,6 +5,7 @@
 #include <petuum_ps/util/class_register.hpp>
 #include <petuum_ps/util/utils.hpp>
 
+#include <climits>
 #include <utility>
 #include <fstream>
 #include <map>
@@ -23,7 +24,6 @@ void Server::Init(int32_t server_id, const std::vector<int32_t> &bg_ids,
   // bg_clock is vector clock. We set it to be zero for all bg threads (one
   // from each worker client)
   for (auto bg : bg_ids) {
-    bg_clock_.AddClock(bg, 0);
     bg_version_map_[bg] = -1;
     // TODO(raajay) is there an easier way to copy vectors?
     bg_ids_.push_back(bg);
@@ -75,17 +75,16 @@ ServerRow *Server::FindCreateRow(int32_t table_id, int32_t row_id) {
  * pushing the clock of a single bg_thread, if the min_value of th vector
  * clock changes, then return true. Also, see if we have to take a snapshot.
  */
-bool Server::ClockUntil(int32_t bg_id, int32_t clock) {
-  int new_clock = bg_clock_.TickUntil(bg_id, clock);
-  if (new_clock) {
-    if (GlobalContext::get_snapshot_clock() <= 0 ||
-        new_clock % GlobalContext::get_snapshot_clock() != 0) {
-      return true;
+bool Server::ClockAllTablesUntil(int32_t bg_id, int32_t clock) {
+    bool did_overall_clock_move = false;
+    // XXX(raajay) We move the overall clock if atleast one of the tables'
+    // clock moves ahead. As long as tables are clocked together, this
+    // assumptions should be fine.
+    for(auto &it : table_vector_clock_) {
+        did_overall_clock_move = did_overall_clock_move ||
+            (0 != it.second.TickUntil(bg_id, clock));
     }
-    TakeSnapShot(new_clock);
-    return true;
-  }
-  return false;
+    return did_overall_clock_move;
 }
 
 /**
@@ -214,8 +213,15 @@ int32_t Server::ApplyOpLogUpdateVersion(const void *oplog, size_t oplog_size,
 }
 
 /**
+ * Returns the least clock among all tables.
  */
-int32_t Server::GetMinClock() { return bg_clock_.get_min_clock(); }
+int32_t Server::GetAllTablesMinClock() {
+    int32_t min_table_clock = INT_MAX;
+    for (auto &it : table_vector_clock_) {
+        min_table_clock = std::min(min_table_clock, it.second.get_min_clock());
+    }
+    return min_table_clock;
+}
 
 /**
  */
@@ -247,6 +253,7 @@ void Server::TakeSnapShot(int32_t current_clock) {
 }
 
 /**
+ * Clock a single table.
  */
 bool Server::ClockTableUntil(int32_t table_id, int32_t bg_id, int32_t clock) {
   TableClockIter iter = table_vector_clock_.find(table_id);
@@ -254,6 +261,7 @@ bool Server::ClockTableUntil(int32_t table_id, int32_t bg_id, int32_t clock) {
 }
 
 /**
+ * Return the min clock for an individual table
  */
 int32_t Server::GetTableMinClock(int32_t table_id) {
   TableClockIter iter = table_vector_clock_.find(table_id);

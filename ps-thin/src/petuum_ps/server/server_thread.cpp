@@ -186,15 +186,16 @@ void ServerThread::HandleRowRequest(int32_t sender_id,
                                     RowRequestMsg &row_request_msg) {
   int32_t table_id = row_request_msg.get_table_id();
   int32_t row_id = row_request_msg.get_row_id();
-  int32_t clock = row_request_msg.get_clock();
-  int32_t server_clock = server_obj_.GetMinClock();
+  int32_t request_clock = row_request_msg.get_clock();
+
+  int32_t server_clock = server_obj_.GetTableMinClock(table_id);
   uint32_t bg_version = server_obj_.GetBgVersion(sender_id);
 
   if (!GlobalContext::is_asynchronous_mode()) {
     // check only in synchronous mode
-    if (server_clock < clock) {
+    if (server_clock < request_clock) {
       // not fresh enough, wait
-      server_obj_.AddRowRequest(sender_id, table_id, row_id, clock);
+      server_obj_.AddRowRequest(sender_id, table_id, row_id, request_clock);
       VLOG(15) << "Buffering row request";
       return;
     }
@@ -206,7 +207,7 @@ void ServerThread::HandleRowRequest(int32_t sender_id,
   ServerRow *server_row = server_obj_.FindCreateRow(table_id, row_id);
 
   int32_t return_clock =
-      (GlobalContext::is_asynchronous_mode()) ? clock : server_clock;
+      (GlobalContext::is_asynchronous_mode()) ? request_clock : server_clock;
 
   ReplyRowRequest(sender_id, server_row, table_id, row_id, return_clock,
                   bg_version, server_row->GetRowVersion());
@@ -259,15 +260,15 @@ void ServerThread::HandleOpLogMsg(int32_t sender_id,
               &observed_delay);
   STATS_SERVER_ACCUM_APPLY_OPLOG_END();
 
-  if (table_id != -1) { CHECK_EQ(num_tables_updated, 1); }
+  if (table_id != ALL_TABLES) { CHECK_EQ(num_tables_updated, 1); }
 
   // TODO add delay to the statistics
   // STATS_MLFABRIC_SERVER_RECORD_DELAY(observed_delay);
 
   if (false == is_clock) { return; }
 
-  bool clock_changed = table_id == -1 ?
-      server_obj_.ClockUntil(sender_id, bg_clock) :
+  bool clock_changed = table_id == ALL_TABLES ?
+      server_obj_.ClockAllTablesUntil(sender_id, bg_clock) :
       server_obj_.ClockTableUntil(table_id, sender_id, bg_clock);
 
   // If clock is not changed then we will not be releasing any row requests
@@ -276,8 +277,8 @@ void ServerThread::HandleOpLogMsg(int32_t sender_id,
   // if we are using asynchronous mode, then row requests are not buffered.
   if (GlobalContext::is_asynchronous_mode()) { return; }
 
-  int32_t new_clock = table_id == -1 ?
-      server_obj_.GetMinClock() :
+  int32_t new_clock = table_id == ALL_TABLES ?
+      server_obj_.GetAllTablesMinClock() :
       server_obj_.GetTableMinClock(table_id);
 
   std::vector<ServerRowRequest> requests;

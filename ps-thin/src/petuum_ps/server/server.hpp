@@ -31,7 +31,6 @@ public:
 
 class Server {
 private:
-  VectorClock bg_clock_;
 
   boost::unordered::unordered_map<int32_t, VectorClock> table_vector_clock_;
   typedef boost::unordered::unordered_map<int32_t, VectorClock>::iterator
@@ -86,9 +85,9 @@ public:
                                int32_t bg_thread_id, uint32_t version,
                                int32_t *observed_delay);
 
-  bool ClockUntil(int32_t bg_id, int32_t clock);
+  bool ClockAllTablesUntil(int32_t bg_id, int32_t clock);
 
-  int32_t GetMinClock();
+  int32_t GetAllTablesMinClock();
 
   bool ClockTableUntil(int32_t table_id, int32_t bg_id, int32_t clock);
 
