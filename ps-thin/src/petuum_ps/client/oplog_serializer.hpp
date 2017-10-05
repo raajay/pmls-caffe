@@ -9,12 +9,9 @@ public:
 
   ~ServerOpLogSerializer() = default;
 
-  size_t Init(int32_t server_id,
-              const TwoDimCounter<int32_t, int32_t, size_t> &server_table_byte_counter) {
+  size_t Init(int32_t server_id, const TwoDimCounter<int32_t, int32_t, size_t> &server_table_byte_counter) {
 
-    const std::vector<int32_t> non_empty_tables =
-        server_table_byte_counter.GetKeysPosValue(server_id);
-
+    const std::vector<int32_t> non_empty_tables = server_table_byte_counter.GetKeysPosValue(server_id);
     num_tables_ = (int32_t)non_empty_tables.size();
 
     if (0 == num_tables_) {
@@ -38,10 +35,10 @@ public:
   }
 
   // does not take ownership
-  void AssignMem(void *mem) {
+  void AssignMem(void *mem, size_t &bytes_written) {
     mem_ = reinterpret_cast<uint8_t *>(mem);
-    // write the number of tables into the ClientSendOplogs memory
     *(reinterpret_cast<int32_t *>(mem_)) = num_tables_;
+    bytes_written += sizeof(int32_t);
   }
 
   /**

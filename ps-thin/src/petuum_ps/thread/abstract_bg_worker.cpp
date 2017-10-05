@@ -454,13 +454,11 @@ long AbstractBgWorker::BgIdleWork() { return 0; }
 /**
  */
 void AbstractBgWorker::FinalizeOpLogMsgStats(int32_t table_id) {
-    VLOG(20) << "eph_server_byte_counter_: " << ephemeral_server_byte_counter_.ToString();
   for (auto server_id : ephemeral_server_byte_counter_.GetKeysPosValue()) {
     // add the size used to represent the number of rows in an update to stats
     ephemeral_server_byte_counter_.Increment(server_id, sizeof(int32_t));
-
-    ephemeral_server_table_size_counter_.Increment(
-        server_id, table_id, ephemeral_server_byte_counter_.Get(server_id));
+    ephemeral_server_table_size_counter_.Increment(server_id, table_id,
+            ephemeral_server_byte_counter_.Get(server_id));
   }
 }
 
@@ -468,35 +466,28 @@ void AbstractBgWorker::FinalizeOpLogMsgStats(int32_t table_id) {
 void AbstractBgWorker::CreateOpLogMsgs(const BgOpLog *bg_oplog) {
 
   std::map<int32_t, std::map<int32_t, void *>> table_server_mem_map;
+  size_t bytes_written = 0;
+  size_t bytes_allocated = 0;
 
-  std::vector<int32_t> servers =
-      ephemeral_server_table_size_counter_.GetDim1Keys();
-  VLOG(20) << "server_Table_size_counter_: "
-      << ephemeral_server_table_size_counter_.ToString();
-  VLOG(20) << "Num servers to send data " << servers.size();
+  for (auto server_id : server_ids_) {
 
-  for (auto server_id : servers) {
+      if(0 == ephemeral_server_table_size_counter_.Get(server_id)) {
+          continue;
+      }
 
     ServerOpLogSerializer oplog_serializer;
-    size_t msg_size = oplog_serializer.Init(server_id,
-            ephemeral_server_table_size_counter_);
+    size_t msg_size = oplog_serializer.Init(server_id, ephemeral_server_table_size_counter_);
 
     if (msg_size == 0) { continue; }
 
-    ClientSendOpLogMsg *msg = new ClientSendOpLogMsg(msg_size);
-    ephemeral_server_oplog_msg_.Put(server_id, msg);
+    ephemeral_server_oplog_msg_.Put(server_id, new ClientSendOpLogMsg(msg_size));
+    bytes_allocated += msg_size;
 
-    // if we look at oplog serializer code, it basically sets and internal
-    // pointer to memory location in ClientSendOpLogMsg's data field.
-    oplog_serializer.AssignMem(ephemeral_server_oplog_msg_.Get(server_id)->get_data());
+    oplog_serializer.AssignMem(ephemeral_server_oplog_msg_.Get(server_id)->get_data(), bytes_written);
 
-    // oplog serializer helps write the correct information to data field in the
-    // oplog message
     for (const auto &table_pair : (*tables_)) {
-
       int32_t table_id = table_pair.first;
-      uint8_t *table_ptr = reinterpret_cast<uint8_t *>
-          (oplog_serializer.GetTablePtr(table_id));
+      uint8_t *table_ptr = reinterpret_cast<uint8_t *> (oplog_serializer.GetTablePtr(table_id));
 
       if (table_ptr == nullptr) {
         table_server_mem_map[table_id].erase(server_id);
@@ -509,19 +500,20 @@ void AbstractBgWorker::CreateOpLogMsgs(const BgOpLog *bg_oplog) {
 
       // table id -- store table_id at the table_ptr location
       *(reinterpret_cast<int32_t *>(table_ptr)) = table_id;
+      bytes_written += sizeof(int32_t);
 
       // table update size -- store table update size at the table_prt + one
       // int32 location
       // some understanding of the serialization is also happening here.
       *(reinterpret_cast<size_t *>(table_ptr + sizeof(int32_t))) =
           table_pair.second->get_sample_row()->get_update_size();
+      bytes_written += sizeof(size_t);
 
       // offset for table rows -- store the offset for each table and each
       // server. This is the offset into oplog msg's memory.
       table_server_mem_map[table_id][server_id] =
           table_ptr + sizeof(int32_t) + sizeof(size_t);
     }
-    VLOG(20) << "Created oplog for server_id=" << server_id;
   }
 
   // here the re-arranging of the different dimensions happen. We use the
@@ -530,15 +522,17 @@ void AbstractBgWorker::CreateOpLogMsgs(const BgOpLog *bg_oplog) {
 
   for (const auto &table_pair : (*tables_)) {
     int32_t table_id = table_pair.first;
-    VLOG(20) << "Serializing all data for table_id=" << table_id;
     BgOpLogPartition *oplog_partition = bg_oplog->Get(table_id);
     // the second argument to function is an indicator to notify is the
     // serialization is dense or sparse
-    oplog_partition->SerializeByServer(
+    bytes_written += oplog_partition->SerializeByServer(
         &(table_server_mem_map[table_id]),
         table_pair.second->oplog_dense_serialized());
-    VLOG(20) << "Serializing DONE table_id" << table_id;
   }
+
+  VLOG(20) << "Total bytes allocated=" << bytes_allocated;
+  VLOG(20) << "Total bytes_written=" << bytes_written;
+  CHECK_EQ(bytes_written, bytes_allocated);
 }
 
 size_t AbstractBgWorker::SendOpLogMsgs(bool clock_advanced) {
@@ -605,11 +599,9 @@ size_t AbstractBgWorker::AddOplogAndCountPerServerSize(
   // 1) row id
   // 2) global version id
   // 3) serialized row size
-  size_t serialized_size = sizeof(int32_t)
-      + sizeof(int32_t) + GetSerializedRowOpLogSize(row_oplog);
+  size_t serialized_size = sizeof(int32_t) + sizeof(int32_t) + GetSerializedRowOpLogSize(row_oplog);
 
-  int32_t server_id = GlobalContext::GetPartitionServerID(row_id,
-          my_comm_channel_idx_);
+  int32_t server_id = GlobalContext::GetPartitionServerID(row_id, my_comm_channel_idx_);
 
   ephemeral_server_byte_counter_.Increment(server_id, serialized_size);
 

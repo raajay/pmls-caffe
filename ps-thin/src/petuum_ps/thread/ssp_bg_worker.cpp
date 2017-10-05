@@ -67,8 +67,7 @@ BgOpLog *SSPBgWorker::PrepareOpLogsToSend(int32_t table_id) {
     // Answer: BgOpLog contains all the oplogs that the current worker is
     // responsible for; it includes oplogs across all tables which are
     // partitioned by the table id.
-    auto table_oplog_partition = PrepareTableOpLogsNormal(curr_table_id,
-            table_pair.second);
+    auto table_oplog_partition = PrepareTableOpLogsNormal(curr_table_id, table_pair.second);
 
     // we add each table's oplog to the overall oplog
     bg_oplog->Add(curr_table_id, table_oplog_partition);
@@ -83,8 +82,7 @@ BgOpLog *SSPBgWorker::PrepareOpLogsToSend(int32_t table_id) {
 
 /**
  */
-BgOpLogPartition *SSPBgWorker::PrepareTableOpLogsNormal(int32_t table_id,
-        ClientTable *table) {
+BgOpLogPartition *SSPBgWorker::PrepareTableOpLogsNormal(int32_t table_id, ClientTable *table) {
 
   AbstractOpLog &table_oplog = table->get_oplog();
 

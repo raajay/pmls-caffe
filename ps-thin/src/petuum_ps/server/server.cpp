@@ -147,23 +147,19 @@ void Server::GetFulfilledRowRequests(std::vector<ServerRowRequest> *requests) {
 void Server::ApplyOpLogUpdateVersion(const void *oplog, size_t oplog_size,
                                      int32_t bg_thread_id, uint32_t version,
                                      int32_t *observed_delay) {
-
   if (!is_replica_) {
     CHECK_EQ(bg_version_map_[bg_thread_id] + 1, version);
     bg_version_map_[bg_thread_id] = version;
   }
 
-  *observed_delay = -1; // init the observed delay
-  if (oplog_size == 0) {
-    return;
-  }
+  if (0 == oplog_size) { return; }
 
   SerializedOpLogReader oplog_reader(oplog, tables_);
-  bool to_read = oplog_reader.Restart();
-
-  if (!to_read) {
-    return;
+  if (false == oplog_reader.Restart()) {
+      return;
   }
+
+  *observed_delay = -1; // init the observed delay
 
   int32_t table_id;
   int32_t row_id;
@@ -208,7 +204,7 @@ void Server::ApplyOpLogUpdateVersion(const void *oplog, size_t oplog_size,
       server_table = GetServerTable(table_id);
     }
   }
-
+  CHECK_EQ(oplog_reader.GetCurrentOffset(), oplog_size);
   VLOG(2) << "server_id=" << server_id_ << " sender_id=" << bg_thread_id
           << ", time=" << GetElapsedTime() << ", size=" << oplog_size;
 }
