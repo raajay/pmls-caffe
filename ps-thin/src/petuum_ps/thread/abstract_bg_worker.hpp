@@ -28,94 +28,75 @@ public:
                    std::map<int32_t, ClientTable *> *tables,
                    pthread_barrier_t *init_barrier,
                    pthread_barrier_t *create_table_barrier);
+
   virtual ~AbstractBgWorker();
-
   void ShutDown();
-
   void AppThreadRegister();
   void AppThreadDeregister();
   void SyncThreadRegister();
   void SyncThreadDeregister();
-
   bool CreateTable(int32_t table_id, const ClientTableConfig &table_config);
-
   bool RequestRow(int32_t table_id, int32_t row_id, int32_t clock);
-  void RequestRowAsync(int32_t table_id, int32_t row_id, int32_t clock,
-                       bool forced);
+  void RequestRowAsync(int32_t table_id, int32_t row_id, int32_t clock, bool forced);
   void GetAsyncRowRequestReply();
-
   void ClockAllTables();
   void ClockTable(int32_t table_id);
   void SendOpLogsAllTables();
-
   double GetElapsedTime() { return from_start_timer_.elapsed(); }
-
   virtual void *operator()();
 
 protected:
-  virtual void InitWhenStart();
-
-  virtual void SetWaitMsg();
-  virtual void CreateRowRequestOpLogMgr() = 0;
-
   static bool WaitMsgBusy(int32_t *sender_id, zmq::message_t *zmq_msg,
                           long timeout_milli = -1);
   static bool WaitMsgSleep(int32_t *sender_id, zmq::message_t *zmq_msg,
                            long timeout_milli = -1);
   static bool WaitMsgTimeOut(int32_t *sender_id, zmq::message_t *zmq_msg,
                              long timeout_milli);
-
   CommBus::WaitMsgTimeOutFunc WaitMsg_;
+  virtual void SetWaitMsg();
+  virtual long ResetBgIdleMilli();
 
   typedef size_t (*GetSerializedRowOpLogSizeFunc)(AbstractRowOpLog *row_oplog);
   static size_t GetDenseSerializedRowOpLogSize(AbstractRowOpLog *row_oplog);
   static size_t GetSparseSerializedRowOpLogSize(AbstractRowOpLog *row_oplog);
 
-  /* Functions Called From Main Loop -- BEGIN */
-  void InitCommBus();
   void BgServerHandshake();
+  void RecvAppInitThreadConnection(int32_t *num_connected_app_threads);
+  void ConnectToNameNodeOrServer(int32_t server_id);
+
+  virtual void CreateRowRequestOpLogMgr() = 0;
+
+  virtual void InitWhenStart();
+  void InitCommBus();
+  virtual void PrepareBeforeInfiniteLoop();
 
   void HandleCreateTables();
+  virtual long HandleClockMsg(int32_t table_id, bool clock_advanced);
 
-  // get connection from init thread
-  void RecvAppInitThreadConnection(int32_t *num_connected_app_threads);
-
-  virtual void PrepareBeforeInfiniteLoop();
-  // invoked after all tables have been created
-  virtual void FinalizeTableStats();
-  virtual long ResetBgIdleMilli();
   virtual long BgIdleWork();
 
-  /* Functions Called From Main Loop -- END */
+  virtual void FinalizeTableStats();
 
-  /* Handles Sending OpLogs -- BEGIN */
   virtual BgOpLog *PrepareOpLogsToSend(int32_t table_id) = 0;
-  virtual void TrackBgOpLog(BgOpLog *bg_oplog) = 0;
-
-  virtual long HandleClockMsg(int32_t table_id, bool clock_advanced);
+  void FinalizeOpLogMsgStats(int32_t table_id);
   void CreateOpLogMsgs(int32_t table_id, const BgOpLog *bg_oplog);
   size_t SendOpLogMsgs(int32_t table_id, bool clock_advanced);
-
+  virtual void TrackBgOpLog(BgOpLog *bg_oplog) = 0;
   size_t AddOplogAndCountPerServerSize(
       int32_t row_id, AbstractRowOpLog *row_oplog,
       BgOpLogPartition *bg_table_oplog,
       GetSerializedRowOpLogSizeFunc GetSerializedRowOpLogSize);
 
-  void FinalizeOpLogMsgStats(int32_t table_id);
-  /* Handles Sending OpLogs -- END */
 
-  /* Handles Row Requests -- BEGIN */
-  void CheckForwardRowRequestToServer(int32_t app_thread_id,
-                                      RowRequestMsg &row_request_msg);
   void HandleServerRowRequestReply(
       int32_t server_id,
       ServerRowRequestReplyMsg &server_row_request_reply_msg);
-  /* Handles Row Requests -- END */
+  void CheckForwardRowRequestToServer(int32_t app_thread_id,
+                                      RowRequestMsg &row_request_msg);
 
-  /* Helper Functions */
+
   size_t SendMsg(MsgBase *msg);
   void RecvMsg(zmq::message_t &zmq_msg);
-  void ConnectToNameNodeOrServer(int32_t server_id);
 
   virtual ClientRow *CreateClientRow(int32_t clock, int32_t global_version,
                                      AbstractRow *row_data) = 0;
@@ -131,6 +112,8 @@ protected:
                                     int32_t clock,
                                     int32_t global_model_version);
 
+
+
   int32_t my_id_;
   int32_t my_comm_channel_idx_;
   std::map<int32_t, ClientTable *> *tables_;
@@ -145,15 +128,9 @@ protected:
   pthread_barrier_t *init_barrier_;
   pthread_barrier_t *create_table_barrier_;
 
-  // initialized at Creation time, used in CreateSendOpLogs()
-  // For server x, table y, the size of serialized OpLog is ...
-  std::map<int32_t, std::map<int32_t, size_t>> server_table_oplog_size_map_;
-  TwoDimCounter<int32_t, int32_t, size_t> ephemeral_server_table_size_counter_;
-
-  // The OpLog msg to each server
-  OneDimStorage<int32_t, ClientSendOpLogMsg*> ephemeral_server_oplog_msg_;
-
   OneDimCounter<int32_t, size_t> ephemeral_server_byte_counter_;
+  TwoDimCounter<int32_t, int32_t, size_t> ephemeral_server_table_size_counter_;
+  OneDimStorage<int32_t, ClientSendOpLogMsg*> ephemeral_server_oplog_msg_;
 
   std::unordered_map<int32_t, RowOpLogSerializer *> row_oplog_serializer_map_;
   HighResolutionTimer from_start_timer_;
