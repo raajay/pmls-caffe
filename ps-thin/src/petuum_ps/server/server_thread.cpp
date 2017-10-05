@@ -264,45 +264,41 @@ void ServerThread::HandleOpLogMsg(int32_t sender_id,
   // TODO add delay to the statistics
   // STATS_MLFABRIC_SERVER_RECORD_DELAY(observed_delay);
 
-  bool clock_changed = false;
-  if (is_clock) {
-    clock_changed = server_obj_.ClockUntil(sender_id, bg_clock);
-    if (clock_changed) {
+  if (false == is_clock) { return; }
 
-      if (!GlobalContext::is_asynchronous_mode()) {
+  bool clock_changed = server_obj_.ClockUntil(sender_id, bg_clock);
 
-        std::vector<ServerRowRequest> requests;
-        server_obj_.GetFulfilledRowRequests(&requests);
+  if (false == clock_changed) { return; }
 
-        for (auto request_iter = requests.begin();
-             request_iter != requests.end(); request_iter++) {
-          int32_t table_id = request_iter->table_id;
-          int32_t row_id = request_iter->row_id;
-          int32_t bg_id = request_iter->bg_id;
-          uint32_t version = server_obj_.GetBgVersion(bg_id);
-          ServerRow *server_row = server_obj_.FindCreateRow(table_id, row_id);
-          RowSubscribe(server_row,
-                       GlobalContext::thread_id_to_client_id(bg_id));
-          int32_t server_clock = server_obj_.GetMinClock();
-          ReplyRowRequest(bg_id, server_row, table_id, row_id, server_clock,
-                          version, server_row->GetRowVersion());
-        }
-        VLOG(15) << "Successively replied to buffered requests.";
-      }
-      // update the stats clock
-      STATS_SERVER_CLOCK();
-    }
+  if (GlobalContext::is_asynchronous_mode()) { return; }
+
+  std::vector<ServerRowRequest> requests;
+  server_obj_.GetFulfilledRowRequests(&requests);
+
+  // respond to buffered requests
+  for (auto request : requests) {
+
+    int32_t table_id = request.table_id;
+    int32_t row_id = request.row_id;
+    int32_t bg_id = request.bg_id;
+
+    uint32_t version = server_obj_.GetBgVersion(bg_id);
+    ServerRow *server_row = server_obj_.FindCreateRow(table_id, row_id);
+    RowSubscribe(server_row, GlobalContext::thread_id_to_client_id(bg_id));
+    int32_t server_clock = server_obj_.GetMinClock();
+
+    ReplyRowRequest(bg_id, server_row, table_id, row_id, server_clock,
+            version, server_row->GetRowVersion());
   }
+
+  VLOG(15) << "Successively replied to buffered requests.";
+  // update the stats clock
+  STATS_SERVER_CLOCK();
 
   // always ack op log receipt, saying the version number for a particular
   // update from a client was applied to the model.
-
-  // if (clock_changed) {
-  //   // (raajay): the below does nothing when SSP consistency is desired.
-  //   // Used only for SSPPush, which we discontinued.
-  //   ServerPushRow(clock_changed);
-  // }
 }
+
 
 long ServerThread::ServerIdleWork() { return 0; }
 
