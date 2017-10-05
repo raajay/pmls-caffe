@@ -138,6 +138,11 @@ struct TableGroupConfig {
   bool is_asynchronous_mode;
 
   /**
+   * Check if we have to use ML Fabric optimizations
+   */
+  bool use_mlfabric;
+
+  /**
    * Determines the wait time on polling?
    */
   int32_t aggressive_cpu;

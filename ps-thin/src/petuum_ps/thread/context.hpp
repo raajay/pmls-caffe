@@ -504,6 +504,13 @@ public:
   }
 
   /**
+   * @brief Check is we have to use MLFabric optimizations
+   */
+  static bool use_mlfabric() {
+      return table_group_config_.use_mlfabric;
+  }
+
+  /**
    * @brief Check if we need pre-table clock or one clock for all tables
    */
   static bool use_table_clock() { return table_group_config_.use_table_clock; }

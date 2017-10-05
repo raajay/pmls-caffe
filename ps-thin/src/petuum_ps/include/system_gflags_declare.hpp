@@ -19,6 +19,7 @@ DECLARE_int32(num_app_threads);
 
 DECLARE_string(consistency_model);
 DECLARE_bool(is_asynchronous_mode);
+DECLARE_bool(use_mlfabric);
 
 DECLARE_uint64(bandwidth_mbps);
 DECLARE_uint64(bg_idle_milli);
