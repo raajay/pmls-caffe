@@ -38,7 +38,6 @@ protected:
   virtual void SetWaitMsg();
 
   virtual void InitServer();
-  virtual void RowSubscribe(ServerRow *server_row, int32_t client_id) {}
 
   void SetUpCommBus();
   void ConnectToNameNode();

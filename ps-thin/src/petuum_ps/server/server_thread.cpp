@@ -205,9 +205,6 @@ void ServerThread::HandleRowRequest(int32_t sender_id,
 
   ServerRow *server_row = server_obj_.FindCreateRow(table_id, row_id);
 
-  // row subscribe is a null function ...
-  RowSubscribe(server_row, GlobalContext::thread_id_to_client_id(sender_id));
-
   int32_t return_clock =
       (GlobalContext::is_asynchronous_mode()) ? clock : server_clock;
 
@@ -284,7 +281,6 @@ void ServerThread::HandleOpLogMsg(int32_t sender_id,
 
     uint32_t version = server_obj_.GetBgVersion(bg_id);
     ServerRow *server_row = server_obj_.FindCreateRow(table_id, row_id);
-    RowSubscribe(server_row, GlobalContext::thread_id_to_client_id(bg_id));
     int32_t server_clock = server_obj_.GetMinClock();
 
     ReplyRowRequest(bg_id, server_row, table_id, row_id, server_clock,
