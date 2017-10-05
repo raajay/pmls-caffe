@@ -244,6 +244,7 @@ void ServerThread::HandleOpLogMsg(int32_t sender_id,
   bool is_clock = client_send_oplog_msg.get_is_clock();
   int32_t bg_clock = client_send_oplog_msg.get_bg_clock();
   uint32_t version = client_send_oplog_msg.get_version();
+  int32_t table_id = client_send_oplog_msg.get_table_id();
 
   VLOG(5) << "Received client oplog msg from " << sender_id
           << " orig_version=" << version << " orig_sender=" << sender_id;
@@ -258,41 +259,42 @@ void ServerThread::HandleOpLogMsg(int32_t sender_id,
               &observed_delay);
   STATS_SERVER_ACCUM_APPLY_OPLOG_END();
 
+  if (table_id != -1) { CHECK_EQ(num_tables_updated, 1); }
+
   // TODO add delay to the statistics
   // STATS_MLFABRIC_SERVER_RECORD_DELAY(observed_delay);
 
   if (false == is_clock) { return; }
 
-  bool clock_changed = server_obj_.ClockUntil(sender_id, bg_clock);
+  bool clock_changed = table_id == -1 ?
+      server_obj_.ClockUntil(sender_id, bg_clock) :
+      server_obj_.ClockTableUntil(table_id, sender_id, bg_clock);
 
   if (false == clock_changed) { return; }
-
   if (GlobalContext::is_asynchronous_mode()) { return; }
 
+  int32_t new_clock = table_id == -1 ?
+      server_obj_.GetMinClock() :
+      server_obj_.GetTableMinClock(table_id);
+
   std::vector<ServerRowRequest> requests;
-  server_obj_.GetFulfilledRowRequests(&requests);
+  server_obj_.GetFulfilledRowRequests(new_clock, table_id, &requests);
 
   // respond to buffered requests
   for (auto request : requests) {
 
-    int32_t table_id = request.table_id;
+    int32_t curr_table_id = request.table_id;
     int32_t row_id = request.row_id;
     int32_t bg_id = request.bg_id;
 
     uint32_t version = server_obj_.GetBgVersion(bg_id);
-    ServerRow *server_row = server_obj_.FindCreateRow(table_id, row_id);
-    int32_t server_clock = server_obj_.GetMinClock();
+    ServerRow *server_row = server_obj_.FindCreateRow(curr_table_id, row_id);
 
-    ReplyRowRequest(bg_id, server_row, table_id, row_id, server_clock,
+    ReplyRowRequest(bg_id, server_row, curr_table_id, row_id, new_clock,
             version, server_row->GetRowVersion());
   }
 
-  VLOG(15) << "Successively replied to buffered requests.";
-  // update the stats clock
   STATS_SERVER_CLOCK();
-
-  // always ack op log receipt, saying the version number for a particular
-  // update from a client was applied to the model.
 }
 
 

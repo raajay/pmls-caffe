@@ -93,8 +93,8 @@ protected:
   virtual void TrackBgOpLog(BgOpLog *bg_oplog) = 0;
 
   virtual long HandleClockMsg(int32_t table_id, bool clock_advanced);
-  void CreateOpLogMsgs(const BgOpLog *bg_oplog);
-  size_t SendOpLogMsgs(bool clock_advanced);
+  void CreateOpLogMsgs(int32_t table_id, const BgOpLog *bg_oplog);
+  size_t SendOpLogMsgs(int32_t table_id, bool clock_advanced);
 
   size_t AddOplogAndCountPerServerSize(
       int32_t row_id, AbstractRowOpLog *row_oplog,

@@ -118,25 +118,27 @@ void Server::AddRowRequest(int32_t bg_id, int32_t table_id, int32_t row_id,
  * Look at the cache of row request, and return those that are satisfied upon
  * the clock moving.
  */
-void Server::GetFulfilledRowRequests(std::vector<ServerRowRequest> *requests) {
-
-  int32_t clock = bg_clock_.get_min_clock();
+void Server::GetFulfilledRowRequests(int32_t clock, int32_t table_id,
+        std::vector<ServerRowRequest> *requests) {
   requests->clear();
-  auto iter = clock_bg_row_requests_.find(clock);
 
-  if (iter == clock_bg_row_requests_.end())
-    return;
+  auto it1 = clock_bg_row_requests_.find(clock);
+  if (it1 == clock_bg_row_requests_.end()) { return; }
 
-  boost::unordered::unordered_map<int32_t, std::vector<ServerRowRequest>> &
-      bg_row_requests = iter->second;
-
-  for (auto bg_iter = bg_row_requests.begin(); bg_iter != bg_row_requests.end();
-       bg_iter++) {
-    requests->insert(requests->end(), bg_iter->second.begin(),
-                     bg_iter->second.end());
+  for (auto &it2 : it1->second) {
+      if (table_id != -1 && table_id != it2.first) {
+          continue;
+      }
+      requests->insert(requests->end(), it2.second.begin(), it2.second.end());
   }
 
-  clock_bg_row_requests_.erase(clock);
+  if (table_id == -1) {
+      // erase all requests for a clock
+    clock_bg_row_requests_.erase(clock);
+  } else {
+      // erase only requests for specific table id
+    it1->second.erase(table_id);
+  }
 }
 
 /**

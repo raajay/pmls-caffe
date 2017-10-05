@@ -737,12 +737,11 @@ public:
   size_t get_header_size() {
     return ArbitrarySizedMsg::get_header_size() +
            sizeof(bool) // a bit to denote whether the message is clock or not
-           + sizeof(int32_t) // a 32 bit int to get the client id
-           +
-           sizeof(uint32_t) // a 32 bit unsigned int to denote the local version
+           + sizeof(int32_t) // a 32 bit int : client id
+           + sizeof(uint32_t) // a 32 bit unsigned int : local version
            + sizeof(int32_t) // a 32 bit int to get clock value
-           + sizeof(int32_t) // a 32 bit int to store the global model version
-                             // number on which gradient is calculated
+           + sizeof(int32_t) // a 32 bit int : global model version
+           + sizeof(int32_t) // a 32 bit int : table id (-1 => all tables)
         ;
   }
 
@@ -773,9 +772,16 @@ public:
   }
 
   int32_t &get_global_model_version() {
-    return *(reinterpret_cast<int32_t *>(
-        mem_.get_mem() + ArbitrarySizedMsg::get_header_size() + sizeof(bool) +
-        sizeof(int32_t) + sizeof(uint32_t) + sizeof(int32_t)));
+    return *(reinterpret_cast<int32_t *>( mem_.get_mem() +
+                ArbitrarySizedMsg::get_header_size() + sizeof(bool) +
+                sizeof(int32_t) + sizeof(uint32_t) + sizeof(int32_t)));
+  }
+
+  int32_t &get_table_id() {
+      return *(reinterpret_cast<int32_t *>( mem_.get_mem() +
+                  ArbitrarySizedMsg::get_header_size() + sizeof(bool) +
+                  sizeof(int32_t) + sizeof(uint32_t) + sizeof(int32_t) +
+                  sizeof(int32_t)));
   }
 
   // data is to be accessed via SerializedOpLogAccessor

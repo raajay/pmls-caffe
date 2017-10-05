@@ -419,14 +419,14 @@ long AbstractBgWorker::HandleClockMsg(int32_t table_id, bool clock_advanced) {
 
   BgOpLog *bg_oplog = PrepareOpLogsToSend(table_id);
   VLOG(20) << "PrepareOplogs successful";
-  CreateOpLogMsgs(bg_oplog);
+  CreateOpLogMsgs(table_id, bg_oplog);
   VLOG(20) << "CreateOplogs successful";
   STATS_BG_ACCUM_CLOCK_END_OPLOG_SERIALIZE_END();
 
   clock_has_pushed_ = worker_clock_;
   // send the information to the server with info on whether the clock has
   // advanced (or) if the client is just pushing updates aggressively.
-  SendOpLogMsgs(clock_advanced);
+  SendOpLogMsgs(table_id, clock_advanced);
   VLOG(20) << "SendOpLogs successful";
   // increments the current version of the bgworker, and keeps track of the
   // oplog in ssp_row_request_oplog_manager
@@ -463,7 +463,7 @@ void AbstractBgWorker::FinalizeOpLogMsgStats(int32_t table_id) {
 }
 
 
-void AbstractBgWorker::CreateOpLogMsgs(const BgOpLog *bg_oplog) {
+void AbstractBgWorker::CreateOpLogMsgs(int32_t table_id, const BgOpLog *bg_oplog) {
 
   std::map<int32_t, std::map<int32_t, void *>> table_server_mem_map;
   size_t bytes_written = 0;
@@ -535,7 +535,7 @@ void AbstractBgWorker::CreateOpLogMsgs(const BgOpLog *bg_oplog) {
   CHECK_EQ(bytes_written, bytes_allocated);
 }
 
-size_t AbstractBgWorker::SendOpLogMsgs(bool clock_advanced) {
+size_t AbstractBgWorker::SendOpLogMsgs(int32_t table_id, bool clock_advanced) {
   size_t accum_size = 0;
 
   STATS_MLFABRIC_CLIENT_PUSH_BEGIN(0, per_worker_update_version_);
@@ -548,6 +548,7 @@ size_t AbstractBgWorker::SendOpLogMsgs(bool clock_advanced) {
     if (msg != nullptr) {
       // if there is data that needs to be sent to the server, we send it along
       // with clock information.
+      msg->get_table_id() = table_id;
       msg->get_is_clock() = clock_advanced;
       msg->get_client_id() = GlobalContext::get_client_id();
       msg->get_version() = per_worker_update_version_;
@@ -572,6 +573,7 @@ size_t AbstractBgWorker::SendOpLogMsgs(bool clock_advanced) {
       // generated the data).
       // create a message with zero data size
       ClientSendOpLogMsg clock_oplog_msg(0);
+      clock_oplog_msg.get_table_id() = table_id;
       clock_oplog_msg.get_is_clock() = clock_advanced;
       clock_oplog_msg.get_client_id() = GlobalContext::get_client_id();
       clock_oplog_msg.get_version() = per_worker_update_version_;

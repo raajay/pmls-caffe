@@ -79,7 +79,8 @@ public:
   void AddRowRequest(int32_t bg_id, int32_t table_id, int32_t row_id,
                      int32_t clock);
 
-  void GetFulfilledRowRequests(std::vector<ServerRowRequest> *requests);
+  void GetFulfilledRowRequests(int32_t clock, int32_t table_id,
+          std::vector<ServerRowRequest> *requests);
 
   int32_t ApplyOpLogUpdateVersion(const void *oplog, size_t oplog_size,
                                int32_t bg_thread_id, uint32_t version,
