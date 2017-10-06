@@ -59,6 +59,13 @@ public:
   }
 
   /**
+   * Set a new value for counter
+   */
+  void Set(K key, V value) {
+    data_.emplace(key, value);
+  }
+
+  /**
    * Return keys with pos values
    */
   const std::vector<K> GetKeysPosValue() {

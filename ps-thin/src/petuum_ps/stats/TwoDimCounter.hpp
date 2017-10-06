@@ -15,6 +15,8 @@ public:
 
   ~TwoDimCounter() = default;
 
+  /**
+   */
   void Reset() {
     for (auto &iter1 : data_) {
       iter1.second.clear();
@@ -22,6 +24,8 @@ public:
     data_.clear();
   }
 
+  /**
+   */
   V Get(K1 key1, K2 key2) const {
     auto iter1 = data_.find(key1);
     if (data_.end() == iter1) {
@@ -31,6 +35,8 @@ public:
     return (iter1->second.end() == iter2) ? 0 : iter2->second;
   }
 
+  /**
+   */
   V Get(K1 key1) const {
     auto iter1 = data_.find(key1);
     if (data_.end() == iter1) {
@@ -43,6 +49,8 @@ public:
     return return_value;
   }
 
+  /**
+   */
   V GetAll() const {
     V return_value = 0;
     for (auto &iter1 : data_) {
@@ -53,6 +61,8 @@ public:
     return return_value;
   }
 
+  /**
+   */
   void Increment(K1 key1, K2 key2, V value) {
     if (data_.end() == data_.find(key1)) {
       data_.insert(std::make_pair(key1, std::map<K2, V>()));
@@ -68,6 +78,20 @@ public:
     }
   }
 
+  /**
+   */
+  void Set(K1 key1, K2 key2, V value) {
+      if(data_.end() == data_.find(key1)) {
+          data_.insert(std::make_pair(key1, std::map<K2,V>()));
+      }
+      auto iter1 = data_.find(key1);
+      CHECK_EQ(iter1 == data_.end(), false);
+      iter1->second.erase(key2);
+      iter1->second.insert({key2, value});
+  }
+
+  /**
+   */
   std::vector<K2> GetKeysPosValue(K1 key1) const {
     std::vector<K2> return_value;
     auto iter1 = data_.find(key1);
@@ -84,6 +108,8 @@ public:
     return return_value;
   }
 
+  /**
+   */
   std::vector<K1> GetDim1Keys() const {
     std::vector<K1> return_value;
     for (auto &it : data_) {
@@ -92,6 +118,8 @@ public:
     return return_value;
   }
 
+  /**
+   */
   std::string ToString() {
       std::stringstream ss;
       for(auto &iter1 : data_) {
