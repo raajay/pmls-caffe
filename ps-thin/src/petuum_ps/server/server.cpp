@@ -24,7 +24,6 @@ void Server::Init(int32_t server_id, const std::vector<int32_t> &bg_ids,
   // bg_clock is vector clock. We set it to be zero for all bg threads (one
   // from each worker client)
   for (auto bg : bg_ids) {
-    bg_version_map_[bg] = -1;
     // TODO(raajay) is there an easier way to copy vectors?
     bg_ids_.push_back(bg);
   }
@@ -42,9 +41,6 @@ void Server::CreateTable(int32_t table_id, TableInfo &table_info) {
   auto ret = tables_.emplace(table_id, ServerTable(table_info));
   CHECK(ret.second);
 
-  // Add vector clock for each table
-  auto ret1 = table_vector_clock_.emplace(table_id, VectorClock());
-  CHECK(ret1.second);
   if (GlobalContext::get_resume_clock() > 0) {
     TableIter table_iter = tables_.find(table_id);
     table_iter->second.ReadSnapShot(GlobalContext::get_resume_dir(), server_id_,
@@ -52,10 +48,14 @@ void Server::CreateTable(int32_t table_id, TableInfo &table_info) {
                                     GlobalContext::get_resume_clock());
   }
 
-  // Initialize the vector clocks
+  auto ret1 = table_vector_clock_.emplace(table_id, VectorClock());
+  CHECK(ret1.second);
+
+  // Initialize the vector clocks & per table bg version
   TableClockIter iter = table_vector_clock_.find(table_id);
   for (auto bg : bg_ids_) {
     iter->second.AddClock(bg, std::max(GlobalContext::get_resume_clock(), 0));
+    table_bg_version_.Set(table_id, bg, -1);
   }
 }
 
@@ -145,13 +145,11 @@ void Server::GetFulfilledRowRequests(int32_t clock, int32_t table_id,
  * with values sent from the client. It is important to note that the client
  * message will contain updates to all the tables.
  */
-int32_t Server::ApplyOpLogUpdateVersion(const void *oplog, size_t oplog_size,
-                                     int32_t bg_thread_id, uint32_t version,
+int32_t Server::ApplyOpLogUpdateVersion(int32_t oplog_table_id, const void *oplog, size_t oplog_size,
+                                     int32_t bg_id, uint32_t version,
                                      int32_t *observed_delay) {
-  if (!is_replica_) {
-    CHECK_EQ(bg_version_map_[bg_thread_id] + 1, version);
-    bg_version_map_[bg_thread_id] = version;
-  }
+
+    CheckUpdateVersion(oplog_table_id, bg_id, version);
 
   if (0 == oplog_size) { return 0; }
 
@@ -206,7 +204,12 @@ int32_t Server::ApplyOpLogUpdateVersion(const void *oplog, size_t oplog_size,
       num_tables_updated++;
     }
   }
+
+  // validations
   CHECK_EQ(oplog_reader.GetCurrentOffset(), oplog_size);
+  if (oplog_table_id != ALL_TABLES) {
+    CHECK_EQ(num_tables_updated, 1);
+  }
   return num_tables_updated;
 }
 
@@ -222,9 +225,39 @@ int32_t Server::GetAllTablesMinClock() {
 }
 
 /**
+ * Returns the minimum bg version across all tables.
  */
-int32_t Server::GetBgVersion(int32_t bg_thread_id) {
-  return bg_version_map_[bg_thread_id];
+int32_t Server::GetAllTableBgVersion(int32_t bg_thread_id) {
+    int32_t all_table_bg_version  = INT_MAX;
+    for(auto table_id : table_bg_version_.GetDim1Keys()) {
+        all_table_bg_version = std::min(all_table_bg_version,
+                table_bg_version_.Get(table_id, bg_thread_id));
+    }
+    CHECK_NE(all_table_bg_version, INT_MAX);
+    return all_table_bg_version;
+}
+
+/**
+ * Returns the current version of update applied for table_id from bg_id
+ */
+int32_t Server::GetTableBgVersion(int32_t table_id, int32_t bg_id) {
+    return table_bg_version_.Get(table_id, bg_id);
+}
+
+/**
+ * Set the latest version seen from a worker for all tables
+ */
+void Server::SetAllTableBgVersion(int32_t bg_id, uint32_t version) {
+    for(auto table_id : table_bg_version_.GetDim1Keys()) {
+        table_bg_version_.Set(table_id, bg_id, version);
+    }
+}
+
+/**
+ *
+ */
+void Server::SetTableBgVersion(int32_t table_id, int32_t bg_id, uint32_t version) {
+    table_bg_version_.Set(table_id, bg_id, version);
 }
 
 /**
@@ -277,6 +310,23 @@ std::string Server::DisplayClock() {
     }
     ss << "]";
     return ss.str();
+}
+
+/**
+ * Check if the version of the Oplog is valid before updating it.
+ */
+void Server::CheckUpdateVersion(int32_t table_id, int32_t bg_id, uint32_t version) {
+    if (is_replica_) {
+        return;
+    }
+
+    if (table_id != ALL_TABLES) {
+        CHECK_EQ(GetTableBgVersion(table_id, bg_id) + 1, version);
+        SetTableBgVersion(table_id, bg_id, version);
+    } else {
+        CHECK_EQ(GetAllTableBgVersion(bg_id) + 1, version);
+        SetAllTableBgVersion(bg_id, version);
+    }
 }
 
 }

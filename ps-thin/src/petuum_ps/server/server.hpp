@@ -14,6 +14,7 @@
 #include <petuum_ps/server/server_table.hpp>
 #include <petuum_ps/thread/ps_msgs.hpp>
 #include <petuum_ps/util/high_resolution_timer.hpp>
+#include <petuum_ps/stats/TwoDimCounter.hpp>
 
 namespace petuum {
 
@@ -48,8 +49,9 @@ private:
   std::map<int32_t, boost::unordered::unordered_map<
                         int32_t, std::vector<ServerRowRequest>>>
       clock_bg_row_requests_;
+
   // Keep track of the latest oplog version received from each bg thread
-  std::map<int32_t, int32_t> bg_version_map_;
+  TwoDimCounter<int32_t, int32_t, int32_t> table_bg_version_;
 
   int32_t server_id_;
 
@@ -72,31 +74,35 @@ public:
             bool is_replica = false);
 
   void CreateTable(int32_t table_id, TableInfo &table_info);
-
   ServerRow *FindCreateRow(int32_t table_id, int32_t row_id);
+
 
   void AddRowRequest(int32_t bg_id, int32_t table_id, int32_t row_id,
                      int32_t clock);
-
   void GetFulfilledRowRequests(int32_t clock, int32_t table_id,
           std::vector<ServerRowRequest> *requests);
 
-  int32_t ApplyOpLogUpdateVersion(const void *oplog, size_t oplog_size,
+
+  int32_t ApplyOpLogUpdateVersion(int32_t oplog_table_id, const void *oplog, size_t oplog_size,
                                int32_t bg_thread_id, uint32_t version,
                                int32_t *observed_delay);
 
+  int32_t GetTableMinClock(int32_t table_id);
+  bool ClockTableUntil(int32_t table_id, int32_t bg_id, int32_t clock);
+  int32_t GetAllTablesMinClock();
   bool ClockAllTablesUntil(int32_t bg_id, int32_t clock);
 
-  int32_t GetAllTablesMinClock();
 
-  bool ClockTableUntil(int32_t table_id, int32_t bg_id, int32_t clock);
-
-  int32_t GetTableMinClock(int32_t table_id);
-
-  int32_t GetBgVersion(int32_t bg_thread_id);
+  int32_t GetTableBgVersion(int32_t table_id, int32_t bg_id);
+  int32_t GetAllTableBgVersion(int32_t bg_thread_id);
+  void SetTableBgVersion(int32_t table_id, int32_t bg_id, uint32_t version);
+  void SetAllTableBgVersion(int32_t bg_id, uint32_t version);
 
   double GetElapsedTime();
-
   std::string DisplayClock();
+
+private:
+  void CheckUpdateVersion(int32_t table_id, int32_t bg_id, uint32_t version);
+
 };
 }

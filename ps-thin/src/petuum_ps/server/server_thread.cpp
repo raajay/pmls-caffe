@@ -188,45 +188,37 @@ void ServerThread::HandleRowRequest(int32_t sender_id,
   int32_t row_id = row_request_msg.get_row_id();
   int32_t request_clock = row_request_msg.get_clock();
 
-  int32_t server_clock = server_obj_.GetTableMinClock(table_id);
-  uint32_t bg_version = server_obj_.GetBgVersion(sender_id);
+  int32_t curr_table_clock = server_obj_.GetTableMinClock(table_id);
+  uint32_t curr_table_bg_version = server_obj_.GetTableBgVersion(table_id, sender_id);
 
-  if (!GlobalContext::is_asynchronous_mode()) {
-    // check only in synchronous mode
-    if (server_clock < request_clock) {
-      // not fresh enough, wait
-      server_obj_.AddRowRequest(sender_id, table_id, row_id, request_clock);
-      VLOG(20) << "Buffering row request: table_id=" << table_id << " row_id="
-          << row_id << " request_clock=" << request_clock << " server_clock=" <<
-          server_clock;
-      return;
-    }
-  } else {
-    VLOG(20) << ": Responding to row request immediately; since server is in "
-                "asynchronous mode";
+  if (!GlobalContext::is_asynchronous_mode() && curr_table_clock < request_clock) {
+    // buffer if clock is not satisfied
+    server_obj_.AddRowRequest(sender_id, table_id, row_id, request_clock);
+    return;
   }
 
+  // respond otherwise
   ServerRow *server_row = server_obj_.FindCreateRow(table_id, row_id);
 
-  int32_t return_clock =
-      (GlobalContext::is_asynchronous_mode()) ? request_clock : server_clock;
+  int32_t return_clock = (GlobalContext::is_asynchronous_mode()) ?
+      request_clock : curr_table_clock;
 
   ReplyRowRequest(sender_id, server_row, table_id, row_id, return_clock,
-                  bg_version, server_row->GetRowVersion());
+                  curr_table_bg_version, server_row->GetRowVersion());
 }
 
 void ServerThread::ReplyRowRequest(
     int32_t bg_id, ServerRow *server_row, int32_t table_id, int32_t row_id,
-    int32_t client_clock, // earlier we used to return server clock
-    uint32_t bg_version, unsigned long server_row_global_version) {
+    int32_t return_clock,
+    uint32_t table_bg_version, unsigned long server_row_global_version) {
 
   size_t row_size = server_row->SerializedSize();
 
   ServerRowRequestReplyMsg server_row_request_reply_msg(row_size);
   server_row_request_reply_msg.get_table_id() = table_id;
   server_row_request_reply_msg.get_row_id() = row_id;
-  server_row_request_reply_msg.get_clock() = client_clock;
-  server_row_request_reply_msg.get_version() = bg_version;
+  server_row_request_reply_msg.get_clock() = return_clock;
+  server_row_request_reply_msg.get_version() = table_bg_version;
   server_row_request_reply_msg.get_global_model_version() =
       (int32_t)server_row_global_version;
   // TODO(raajay) change the serialization to use unsigned long and remove cast
@@ -257,13 +249,11 @@ void ServerThread::HandleOpLogMsg(int32_t sender_id,
   int32_t observed_delay;
   STATS_SERVER_ACCUM_APPLY_OPLOG_BEGIN();
   int32_t num_tables_updated =
-      server_obj_.ApplyOpLogUpdateVersion(client_send_oplog_msg.get_data(),
+      server_obj_.ApplyOpLogUpdateVersion(table_id, client_send_oplog_msg.get_data(),
               client_send_oplog_msg.get_avai_size(), sender_id, version,
               &observed_delay);
   STATS_SERVER_ACCUM_APPLY_OPLOG_END();
   VLOG(20) << "Number of tables updated = " << num_tables_updated;
-
-  if (table_id != ALL_TABLES) { CHECK_EQ(num_tables_updated, 1); }
 
   // TODO add delay to the statistics
   // STATS_MLFABRIC_SERVER_RECORD_DELAY(observed_delay);
@@ -296,7 +286,7 @@ void ServerThread::HandleOpLogMsg(int32_t sender_id,
     int32_t row_id = request.row_id;
     int32_t bg_id = request.bg_id;
 
-    uint32_t version = server_obj_.GetBgVersion(bg_id);
+    uint32_t version = server_obj_.GetTableBgVersion(table_id, bg_id);
     ServerRow *server_row = server_obj_.FindCreateRow(curr_table_id, row_id);
 
     ReplyRowRequest(bg_id, server_row, curr_table_id, row_id, new_clock,
