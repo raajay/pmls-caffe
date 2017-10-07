@@ -575,6 +575,8 @@ void AbstractBgWorker::RecvAppInitThreadConnection(
   CHECK(*num_connected_app_threads <= GlobalContext::get_num_app_threads());
 }
 
+/**
+ */
 void AbstractBgWorker::CheckForwardRowRequestToServer(
     int32_t app_thread_id, RowRequestMsg &row_request_msg) {
 
@@ -585,36 +587,22 @@ void AbstractBgWorker::CheckForwardRowRequestToServer(
 
   if (!forced) {
     // Check if the row exists in process cache
-    auto table_iter = tables_->find(table_id);
-    CHECK(table_iter != tables_->end());
-    {
-      // check if it is in process storage
-      ClientTable *table = table_iter->second;
-      AbstractProcessStorage &table_storage = table->get_process_storage();
-      RowAccessor row_accessor;
-      ClientRow *client_row = table_storage.Find(row_id, &row_accessor);
-      if (client_row != nullptr) {
-        if (GlobalContext::get_consistency_model() == SSP &&
+    RowAccessor row_accessor;
+    ClientRow *client_row = tables_->find(table_id)->second->
+        get_process_storage().Find(row_id, &row_accessor);
+
+    if (client_row != nullptr &&
+            GlobalContext::get_consistency_model() == SSP &&
             client_row->GetClock() >= clock) {
-          VLOG(20) << "RRR-cache hit BgThread (" << my_id_
-                   << ") >>> App Thread (" << app_thread_id << ") "
-                   << petuum::GetTableRowStringId(table_id, row_id)
-                   << " request clock=" << clock
-                   << " row clock=" << client_row->GetClock();
-          RowRequestReplyMsg row_request_reply_msg;
-          size_t sent_size = comm_bus_->SendInProc(
-              app_thread_id, row_request_reply_msg.get_mem(),
-              row_request_reply_msg.get_size());
-          CHECK_EQ(sent_size, row_request_reply_msg.get_size());
-          return;
-        }
-      }
+        SendRowRequestReplyToApp(app_thread_id, table_id, row_id, client_row->GetClock());
+        return;
     }
   }
 
-  RowRequestInfo row_request;
-  row_request.app_thread_id = app_thread_id;
-  row_request.clock = row_request_msg.get_clock();
+  RowRequestInfo request_info;
+  request_info.app_thread_id = app_thread_id;
+  request_info.clock = row_request_msg.get_clock();
+  request_info.version = GetUpdateVersion(table_id) - 1;
 
   // Version in request denotes the update version that the row on server can
   // see. Which should be 1 less than the current version number.
@@ -628,27 +616,14 @@ void AbstractBgWorker::CheckForwardRowRequestToServer(
   // remember that the app thread made a request for the row when the current
   // version of the model was blah.
 
-  row_request.version = GetUpdateVersion(table_id) - 1;
-
-  bool should_be_sent =
-      row_request_oplog_mgr_->AddRowRequest(row_request, table_id, row_id);
-
+  bool should_be_sent = row_request_oplog_mgr_->AddRowRequest(request_info, table_id, row_id);
   if (should_be_sent) {
-    int32_t server_id =
-        GlobalContext::GetPartitionServerID(row_id, my_comm_channel_idx_);
-    VLOG(20) << "THREAD-" << my_id_
-             << ": Sending a row request received from app thread="
-             << app_thread_id << " to server=" << server_id
-             << " for table=" << table_id << " and row_id=" << row_id
-             << " with version=" << row_request.version;
-
-    size_t sent_size = (comm_bus_->*(comm_bus_->SendAny_))(
-        server_id, row_request_msg.get_mem(), row_request_msg.get_size());
-
-    CHECK_EQ(sent_size, row_request_msg.get_size());
+      SendRowRequestToServer(row_request_msg);
   }
 }
 
+/**
+ */
 void AbstractBgWorker::InsertUpdateRow(const int32_t table_id, const int32_t row_id, const void *data, const size_t row_update_size,
         int32_t new_clock, int32_t global_row_version) {
 
@@ -783,11 +758,15 @@ void AbstractBgWorker::SendRowRequestToServer(int32_t table_id, int32_t row_id, 
     msg.get_table_id() = table_id;
     msg.get_row_id() = row_id;
     msg.get_clock() = clock;
+    SendRowRequestToServer(msg);
+}
 
-    int32_t server_id = GlobalContext::GetPartitionServerID(row_id, my_comm_channel_idx_);
+/**
+ */
+void AbstractBgWorker::SendRowRequestToServer(RowRequestMsg &msg) {
+    int32_t server_id = GlobalContext::GetPartitionServerID(msg.get_row_id(), my_comm_channel_idx_);
     VLOG(20) << "RR BgThread >>> ServerThread (" << server_id << ") "
-             << petuum::GetTableRowStringId(table_id, row_id);
-
+             << petuum::GetTableRowStringId(msg.get_table_id(), msg.get_row_id());
     size_t sent_size = (comm_bus_->*(comm_bus_->SendAny_))(server_id,
             msg.get_mem(), msg.get_size());
     CHECK_EQ(sent_size,  msg.get_size());

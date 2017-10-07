@@ -101,6 +101,8 @@ protected:
 
   void SendRowRequestToServer(int32_t table_id, int32_t row_id, int32_t clock);
 
+  void SendRowRequestToServer(RowRequestMsg &msg);
+
   void SendRowRequestReplyToApp(int32_t app_id, int32_t table_id, int32_t row_id, int32_t clock);
 
 

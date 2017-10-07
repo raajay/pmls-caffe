@@ -372,7 +372,7 @@ void *ServerThread::operator()() {
     }
 
     case kApplicationThreadRowRequest: {
-      // here, handle a clients request for new data
+      // here, handle a client's request for new data
       RowRequestMsg row_request_msg(msg_mem);
       HandleRowRequest(sender_id, row_request_msg);
     } break;
