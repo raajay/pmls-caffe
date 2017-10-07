@@ -64,6 +64,7 @@ protected:
 
   virtual void InitWhenStart();
   void InitCommBus();
+  void PrepareBeforeInfiniteLoop();
 
   void HandleCreateTables();
   virtual long HandleClockMsg(int32_t table_id, bool clock_advanced);
@@ -74,7 +75,7 @@ protected:
   void FinalizeTableOplogSize(int32_t table_id);
   void CreateOpLogMsgs(int32_t table_id, const BgOpLog *bg_oplog);
   size_t SendOpLogMsgs(int32_t table_id, bool clock_advanced);
-  virtual void TrackBgOpLog(BgOpLog *bg_oplog) = 0;
+  virtual void TrackBgOpLog(int32_t table_id, BgOpLog *bg_oplog) = 0;
 
   void HandleServerRowRequestReply(
       int32_t server_id,
@@ -89,25 +90,28 @@ protected:
   virtual ClientRow *CreateClientRow(int32_t clock, int32_t global_version,
                                      AbstractRow *row_data) = 0;
 
-  virtual void UpdateExistingRow(int32_t table_id, int32_t row_id,
-                                 ClientRow *client_row,
-                                 ClientTable *client_table, const void *data,
-                                 size_t row_size, uint32_t version);
+  void InsertUpdateRow(const int32_t table_id, const int32_t row_id, const void
+          *data, const size_t row_update_size, int32_t new_clock, int32_t
+          global_row_version);
 
-  virtual void InsertNonexistentRow(int32_t table_id, int32_t row_id,
-                                    ClientTable *client_table, const void *data,
-                                    size_t row_size, uint32_t version,
-                                    int32_t clock,
-                                    int32_t global_model_version);
 
+  void IncrementUpdateVersion(int32_t table_id);
+
+  uint32_t GetUpdateVersion(int32_t table_id);
+
+  void SendRowRequestToServer(int32_t table_id, int32_t row_id, int32_t clock);
+
+  void SendRowRequestReplyToApp(int32_t app_id, int32_t table_id, int32_t row_id, int32_t clock);
 
 
   int32_t my_id_;
   int32_t my_comm_channel_idx_;
+
   std::map<int32_t, ClientTable *> *tables_;
   std::vector<int32_t> server_ids_;
 
-  uint32_t per_worker_update_version_;
+  OneDimCounter<int32_t, uint32_t> table_update_version_;
+
   int32_t worker_clock_;
   int32_t clock_has_pushed_;
   RowRequestOpLogMgr *row_request_oplog_mgr_;

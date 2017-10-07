@@ -78,6 +78,17 @@ public:
     return return_value;
   }
 
+  /**
+   * Get all the keys
+   */
+  const std::vector<K> GetKeys() {
+    std::vector<K> return_value;
+    for (auto &it : data_) {
+        return_value.push_back(it.first);
+    }
+    return return_value;
+  }
+
   std::string ToString() {
       std::stringstream ss;
       for(auto &it : data_) {

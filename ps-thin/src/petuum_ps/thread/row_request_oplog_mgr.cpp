@@ -83,8 +83,8 @@ int32_t SSPRowRequestOpLogMgr::InformReply(
 
     RowRequestInfo &request = request_list.front();
 
-    if (request.clock <=
-        clock) { // current server response satisfies the request
+    if (request.clock <= clock) {
+       // current server response satisfies the request
       // remove the request
       uint32_t req_version = request.version;
       app_thread_ids->push_back(request.app_thread_id);
@@ -131,15 +131,14 @@ int32_t SSPRowRequestOpLogMgr::InformReply(
 
       // we break, because the requests are stored in sorted order of clock.
       break;
-    } // end if-else -- clock is satisfied
+    }
   }
-  // if there's no request in that list, I can remove the empty list
+  // if there's no request in that list, remove the empty list
   if (request_list.empty()) {
     pending_row_requests_.erase(request_key);
   }
   return clock_to_request;
-
-} // end function - Inform reply
+}
 
 bool SSPRowRequestOpLogMgr::AddOpLog(uint32_t version, BgOpLog *oplog) {
   CHECK_EQ(version_oplog_map_.count(version), (size_t)0)

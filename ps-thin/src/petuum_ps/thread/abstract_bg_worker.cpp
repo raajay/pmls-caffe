@@ -6,6 +6,9 @@
 #include <petuum_ps/thread/mem_transfer.hpp>
 #include <petuum_ps/util/utils.hpp>
 
+#include <climits>
+#include <utility>
+
 namespace petuum {
 
 AbstractBgWorker::AbstractBgWorker(int32_t id, int32_t comm_channel_idx,
@@ -13,12 +16,10 @@ AbstractBgWorker::AbstractBgWorker(int32_t id, int32_t comm_channel_idx,
                                    pthread_barrier_t *init_barrier,
                                    pthread_barrier_t *create_table_barrier)
     : my_id_(id), my_comm_channel_idx_(comm_channel_idx), tables_(tables),
-      per_worker_update_version_(0), worker_clock_(0), clock_has_pushed_(-1),
+      worker_clock_(0), clock_has_pushed_(-1),
       comm_bus_(GlobalContext::comm_bus), init_barrier_(init_barrier),
       create_table_barrier_(create_table_barrier) {
-
   GlobalContext::GetServerThreadIDs(my_comm_channel_idx_, &(server_ids_));
-
 }
 
 
@@ -415,7 +416,7 @@ long AbstractBgWorker::HandleClockMsg(int32_t table_id, bool clock_advanced) {
   // oplog in ssp_row_request_oplog_manager
   // note that the version number is incremented even if the clock has not
   // advanced.
-  TrackBgOpLog(bg_oplog);
+  TrackBgOpLog(table_id, bg_oplog);
 
   VLOG(20) << "THREAD-" << my_id_
            << ": Handle clock message (prepare, create, send) took "
@@ -530,7 +531,7 @@ size_t AbstractBgWorker::SendOpLogMsgs(int32_t table_id, bool clock_advanced) {
       msg->get_table_id() = table_id;
       msg->get_is_clock() = clock_advanced;
       msg->get_client_id() = GlobalContext::get_client_id();
-      msg->get_version() = per_worker_update_version_;
+      msg->get_version() = GetUpdateVersion(table_id);
       msg->get_bg_clock() = clock_has_pushed_ + 1;
 
       accum_size += msg->get_size();
@@ -549,7 +550,7 @@ size_t AbstractBgWorker::SendOpLogMsgs(int32_t table_id, bool clock_advanced) {
       clock_oplog_msg.get_table_id() = table_id;
       clock_oplog_msg.get_is_clock() = clock_advanced;
       clock_oplog_msg.get_client_id() = GlobalContext::get_client_id();
-      clock_oplog_msg.get_version() = per_worker_update_version_;
+      clock_oplog_msg.get_version() = GetUpdateVersion(table_id);
       clock_oplog_msg.get_bg_clock() = clock_has_pushed_ + 1;
 
       accum_size += clock_oplog_msg.get_size();
@@ -627,7 +628,7 @@ void AbstractBgWorker::CheckForwardRowRequestToServer(
   // remember that the app thread made a request for the row when the current
   // version of the model was blah.
 
-  row_request.version = per_worker_update_version_ - 1;
+  row_request.version = GetUpdateVersion(table_id) - 1;
 
   bool should_be_sent =
       row_request_oplog_mgr_->AddRowRequest(row_request, table_id, row_id);
@@ -646,134 +647,86 @@ void AbstractBgWorker::CheckForwardRowRequestToServer(
 
     CHECK_EQ(sent_size, row_request_msg.get_size());
   }
-} // end function -- CheckForwardRowRequestToServer
+}
 
-void AbstractBgWorker::UpdateExistingRow(
-    int32_t table_id, int32_t row_id, ClientRow *client_row,
-    ClientTable *client_table, const void *data, size_t row_size,
-    uint32_t version) { // version : from row request reply msg
+void AbstractBgWorker::InsertUpdateRow(const int32_t table_id, const int32_t row_id, const void *data, const size_t row_update_size,
+        int32_t new_clock, int32_t global_row_version) {
 
-  AbstractRow *row_data = client_row->GetRowDataPtr();
-  row_data->GetWriteLock();
-  row_data->ResetRowData(data, row_size);
-  row_data->ReleaseWriteLock();
+    auto iter = tables_->find(table_id);
+    CHECK(iter != tables_->end()) << "Cannot find table " << table_id;
 
-} // end function - Update Existing Row
+    RowAccessor row_accessor;
+    ClientRow *row = iter->second->get_process_storage().Find(row_id, &row_accessor);
 
-void AbstractBgWorker::InsertNonexistentRow(int32_t table_id, int32_t row_id,
-                                            ClientTable *client_table,
-                                            const void *data, size_t row_size,
-                                            uint32_t version, int32_t clock,
-                                            int32_t global_model_version) {
+    if(row == nullptr) {
+        AbstractRow *row_data = ClassRegistry<AbstractRow>::GetRegistry().CreateObject(iter->second->get_row_type());
+        row_data->Deserialize(data, row_update_size);
+        row = CreateClientRow(new_clock, global_row_version, row_data);
+        iter->second->get_process_storage().Insert(row_id, row);
 
-  int32_t row_type = client_table->get_row_type();
-  AbstractRow *row_data =
-      ClassRegistry<AbstractRow>::GetRegistry().CreateObject(row_type);
-  row_data->Deserialize(data, row_size);
-  ClientRow *client_row =
-      CreateClientRow(clock, global_model_version, row_data);
-  client_table->get_process_storage().Insert(row_id, client_row);
+    } else {
+        row->GetRowDataPtr()->GetWriteLock();
+        row->GetRowDataPtr()->ResetRowData(data, row_update_size);
+        row->GetRowDataPtr()->ReleaseWriteLock();
+        row->SetClock(new_clock);
+        row->SetGlobalVersion(global_row_version);
+    }
 
-} // end function -- Insert Non existent row
+}
 
+
+/**
+ * @brief Act on the response from the server.
+ */
 void AbstractBgWorker::HandleServerRowRequestReply(
     int32_t server_id, ServerRowRequestReplyMsg &server_row_request_reply_msg) {
 
   int32_t table_id = server_row_request_reply_msg.get_table_id();
   int32_t row_id = server_row_request_reply_msg.get_row_id();
-  int32_t clock = server_row_request_reply_msg.get_clock();
-  uint32_t version = server_row_request_reply_msg.get_version();
-  int32_t global_model_version =
-      server_row_request_reply_msg.get_global_model_version();
-
-  auto table_iter = tables_->find(table_id);
-  CHECK(table_iter != tables_->end()) << "Cannot find table " << table_id;
-  ClientTable *client_table = table_iter->second;
-
-  // (raajay) for SSP the below function does nothing.
-  row_request_oplog_mgr_->ServerAcknowledgeVersion(server_id, version);
-
-  RowAccessor row_accessor;
-  ClientRow *client_row =
-      client_table->get_process_storage().Find(row_id, &row_accessor);
+  int32_t new_clock = server_row_request_reply_msg.get_clock();
+  int32_t global_row_version = server_row_request_reply_msg.get_global_row_version();
 
   const void *data = server_row_request_reply_msg.get_row_data();
   size_t row_size = server_row_request_reply_msg.get_row_size();
 
-  if (client_row != nullptr) {
-    // internal private function defined in this class.
-    VLOG(20) << "Update ClientRow "
-             << petuum::GetTableRowStringId(table_id, row_id)
-             << " clock=" << client_row->GetClock() << " new clock=" << clock;
-
-    CHECK_GT(clock, client_row->GetClock())
-        << "Latest clock is not greater than prior clock for "
-        << petuum::GetTableRowStringId(table_id, row_id) << ". "
-        << "latest clock=" << clock
-        << " prior clock=" << client_row->GetClock();
-
-    UpdateExistingRow(table_id, row_id, client_row, client_table, data,
-                      row_size, version);
-    client_row->SetClock(clock);
-    client_row->SetGlobalVersion(global_model_version);
-  } else { // not found
-    VLOG(20) << "New ClientRow "
-             << petuum::GetTableRowStringId(table_id, row_id)
-             << " new clock=" << clock;
-    InsertNonexistentRow(table_id, row_id, client_table, data, row_size,
-                         version, clock, global_model_version);
-  }
+  InsertUpdateRow(table_id, row_id, data, row_size, new_clock, global_row_version);
 
   // populate app_thread_ids with the list of app threads whose request can be
   // satisfied with this update.
   std::vector<int32_t> app_thread_ids;
-  int32_t clock_to_request = row_request_oplog_mgr_->InformReply(
-      table_id, row_id, clock, per_worker_update_version_, &app_thread_ids);
+  int32_t clock_to_request = row_request_oplog_mgr_->InformReply(table_id,
+          row_id, new_clock, GetUpdateVersion(table_id), &app_thread_ids);
 
   if (clock_to_request >= 0) {
-    // send a new request to the server, if there exists a app row request
-    // with a higher clock for which a request to server has not been sent
-
-    RowRequestMsg row_request_msg;
-    row_request_msg.get_table_id() = table_id;
-    row_request_msg.get_row_id() = row_id;
-    row_request_msg.get_clock() = clock_to_request;
-
-    int32_t server_id_1 =
-        GlobalContext::GetPartitionServerID(row_id, my_comm_channel_idx_);
-    VLOG(20) << "RR BgThread >>> ServerThread (" << server_id_1 << ") "
-             << petuum::GetTableRowStringId(table_id, row_id);
-    size_t sent_size = (comm_bus_->*(comm_bus_->SendAny_))(
-        server_id_1, row_request_msg.get_mem(), row_request_msg.get_size());
-    CHECK_EQ(sent_size, row_request_msg.get_size());
+    SendRowRequestToServer(table_id, row_id, clock_to_request);
   }
 
-  // respond to each satisfied application row request
-  RowRequestReplyMsg row_request_reply_msg;
   for (int app_thread_id : app_thread_ids) {
-    VLOG(20) << "RRR BgThread (" << my_id_ << ") >>> App Thread ("
-             << app_thread_id << ") "
-             << petuum::GetTableRowStringId(table_id, row_id)
-             << " clock=" << clock;
-    size_t sent_size =
-        comm_bus_->SendInProc(app_thread_id, row_request_reply_msg.get_mem(),
-                              row_request_reply_msg.get_size());
-    CHECK_EQ(sent_size, row_request_reply_msg.get_size());
+      SendRowRequestReplyToApp(app_thread_id, table_id, row_id, new_clock);
   }
+}
 
-} // end function - Handle Row Request reply msg
 
+/**
+ * Send message to bg worker thread.
+ */
 size_t AbstractBgWorker::SendMsg(MsgBase *msg) {
   size_t sent_size =
       comm_bus_->SendInProc(my_id_, msg->get_mem(), msg->get_size());
   return sent_size;
 }
 
+/**
+ * Recv message on bg worker thread
+ */
 void AbstractBgWorker::RecvMsg(zmq::message_t &zmq_msg) {
   int32_t sender_id;
   comm_bus_->RecvInProc(&sender_id, &zmq_msg);
 }
 
+/**
+ * Connect to namenode server.
+ */
 void AbstractBgWorker::ConnectToNameNodeOrServer(int32_t server_id) {
 
   ClientConnectMsg client_connect_msg;
@@ -795,6 +748,77 @@ void AbstractBgWorker::ConnectToNameNodeOrServer(int32_t server_id) {
   }
 }
 
+
+/**
+ */
+void AbstractBgWorker::IncrementUpdateVersion(int32_t table_id) {
+      if (table_id == ALL_TABLES) {
+          for (auto key : table_update_version_.GetKeys()) {
+              table_update_version_.Increment(key, 1);
+          }
+      } else {
+          table_update_version_.Increment(table_id, 1);
+      }
+}
+
+/**
+ */
+uint32_t AbstractBgWorker::GetUpdateVersion(int32_t table_id)  {
+    if (table_id == ALL_TABLES) {
+        uint32_t minimum_version = UINT_MAX;
+        for(auto it : table_update_version_.GetKeys()) {
+            minimum_version = std::min(minimum_version, table_update_version_.Get(it));
+        }
+        CHECK_NE(minimum_version, UINT_MAX) << "Update version: " << table_update_version_.ToString();
+        return minimum_version;
+    } else {
+        return table_update_version_.Get(table_id);
+    }
+}
+
+/**
+ */
+void AbstractBgWorker::SendRowRequestToServer(int32_t table_id, int32_t row_id, int32_t clock) {
+    RowRequestMsg msg;
+    msg.get_table_id() = table_id;
+    msg.get_row_id() = row_id;
+    msg.get_clock() = clock;
+
+    int32_t server_id = GlobalContext::GetPartitionServerID(row_id, my_comm_channel_idx_);
+    VLOG(20) << "RR BgThread >>> ServerThread (" << server_id << ") "
+             << petuum::GetTableRowStringId(table_id, row_id);
+
+    size_t sent_size = (comm_bus_->*(comm_bus_->SendAny_))(server_id,
+            msg.get_mem(), msg.get_size());
+    CHECK_EQ(sent_size,  msg.get_size());
+}
+
+
+/**
+ */
+void AbstractBgWorker::SendRowRequestReplyToApp(int32_t app_id,
+        int32_t table_id, int32_t row_id, int32_t row_clock) {
+    VLOG(20) << "RRR BgThread (" << my_id_ << ") >>> App Thread ("
+             << app_id << ") "
+             << petuum::GetTableRowStringId(table_id, row_id)
+             << " clock=" << row_clock;
+    RowRequestReplyMsg msg;
+    size_t sent_size = comm_bus_->SendInProc(app_id, msg.get_mem(), msg.get_size());
+    CHECK_EQ(sent_size, msg.get_size());
+}
+
+/**
+ */
+void AbstractBgWorker::PrepareBeforeInfiniteLoop() {
+  // for each table initialize a version counter
+  for (auto &it : *tables_) {
+      table_update_version_.Set(it.first, 0);
+  }
+}
+
+/**
+ * The infinite loop
+ */
 void *AbstractBgWorker::operator()() {
   STATS_REGISTER_THREAD(kBgThread);
 
@@ -821,6 +845,9 @@ void *AbstractBgWorker::operator()() {
     HandleCreateTables();
   }
   pthread_barrier_wait(create_table_barrier_);
+
+  // Initialize data structures
+  PrepareBeforeInfiniteLoop();
 
   zmq::message_t zmq_msg;
   int32_t sender_id;
@@ -935,11 +962,6 @@ void *AbstractBgWorker::operator()() {
       timeout_milli = HandleClockMsg(oplog_msg.get_table_id(), false);
     } break;
     case kServerOpLogAck: {
-      // this is sent by the server to acknowledge the receipt of an oplog
-      ServerOpLogAckMsg server_oplog_ack_msg(msg_mem);
-      int32_t acked_version = server_oplog_ack_msg.get_ack_version();
-      row_request_oplog_mgr_->ServerAcknowledgeVersion(sender_id,
-                                                       acked_version);
       STATS_MLFABRIC_CLIENT_PUSH_END(sender_id, acked_version);
     } break;
     default:

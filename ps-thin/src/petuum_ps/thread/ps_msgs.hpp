@@ -705,7 +705,7 @@ public:
                                         sizeof(int32_t) + sizeof(uint32_t)));
   }
 
-  int32_t &get_global_model_version() {
+  int32_t &get_global_row_version() {
     return *(reinterpret_cast<int32_t *>(
         mem_.get_mem() + ArbitrarySizedMsg::get_header_size() +
         sizeof(int32_t) + sizeof(int32_t) + sizeof(int32_t) + sizeof(uint32_t) +

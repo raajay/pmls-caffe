@@ -57,8 +57,7 @@ public:
   virtual BgOpLog *GetOpLog(uint32_t version) = 0;
 
   virtual void InformVersionInc() = 0;
-  virtual void ServerAcknowledgeVersion(int32_t server_id,
-                                        uint32_t version) = 0;
+
   virtual bool AddOpLog(uint32_t version, BgOpLog *oplog) = 0;
 
   virtual BgOpLog *OpLogIterInit(uint32_t start_version,
@@ -133,8 +132,6 @@ public:
   bool AddOpLog(uint32_t version, BgOpLog *oplog);
 
   void InformVersionInc() {}
-  // not supported
-  void ServerAcknowledgeVersion(int32_t server_id, uint32_t version) {}
 
   BgOpLog *OpLogIterInit(uint32_t start_version, uint32_t end_version);
   BgOpLog *OpLogIterNext(uint32_t *version);

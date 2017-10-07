@@ -117,13 +117,10 @@ BgOpLogPartition *SSPBgWorker::PrepareTableOpLogs(int32_t table_id, ClientTable 
 
 
 
-void SSPBgWorker::TrackBgOpLog(BgOpLog *bg_oplog) {
-  bool tracked =
-      row_request_oplog_mgr_->AddOpLog(per_worker_update_version_, bg_oplog);
-  ++per_worker_update_version_;
-  VLOG(5) << "Increment version of bgworker:" << my_id_ << " to "
-          << per_worker_update_version_;
+void SSPBgWorker::TrackBgOpLog(int32_t table_id, BgOpLog *bg_oplog) {
+  bool tracked = row_request_oplog_mgr_->AddOpLog(GetUpdateVersion(table_id), bg_oplog);
 
+  IncrementUpdateVersion(table_id);
   // the below function does nothing.
   row_request_oplog_mgr_->InformVersionInc();
 

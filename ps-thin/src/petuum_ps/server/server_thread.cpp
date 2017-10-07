@@ -219,7 +219,7 @@ void ServerThread::ReplyRowRequest(
   server_row_request_reply_msg.get_row_id() = row_id;
   server_row_request_reply_msg.get_clock() = return_clock;
   server_row_request_reply_msg.get_version() = table_bg_version;
-  server_row_request_reply_msg.get_global_model_version() =
+  server_row_request_reply_msg.get_global_row_version() =
       (int32_t)server_row_global_version;
   // TODO(raajay) change the serialization to use unsigned long and remove cast
 
