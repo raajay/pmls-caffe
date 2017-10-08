@@ -110,17 +110,17 @@ bool AbstractBgWorker::CreateTable(int32_t table_id,
 }
 
 bool AbstractBgWorker::RequestRow(int32_t table_id, int32_t row_id,
-                                  int32_t clock) {
+                                  int32_t req_clock) {
   petuum::HighResolutionTimer rr_send;
   {
     RowRequestMsg request_row_msg;
     request_row_msg.get_table_id() = table_id;
     request_row_msg.get_row_id() = row_id;
-    request_row_msg.get_clock() = clock;
+    request_row_msg.get_clock() = req_clock;
     request_row_msg.get_forced_request() = false;
     VLOG(20) << "RR App Thread >>> Bg Thread (" << my_id_ << ") "
              << petuum::GetTableRowStringId(table_id, row_id)
-             << " clock=" << clock;
+             << " clock=" << req_clock;
     size_t sent_size = SendMsg(reinterpret_cast<MsgBase *>(&request_row_msg));
     CHECK_EQ(sent_size, request_row_msg.get_size());
   }
@@ -131,7 +131,7 @@ bool AbstractBgWorker::RequestRow(int32_t table_id, int32_t row_id,
     comm_bus_->RecvInProc(&sender_id, &zmq_msg);
     VLOG(20) << "RR Latency@App Thread for "
              << petuum::GetTableRowStringId(table_id, row_id)
-             << " clock=" << clock << " equals " << rr_send.elapsed() << " s";
+             << " clock=" << req_clock << " equals " << rr_send.elapsed() << " s";
     MsgType msg_type = MsgBase::get_msg_type(zmq_msg.data());
     CHECK_EQ(msg_type, kRowRequestReply);
   }
