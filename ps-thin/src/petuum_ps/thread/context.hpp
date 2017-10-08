@@ -21,6 +21,9 @@ namespace petuum {
  * In petuum PS, thread is treated as first-class citizen. Some globaly
  * shared thread information, such as ID, are stored in static variable to
  * avoid having passing some variables every where.
+ *
+ * XXX(raajay) Ephemeral threads / sync threads do not register with
+ * ThreadContext and hence do not have a clock or id
  */
 class ThreadContext {
 
