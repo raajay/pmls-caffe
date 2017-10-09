@@ -171,6 +171,7 @@ void AbstractBgWorker::ClockAllTables() {
 void AbstractBgWorker::ClockTable(int32_t table_id) {
   BgClockMsg msg;
   msg.get_table_id() = table_id;
+  VLOG(20) << "Sync Thread >>> Bg Worker: Clock table_id=" << table_id;
   size_t sent_size = SendMsg(reinterpret_cast<MsgBase *>(&msg));
   CHECK_EQ(sent_size, msg.get_size());
 }
@@ -466,11 +467,12 @@ void AbstractBgWorker::CreateOpLogMsgs(int32_t table_id, const BgOpLog *bg_oplog
     oplog_serializer.AssignMem(ephemeral_server_oplog_msg_.Get(server_id)->get_data(), bytes_written);
 
     for (const auto &table_pair : (*tables_)) {
-      int32_t table_id = table_pair.first;
-      uint8_t *table_ptr = reinterpret_cast<uint8_t *> (oplog_serializer.GetTablePtr(table_id));
+      int32_t curr_table_id = table_pair.first;
+
+      uint8_t *table_ptr = reinterpret_cast<uint8_t *> (oplog_serializer.GetTablePtr(curr_table_id));
 
       if (table_ptr == nullptr) {
-        table_server_mem_map[table_id].erase(server_id);
+        table_server_mem_map[curr_table_id].erase(server_id);
         continue;
       }
 
@@ -479,7 +481,7 @@ void AbstractBgWorker::CreateOpLogMsgs(int32_t table_id, const BgOpLog *bg_oplog
       // 3. table data
 
       // table id -- store table_id at the table_ptr location
-      *(reinterpret_cast<int32_t *>(table_ptr)) = table_id;
+      *(reinterpret_cast<int32_t *>(table_ptr)) = curr_table_id;
       bytes_written += sizeof(int32_t);
 
       // table update size -- store table update size at the table_prt + one
@@ -491,7 +493,7 @@ void AbstractBgWorker::CreateOpLogMsgs(int32_t table_id, const BgOpLog *bg_oplog
 
       // offset for table rows -- store the offset for each table and each
       // server. This is the offset into oplog msg's memory.
-      table_server_mem_map[table_id][server_id] =
+      table_server_mem_map[curr_table_id][server_id] =
           table_ptr + sizeof(int32_t) + sizeof(size_t);
     }
   }
@@ -501,12 +503,15 @@ void AbstractBgWorker::CreateOpLogMsgs(int32_t table_id, const BgOpLog *bg_oplog
   // write into locations pointed in the table_server_mem_map.
 
   for (const auto &table_pair : (*tables_)) {
-    int32_t table_id = table_pair.first;
-    BgOpLogPartition *oplog_partition = bg_oplog->Get(table_id);
+    int32_t curr_table_id = table_pair.first;
+    if (table_id != ALL_TABLES && table_id != curr_table_id) {
+        continue;
+    }
+    BgOpLogPartition *oplog_partition = bg_oplog->Get(curr_table_id);
     // the second argument to function is an indicator to notify is the
     // serialization is dense or sparse
     bytes_written += oplog_partition->SerializeByServer(
-        &(table_server_mem_map[table_id]),
+        &(table_server_mem_map[curr_table_id]),
         table_pair.second->oplog_dense_serialized());
   }
 
@@ -765,8 +770,9 @@ void AbstractBgWorker::SendRowRequestToServer(int32_t table_id, int32_t row_id, 
  */
 void AbstractBgWorker::SendRowRequestToServer(RowRequestMsg &msg) {
     int32_t server_id = GlobalContext::GetPartitionServerID(msg.get_row_id(), my_comm_channel_idx_);
-    VLOG(20) << "RR BgThread >>> ServerThread (" << server_id << ") "
-             << petuum::GetTableRowStringId(msg.get_table_id(), msg.get_row_id());
+    VLOG(20) << "RR BgThread (" << my_id_
+        << ") >>> ServerThread (" << server_id << ") "
+        << petuum::GetTableRowStringId(msg.get_table_id(), msg.get_row_id());
     size_t sent_size = (comm_bus_->*(comm_bus_->SendAny_))(server_id,
             msg.get_mem(), msg.get_size());
     CHECK_EQ(sent_size,  msg.get_size());

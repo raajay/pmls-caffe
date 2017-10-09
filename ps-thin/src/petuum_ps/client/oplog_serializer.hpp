@@ -1,6 +1,7 @@
 #pragma once
 
 #include <boost/noncopyable.hpp>
+#include <cstring>
 
 namespace petuum {
 class ServerOpLogSerializer : boost::noncopyable {

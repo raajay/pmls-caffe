@@ -46,7 +46,7 @@ BgOpLog *SSPBgWorker::PrepareOpLogs(int32_t table_id) {
   for (const auto &table_pair : (*tables_)) {
     int32_t curr_table_id = table_pair.first;
 
-    if (table_id != -1 && table_id != curr_table_id) {
+    if (table_id != ALL_TABLES && table_id != curr_table_id) {
       continue;
     }
 
@@ -118,14 +118,8 @@ BgOpLogPartition *SSPBgWorker::PrepareTableOpLogs(int32_t table_id, ClientTable 
 
 
 void SSPBgWorker::TrackBgOpLog(int32_t table_id, BgOpLog *bg_oplog) {
-  bool tracked = row_request_oplog_mgr_->AddOpLog(GetUpdateVersion(table_id), bg_oplog);
-
   IncrementUpdateVersion(table_id);
-  // the below function does nothing.
-  row_request_oplog_mgr_->InformVersionInc();
-
-  if (!tracked) {
-    delete bg_oplog;
-  }
+  delete bg_oplog;
 }
+
 }
