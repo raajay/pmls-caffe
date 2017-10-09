@@ -336,7 +336,15 @@ template <typename Dtype> void Solver<Dtype>::Solve(const char *resume_file) {
     const bool display = param_.display() && iter_ % param_.display() == 0;
     net_->set_debug_info(display && param_.debug_info());
 
-    Dtype loss = ForwardBackward(bottom_vec);
+    VLOG(20) << "### Start ForwardBackward = " << iter_;
+    Dtype loss;
+    try {
+        loss = ForwardBackward(bottom_vec);
+    } catch (const std::exception &e) {
+        VLOG(20) << "Exception caught";
+        throw e;
+    }
+    VLOG(20) << "### End ForwardBackward = " << iter_;
 
     if (display) {
       if (client_id_ == 0 && thread_id_ == 0) {
@@ -380,6 +388,17 @@ template <typename Dtype> void Solver<Dtype>::Solve(const char *resume_file) {
 
       ++display_counter_;
     } // end of display
+
+    // XXX(raajay): We have introduced per table clock; thus, oplogs for each
+    // table will be sent separately. Earlier, a single clock will forward the
+    // oplogs for all the tables. Why was this change made?
+    // 1. in the backward pass updates to the end layers can be send as soon as
+    //    it is ready.
+    // 2. The sync threads run in parallel. Thus, it cannot be guaranteed if
+    //    the BatchInc on each thread is complete before the main app thread
+    //    Clocks. This could result in some updates being lost.
+    // TODO(raajay) check if output / stats tables are clocked (in turn synced
+    // at all).
 
     petuum::PSTableGroup::Clock();
     ++clock_counter_;
@@ -489,6 +508,9 @@ void Solver<Dtype>::ThreadSyncWithPS(const shared_ptr<Blob<Dtype>> &param,
                                      const int32_t thread_offset
 #endif
                                      ) {
+
+    try {
+
 #ifdef USE_PS_THIN
   petuum::PSTableGroup::RegisterCaffeSyncThread(thread_offset);
 #endif
@@ -500,17 +522,27 @@ void Solver<Dtype>::ThreadSyncWithPS(const shared_ptr<Blob<Dtype>> &param,
   if (param_owner < 0) {
     // Push updates to PS
     param->UpdatePSTable();
+    // Clock table (will push updates to server)
+    // petuum::PSTableGroup::ClockTable(param->global_id());
     // Read fresh values from PS
     param->SyncWithPSTable(clock + 1);
   } else {
     // Push updates to PS
     net_->params()[param_owner]->UpdatePSTable(param->cpu_diff());
+    // Clock table (will push updates to server)
+    // petuum::PSTableGroup::ClockTable(param->global_id());
     // Read fresh values from PS
     net_->params()[param_owner]->SyncWithPSTable(clock + 1);
   }
 #ifdef USE_PS_THIN
   petuum::PSTableGroup::DeregisterCaffeSyncThread();
 #endif
+    } catch (const std::exception &e) {
+        VLOG(20) << "Exception caught in ThreadSyncWithPS: param_id=" << param_id
+            << " thread_offset=" << thread_offset
+            << " global_id=" << param->global_id();
+//        throw e;
+    }
 }
 
 /// This function is used for created thread to sync one (ip) layer through SVB
@@ -580,8 +612,10 @@ template <typename Dtype> void Solver<Dtype>::JoinSyncThreads() {
     sync_threads_[i]->join();
     delete sync_threads_[i];
   }
+  if (!sync_threads_.empty()) {
+    VLOG(20) << "Deleting all sync threads";
+  }
   sync_threads_.clear();
-  VLOG(20) << "Deleting all sync threads";
 }
 
 template <typename Dtype> void Solver<Dtype>::TestAll() {

@@ -42,7 +42,8 @@ std::vector<double> Stats::app_defined_vec_;
 std::string Stats::app_defined_accum_val_name_;
 double Stats::app_defined_accum_val_;
 
-boost::unordered::unordered_map<int32_t, AppThreadPerTableStats> Stats::table_stats_;
+boost::unordered::unordered_map<int32_t, AppThreadPerTableStats>
+    Stats::table_stats_;
 double Stats::app_accum_comp_sec_ = 0;
 double Stats::app_accum_obj_comp_sec_ = 0;
 double Stats::app_accum_tg_clock_sec_ = 0;

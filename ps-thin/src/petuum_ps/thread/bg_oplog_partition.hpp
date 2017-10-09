@@ -22,7 +22,7 @@ public:
 
   void InsertOpLog(int32_t row_id, AbstractRowOpLog *row_oplog);
 
-  void SerializeByServer(std::map<int32_t, void *> *bytes_by_server,
+  size_t SerializeByServer(std::map<int32_t, void *> *bytes_by_server,
                          bool dense_serialize = false);
 
   size_t num_rows() { return oplog_map_.size(); }

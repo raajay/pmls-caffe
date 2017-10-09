@@ -186,48 +186,40 @@ void ServerThread::HandleRowRequest(int32_t sender_id,
                                     RowRequestMsg &row_request_msg) {
   int32_t table_id = row_request_msg.get_table_id();
   int32_t row_id = row_request_msg.get_row_id();
-  int32_t clock = row_request_msg.get_clock();
-  int32_t server_clock = server_obj_.GetMinClock();
-  uint32_t bg_version = server_obj_.GetBgVersion(sender_id);
+  int32_t request_clock = row_request_msg.get_clock();
 
-  if (!GlobalContext::is_asynchronous_mode()) {
-    // check only in synchronous mode
-    if (server_clock < clock) {
-      // not fresh enough, wait
-      server_obj_.AddRowRequest(sender_id, table_id, row_id, clock);
-      VLOG(15) << "Buffering row request";
-      return;
-    }
-  } else {
-    VLOG(20) << ": Responding to row request immediately; since server is in "
-                "asynchronous mode";
+  int32_t curr_table_clock = server_obj_.GetTableMinClock(table_id);
+  uint32_t curr_table_bg_version = server_obj_.GetTableBgVersion(table_id, sender_id);
+
+  if (!GlobalContext::is_asynchronous_mode() && curr_table_clock < request_clock) {
+    // buffer if clock is not satisfied
+    server_obj_.AddRowRequest(sender_id, table_id, row_id, request_clock);
+    return;
   }
 
+  // respond otherwise
   ServerRow *server_row = server_obj_.FindCreateRow(table_id, row_id);
 
-  // row subscribe is a null function ...
-  RowSubscribe(server_row, GlobalContext::thread_id_to_client_id(sender_id));
-
-  int32_t return_clock =
-      (GlobalContext::is_asynchronous_mode()) ? clock : server_clock;
+  int32_t return_clock = (GlobalContext::is_asynchronous_mode()) ?
+      request_clock : curr_table_clock;
 
   ReplyRowRequest(sender_id, server_row, table_id, row_id, return_clock,
-                  bg_version, server_row->GetRowVersion());
+                  curr_table_bg_version, server_row->GetRowVersion());
 }
 
 void ServerThread::ReplyRowRequest(
     int32_t bg_id, ServerRow *server_row, int32_t table_id, int32_t row_id,
-    int32_t client_clock, // earlier we used to return server clock
-    uint32_t bg_version, unsigned long server_row_global_version) {
+    int32_t return_clock,
+    uint32_t table_bg_version, unsigned long server_row_global_version) {
 
   size_t row_size = server_row->SerializedSize();
 
   ServerRowRequestReplyMsg server_row_request_reply_msg(row_size);
   server_row_request_reply_msg.get_table_id() = table_id;
   server_row_request_reply_msg.get_row_id() = row_id;
-  server_row_request_reply_msg.get_clock() = client_clock;
-  server_row_request_reply_msg.get_version() = bg_version;
-  server_row_request_reply_msg.get_global_model_version() =
+  server_row_request_reply_msg.get_clock() = return_clock;
+  server_row_request_reply_msg.get_version() = table_bg_version;
+  server_row_request_reply_msg.get_global_row_version() =
       (int32_t)server_row_global_version;
   // TODO(raajay) change the serialization to use unsigned long and remove cast
 
@@ -236,18 +228,18 @@ void ServerThread::ReplyRowRequest(
   MemTransfer::TransferMem(comm_bus_, bg_id, &server_row_request_reply_msg);
 }
 
+
+/**
+ */
 void ServerThread::HandleOpLogMsg(int32_t sender_id,
                                   ClientSendOpLogMsg &client_send_oplog_msg) {
 
   STATS_SERVER_OPLOG_MSG_RECV_INC_ONE();
 
-  bool is_clock =
-      client_send_oplog_msg
-          .get_is_clock(); // if the oplog also says that client has clocked
-  int32_t bg_clock =
-      client_send_oplog_msg.get_bg_clock(); // the value of clock at client
-  uint32_t version =
-      client_send_oplog_msg.get_version(); // the bg version of the oplog update
+  bool is_clock = client_send_oplog_msg.get_is_clock();
+  int32_t bg_clock = client_send_oplog_msg.get_bg_clock();
+  uint32_t version = client_send_oplog_msg.get_version();
+  int32_t table_id = client_send_oplog_msg.get_table_id();
 
   VLOG(5) << "Received client oplog msg from " << sender_id
           << " orig_version=" << version << " orig_sender=" << sender_id;
@@ -256,58 +248,63 @@ void ServerThread::HandleOpLogMsg(int32_t sender_id,
 
   int32_t observed_delay;
   STATS_SERVER_ACCUM_APPLY_OPLOG_BEGIN();
-  server_obj_.ApplyOpLogUpdateVersion(client_send_oplog_msg.get_data(),
-                                      client_send_oplog_msg.get_avai_size(),
-                                      sender_id, version, &observed_delay);
+  int32_t num_tables_updated =
+      server_obj_.ApplyOpLogUpdateVersion(table_id, client_send_oplog_msg.get_data(),
+              client_send_oplog_msg.get_avai_size(), sender_id, version,
+              &observed_delay);
   STATS_SERVER_ACCUM_APPLY_OPLOG_END();
+  VLOG(20) << "Number of tables updated = " << num_tables_updated;
 
   // TODO add delay to the statistics
   // STATS_MLFABRIC_SERVER_RECORD_DELAY(observed_delay);
 
-  bool clock_changed = false;
-  if (is_clock) {
-    clock_changed = server_obj_.ClockUntil(sender_id, bg_clock);
-    if (clock_changed) {
+  if (false == is_clock) { return; }
 
-      if (!GlobalContext::is_asynchronous_mode()) {
+  bool clock_changed = table_id == ALL_TABLES ?
+      server_obj_.ClockAllTablesUntil(sender_id, bg_clock) :
+      server_obj_.ClockTableUntil(table_id, sender_id, bg_clock);
 
-        std::vector<ServerRowRequest> requests;
-        server_obj_.GetFulfilledRowRequests(&requests);
+  VLOG(20) << "Clocked tables. " << server_obj_.DisplayClock();
 
-        for (auto request_iter = requests.begin();
-             request_iter != requests.end(); request_iter++) {
-          int32_t table_id = request_iter->table_id;
-          int32_t row_id = request_iter->row_id;
-          int32_t bg_id = request_iter->bg_id;
-          uint32_t version = server_obj_.GetBgVersion(bg_id);
-          ServerRow *server_row = server_obj_.FindCreateRow(table_id, row_id);
-          RowSubscribe(server_row,
-                       GlobalContext::thread_id_to_client_id(bg_id));
-          int32_t server_clock = server_obj_.GetMinClock();
-          ReplyRowRequest(bg_id, server_row, table_id, row_id, server_clock,
-                          version, server_row->GetRowVersion());
-        }
-        VLOG(15) << "Successively replied to buffered requests.";
-      }
-      // update the stats clock
-      STATS_SERVER_CLOCK();
-    }
+  // If clock is not changed then we will not be releasing any row requests
+  if (false == clock_changed) { return; }
+
+  // if we are using asynchronous mode, then row requests are not buffered.
+  if (GlobalContext::is_asynchronous_mode()) { return; }
+
+  int32_t new_clock = table_id == ALL_TABLES ?
+      server_obj_.GetAllTablesMinClock() :
+      server_obj_.GetTableMinClock(table_id);
+
+  std::vector<ServerRowRequest> requests;
+  server_obj_.GetFulfilledRowRequests(new_clock, table_id, &requests);
+
+  // respond to buffered requests
+  for (auto request : requests) {
+
+    int32_t curr_table_id = request.table_id;
+    int32_t row_id = request.row_id;
+    int32_t bg_id = request.bg_id;
+
+    uint32_t version = server_obj_.GetTableBgVersion(table_id, bg_id);
+    ServerRow *server_row = server_obj_.FindCreateRow(curr_table_id, row_id);
+
+    ReplyRowRequest(bg_id, server_row, curr_table_id, row_id, new_clock,
+            version, server_row->GetRowVersion());
   }
 
-  // always ack op log receipt, saying the version number for a particular
-  // update from a client was applied to the model.
-
-  // if (clock_changed) {
-  //   // (raajay): the below does nothing when SSP consistency is desired.
-  //   // Used only for SSPPush, which we discontinued.
-  //   ServerPushRow(clock_changed);
-  // }
+  STATS_SERVER_CLOCK();
 }
+
 
 long ServerThread::ServerIdleWork() { return 0; }
 
 long ServerThread::ResetServerIdleMilli() { return 0; }
 
+
+/**
+ * The operator that runs infinitely receiving and processing messages
+ */
 void *ServerThread::operator()() {
 
   ThreadContext::RegisterThread(my_id_);
@@ -330,12 +327,12 @@ void *ServerThread::operator()() {
   bool destroy_mem = false;
   long timeout_milli = GlobalContext::get_server_idle_milli();
 
-  // like the bg thread, the server thread also goes on an infinite loop.
-  // It processes one message at a time; TODO (raajay) shouldn't we have
-  // separate queues for
-  // control and data messages.
+  // like the bg thread, the server thread also goes on an infinite loop.  It
+  // processes one message at a time; TODO (raajay) shouldn't we have separate
+  // queues for control and data messages.
 
-  while (1) {
+  while (true) {
+
     bool received = WaitMsg_(&sender_id, &zmq_msg, timeout_milli);
     if (!received) {
       timeout_milli = ServerIdleWork();
@@ -357,6 +354,7 @@ void *ServerThread::operator()() {
     }
 
     switch (msg_type) {
+
     case kClientShutDown: {
       bool shutdown = HandleShutDownMsg();
       if (shutdown) {
@@ -366,22 +364,26 @@ void *ServerThread::operator()() {
       }
       break;
     }
+
     case kCreateTable: {
       CreateTableMsg create_table_msg(msg_mem);
       HandleCreateTable(sender_id, create_table_msg);
       break;
     }
+
     case kApplicationThreadRowRequest: {
-      // here, handle a clients request for new data
+      // here, handle a client's request for new data
       RowRequestMsg row_request_msg(msg_mem);
       HandleRowRequest(sender_id, row_request_msg);
     } break;
+
     case kClientSendOpLog: {
       // here, we decide what to do with the oplog (update) that the client
       // sends.
       ClientSendOpLogMsg client_send_oplog_msg(msg_mem);
       HandleOpLogMsg(sender_id, client_send_oplog_msg);
     } break;
+
     case kReplicaOpLogAck: {
       ReplicaOpLogAckMsg replica_ack_msg(msg_mem);
       ServerOpLogAckMsg server_oplog_ack_msg;
@@ -398,12 +400,15 @@ void *ServerThread::operator()() {
       delete replica_timers_[0];
       replica_timers_.pop_front();
     } break;
+
     default:
       LOG(FATAL) << "Unrecognized message type " << msg_type;
     }
 
-    if (destroy_mem)
+    if (destroy_mem) {
       MemTransfer::DestroyTransferredMem(msg_mem);
+    }
+
   }
 }
 }

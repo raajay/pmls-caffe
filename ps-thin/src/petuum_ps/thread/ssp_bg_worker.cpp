@@ -23,10 +23,6 @@ bool SSPBgWorker::GetRowOpLog(AbstractOpLog &table_oplog, int32_t row_id,
   return table_oplog.GetEraseOpLog(row_id, row_oplog_ptr);
 }
 
-void SSPBgWorker::PrepareBeforeInfiniteLoop() {}
-
-void SSPBgWorker::FinalizeTableStats() {}
-
 long SSPBgWorker::ResetBgIdleMilli() { return 0; }
 
 long SSPBgWorker::BgIdleWork() { return 0; }
@@ -37,76 +33,57 @@ ClientRow *SSPBgWorker::CreateClientRow(int32_t clock, int32_t global_version,
       new SSPClientRow(clock, global_version, row_data, true));
 }
 
-BgOpLog *SSPBgWorker::PrepareOpLogsToSend() {
+
+/**
+ */
+BgOpLog *SSPBgWorker::PrepareOpLogs(int32_t table_id) {
+
   auto *bg_oplog = new BgOpLog;
+  ephemeral_server_table_size_counter_.Reset();
+  ephemeral_server_oplog_msg_.Reset();
 
-  // Prepare oplogs prepares each table separately.
+  // Prepare oplog for each table and add it to BgOpLog
   for (const auto &table_pair : (*tables_)) {
-    int32_t table_id = table_pair.first;
+    int32_t curr_table_id = table_pair.first;
 
-    // why are we creating a oplog partition? This is the most common case.
-    // Answer: BgOpLog contains all the oplogs that the current worker is
-    // responsible for; it includes oplogs across all tables which are
-    // partitioned by the table id.
+    if (table_id != ALL_TABLES && table_id != curr_table_id) {
+      continue;
+    }
 
-    // stores op logs responsible for the current workers filtered by the
-    // current table id
-    BgOpLogPartition *bg_table_oplog = 0;
-
-    if (table_pair.second->get_oplog_type() == Sparse ||
-        table_pair.second->get_oplog_type() == Dense) {
-      bg_table_oplog = PrepareOpLogsNormal(table_id, table_pair.second);
-    } else if (table_pair.second->get_oplog_type() == AppendOnly) {
-      bg_table_oplog = PrepareOpLogsAppendOnly(table_id, table_pair.second);
-    } else {
+    auto oplog_type = table_pair.second->get_oplog_type();
+    if(oplog_type != Sparse && oplog_type != Dense) {
       LOG(FATAL) << "Unknown oplog type = "
                  << table_pair.second->get_oplog_type();
     }
 
-    // we add each tables oplog to the overall oplog
-    bg_oplog->Add(table_id, bg_table_oplog);
+    // Reset the per-table data structure collecting per-table message size stats
+    ephemeral_server_byte_counter_.Reset();
 
-    FinalizeOpLogMsgStats(table_id, &table_num_bytes_by_server_,
-                          &server_table_oplog_size_map_);
+    // we add each table's oplog to the overall oplog
+    bg_oplog->Add(curr_table_id, PrepareTableOpLogs(curr_table_id, table_pair.second));
 
-  } // end for loop over tables
-
-  VLOG(5) << "Total number of rows modified = " << bg_oplog->num_rows();
-  return bg_oplog;
-
-} // end function -- prepare op logs to send
-
-BgOpLogPartition *SSPBgWorker::PrepareOpLogsNormal(int32_t table_id,
-                                                   ClientTable *table) {
-
-  AbstractOpLog &table_oplog = table->get_oplog();
-
-  GetSerializedRowOpLogSizeFunc GetSerializedRowOpLogSize;
-
-  if (table->oplog_dense_serialized()) {
-    GetSerializedRowOpLogSize = GetDenseSerializedRowOpLogSize;
-  } else {
-    GetSerializedRowOpLogSize = GetSparseSerializedRowOpLogSize;
+    FinalizeTableOplogSize(curr_table_id);
   }
+  return bg_oplog;
+}
 
-  // Get OpLog index. The index will tell which rows have been modified. So
-  // the function below, will query an oplog index -- maintained per table at
-  // the process level -- and get all the rows that have been modified. Note
-  // that it will find modified rows from among the rows for each table that
-  // the current bg_thread is responsible for.
+
+/**
+ */
+BgOpLogPartition *SSPBgWorker::PrepareTableOpLogs(int32_t table_id, ClientTable *table) {
+
+  // Get OpLog index. The index will tell which rows have been modified. So the
+  // function below, will query an oplog index -- maintained per table at the
+  // process level -- and get all the rows that have been modified. Note that
+  // it will find modified rows from among the rows for each table that the
+  // current bg_thread is responsible for.
 
   cuckoohash_map<int32_t, bool> *new_table_oplog_index_ptr =
       table->GetAndResetOpLogIndex(my_comm_channel_idx_);
 
-  size_t table_update_size = table->get_sample_row()->get_update_size();
-
-  auto *bg_table_oplog =
-      new BgOpLogPartition(table_id, table_update_size, my_comm_channel_idx_);
-
-  for (const auto &server_id : server_ids_) {
-    // Reset size to 0
-    table_num_bytes_by_server_[server_id] = 0;
-  }
+  // create an empty partition
+  auto *bg_table_oplog = new BgOpLogPartition(table_id,
+          table->get_sample_row()->get_update_size(), my_comm_channel_idx_);
 
   // iterate over all rows that are potentially modified
   for (auto oplog_index_iter = new_table_oplog_index_ptr->cbegin();
@@ -115,86 +92,34 @@ BgOpLogPartition *SSPBgWorker::PrepareOpLogsNormal(int32_t table_id,
     int32_t row_id = oplog_index_iter->first;
 
     AbstractRowOpLog *row_oplog = nullptr;
+    bool found = GetRowOpLog(table->get_oplog(), row_id, &row_oplog);
 
-    bool found = GetRowOpLog(table_oplog, row_id, &row_oplog);
-
-    // if not found, row_id has not been modified in this table
-    if (!found) {
+    if (!found || row_oplog == nullptr) {
       continue;
     }
 
-    // if row_oplog is null, nothing more to do
-    if (row_oplog == nullptr) {
-      continue;
-    }
+    // get the size of the row depending on the oplog serialization type for the table
+    size_t oplog_size = (table->oplog_dense_serialized()) ?
+                             row_oplog->GetDenseSerializedSize() :
+                             row_oplog->GetSparseSerializedSize();
 
-    // this function
-    // 1. updates the bytes per server dict,
-    // 2. adds the oplog to bg_table_oplog, indexed by row_id
-    CountRowOpLogToSend(row_id, row_oplog, &table_num_bytes_by_server_,
-                        bg_table_oplog, GetSerializedRowOpLogSize);
+    // 1. row id, 2. global version of the row, 3. serialized row size
+    size_t serialized_size = sizeof(int32_t) + sizeof(int32_t) + oplog_size;
+    int32_t server_id = GlobalContext::GetPartitionServerID(row_id, my_comm_channel_idx_);
+    ephemeral_server_byte_counter_.Increment(server_id, serialized_size);
+    bg_table_oplog->InsertOpLog(row_id, row_oplog);
+  }
 
-  } // end for -- over all rows that have oplog (i.e., those which are modified;
-    // obtained from oplog index)
-
-  delete new_table_oplog_index_ptr; // no one else points to this struct, see
-                                    // earlier GetAndResetOpLogIndex function
+  // no one else points to this struct, see GetAndResetOpLogIndex function
+  delete new_table_oplog_index_ptr;
   return bg_table_oplog;
 }
 
-/**
- * Each thread updates oplog without any locking; hence, the name.
- */
-BgOpLogPartition *SSPBgWorker::PrepareOpLogsAppendOnly(int32_t table_id,
-                                                       ClientTable *table) {
-  VLOG(2) << "In PrepareOpLogsAppendOnly";
-  GetSerializedRowOpLogSizeFunc GetSerializedRowOpLogSize;
 
-  if (table->oplog_dense_serialized()) {
-    GetSerializedRowOpLogSize = GetDenseSerializedRowOpLogSize;
-  } else {
-    GetSerializedRowOpLogSize = GetSparseSerializedRowOpLogSize;
-  }
 
-  size_t table_update_size = table->get_sample_row()->get_update_size();
-
-  auto *bg_table_oplog =
-      new BgOpLogPartition(table_id, table_update_size, my_comm_channel_idx_);
-
-  for (const auto &server_id : server_ids_) {
-    // Reset size to 0
-    table_num_bytes_by_server_[server_id] = 0;
-  }
-
-  auto buff_iter = append_only_row_oplog_buffer_map_.find(table_id);
-  if (buff_iter != append_only_row_oplog_buffer_map_.end()) {
-    AppendOnlyRowOpLogBuffer *append_only_row_oplog_buffer = buff_iter->second;
-    append_only_row_oplog_buffer->MergeTmpOpLog();
-
-    int32_t row_id;
-    AbstractRowOpLog *row_oplog =
-        append_only_row_oplog_buffer->InitReadRmOpLog(&row_id);
-    while (row_oplog != nullptr) {
-      CountRowOpLogToSend(row_id, row_oplog, &table_num_bytes_by_server_,
-                          bg_table_oplog, GetSerializedRowOpLogSize);
-      row_oplog = append_only_row_oplog_buffer->NextReadRmOpLog(&row_id);
-    }
-  }
-  return bg_table_oplog;
+void SSPBgWorker::TrackBgOpLog(int32_t table_id, BgOpLog *bg_oplog) {
+  IncrementUpdateVersion(table_id);
+  delete bg_oplog;
 }
 
-void SSPBgWorker::TrackBgOpLog(BgOpLog *bg_oplog) {
-  bool tracked =
-      row_request_oplog_mgr_->AddOpLog(per_worker_update_version_, bg_oplog);
-  ++per_worker_update_version_;
-  VLOG(5) << "Increment version of bgworker:" << my_id_ << " to "
-          << per_worker_update_version_;
-
-  // the below function does nothing.
-  row_request_oplog_mgr_->InformVersionInc();
-
-  if (!tracked) {
-    delete bg_oplog;
-  }
-}
 }

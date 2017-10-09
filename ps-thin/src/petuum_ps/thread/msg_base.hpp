@@ -40,7 +40,8 @@ enum MsgType {
   kReplicaOpLogAck = 63,
   kServerSendOpLog = 64,
   kSyncThreadConnect = 65,
-  kSyncThreadDereg = 66
+  kSyncThreadDereg = 66,
+  kBgTableClock = 67
 };
 
 // Represent a message over wire that is very easy to serialize.
@@ -140,6 +141,19 @@ public:
 
   virtual size_t get_size() {
     return (MsgBase::get_size() + sizeof(uint32_t) + sizeof(uint32_t));
+  }
+
+protected:
+  void AllocateMemory() {
+    if (get_size() > PETUUM_MSG_STACK_BUFF_SIZE) {
+      own_mem_ = true;
+      use_stack_buff_ = false;
+      mem_.Alloc(get_size());
+    } else {
+      own_mem_ = false;
+      use_stack_buff_ = true;
+      mem_.Reset(stack_buff_);
+    }
   }
 };
 

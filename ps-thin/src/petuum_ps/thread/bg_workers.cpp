@@ -56,6 +56,10 @@ void BgWorkers::GetAsyncRowRequestReply() {
 
 void BgWorkers::ClockAllTables() { bg_worker_group_->ClockAllTables(); }
 
+void BgWorkers::ClockTable(int32_t table_id) {
+  bg_worker_group_->ClockTable(table_id);
+}
+
 void BgWorkers::SendOpLogsAllTables() {
   bg_worker_group_->SendOpLogsAllTables();
 }

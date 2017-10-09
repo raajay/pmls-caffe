@@ -25,7 +25,7 @@ public:
     end_ = begin_;
   }
 
-  ~MPMCQueue() {}
+  ~MPMCQueue() = default;
 
   size_t get_size() const { return size_; }
 

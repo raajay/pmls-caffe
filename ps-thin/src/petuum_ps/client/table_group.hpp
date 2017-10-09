@@ -42,6 +42,8 @@ public:
 
   void Clock();
 
+  void ClockTable(int32_t table_id);
+
   void GlobalBarrier();
 
 private:
@@ -52,13 +54,19 @@ private:
   void ClockConservative();
 
   std::map<int32_t, ClientTable *> tables_;
+
   pthread_barrier_t register_barrier_;
+
   std::atomic<int> num_app_threads_registered_;
+
   std::atomic<int> num_ephemeral_threads_registered_;
 
   // Max staleness among all tables.
   int32_t max_table_staleness_;
+
   VectorClockMT vector_clock_;
+
+  VectorClockMT table_clock_;
 };
 
 } // namespace petuum

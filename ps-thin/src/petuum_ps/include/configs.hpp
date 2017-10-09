@@ -11,16 +11,16 @@
 
 namespace petuum {
 
-enum EntityType { SERVER = 0, WORKER = 1, AGGREGATOR = 2, ALL = 3 };
+/**
+ * @brief The consistency model to use for updating and fetching model
+ * SSP: Stale Synchronous Parallel
+ */
+enum ConsistencyModel { SSP = 0, LocalOOC = 6 };
 
-enum ConsistencyModel {
-  /**
-   * Stale synchronous parallel.
-   */
-  SSP = 0,
-  LocalOOC = 6
-};
-
+/**
+ * @brief The policy used to sort the updates, i.e., how to sort the oplog
+ * content.
+ */
 enum UpdateSortPolicy {
   FIFO = 0,
   Random = 1,
@@ -28,31 +28,49 @@ enum UpdateSortPolicy {
   FIFO_N_ReMag = 3
 };
 
+/**
+ * @brief The format of per row updates.
+ */
 struct RowOpLogType {
   static const int32_t kDenseRowOpLog = 0;
   static const int32_t kSparseRowOpLog = 1;
   static const int32_t kSparseVectorRowOpLog = 2;
 };
 
+/**
+ * @brief OpLog stores the updates. If the updates can either be sparse or
+ * dense. AppendOnly is a mystery!!!  TODO(raajay)
+ */
 enum OpLogType { Sparse = 0, AppendOnly = 1, Dense = 2 };
 
+/**
+ */
 enum AppendOnlyOpLogType { Inc = 0, BatchInc = 1, DenseBatchInc = 2 };
 
+/**
+ * @brief ProcessStorage stores the current value of the model in the client
+ * table. Bounded means that there is limited capacity (memory) to store the
+ * model.
+ */
 enum ProcessStorageType { BoundedDense = 0, BoundedSparse = 1 };
 
+/**
+ * @brief Configuration for all tables in the group. Will be used to init the
+ * global context.
+ */
 struct TableGroupConfig {
 
+  /**
+   * Constructor
+   */
   TableGroupConfig()
       : stats_path(""), num_comm_channels_per_client(1), num_tables(1),
-        num_total_clients(1), num_local_app_threads(2),
-        entity_type(
-            ALL), // by default all the clients have server and worker threads
-        aggressive_clock(false),
+        num_total_clients(1), num_local_app_threads(2), aggressive_clock(false),
         aggressive_cpu(false), snapshot_clock(-1), resume_clock(-1),
         update_sort_policy(Random), bg_idle_milli(0), bandwidth_mbps(4000),
         oplog_push_upper_bound_kb(1000), oplog_push_staleness_tolerance(2),
         thread_oplog_batch_size(100 * 1000 * 1000),
-        server_row_candidate_factor(5) {}
+        server_row_candidate_factor(5), use_table_clock(true) {}
 
   std::string stats_path;
 
@@ -100,11 +118,6 @@ struct TableGroupConfig {
   int32_t client_id;
 
   /**
-   * My client type.
-   */
-  EntityType entity_type;
-
-  /**
    * If set to true, oplog send is triggered on every Clock() call.
    * If set to false, oplog is only sent if the process clock (representing all
    * app threads) has advanced.
@@ -125,6 +138,11 @@ struct TableGroupConfig {
   bool is_asynchronous_mode;
 
   /**
+   * Check if we have to use ML Fabric optimizations
+   */
+  bool use_mlfabric;
+
+  /**
    * Determines the wait time on polling?
    */
   int32_t aggressive_cpu;
@@ -135,8 +153,11 @@ struct TableGroupConfig {
   int32_t server_ring_size;
 
   int32_t snapshot_clock;
+
   int32_t resume_clock;
+
   std::string snapshot_dir;
+
   std::string resume_dir;
 
   std::string ooc_path_prefix;
@@ -161,15 +182,38 @@ struct TableGroupConfig {
    */
   size_t oplog_push_upper_bound_kb;
 
+  /**
+   */
   int32_t oplog_push_staleness_tolerance;
 
+  /**
+   */
   size_t thread_oplog_batch_size;
 
+  /**
+   */
   size_t server_push_row_threshold;
 
+  /**
+   */
   long server_idle_milli;
 
+  /**
+   */
   long server_row_candidate_factor;
+
+  /**
+   * (raajay): Petuum traditionally uses one clock for an application thread (a
+   * single clock will indicate updates to all tables have been applied).
+   * However, on integrating with caffe, per-table sync threads are used to Inc
+   * and Get table values. To avoid race conditions between App and Sync
+   * threads, the clocks have to be issued from the sync threads after the Inc
+   * completes. Hence we introduce per table clocks.
+   *
+   * At any given point in time, only one thread uses table API. Hence, we do
+   * not need a multi-threaded clock for each table.
+   */
+  bool use_table_clock;
 
   /**
    * Stringify table group configs
@@ -183,7 +227,6 @@ struct TableGroupConfig {
     ss << "  num_total_clients: " << num_total_clients << std::endl;
     ss << "  num_local_app_threads: " << num_local_app_threads << std::endl;
     ss << "  client_id: " << client_id << std::endl;
-    ss << "  entity_type: " << entity_type << std::endl;
     ss << "  aggressive_clock: " << aggressive_clock << std::endl;
     ss << "  consistency_model: " << consistency_model << std::endl;
     ss << "  aggressive_cpu: " << aggressive_cpu << std::endl;
@@ -211,9 +254,15 @@ struct TableGroupConfig {
 };
 
 /**
- * TableInfo is shared between client and server.
+ * TableInfo is shared between client and server; i.e., its values are used for
+ * creation of Client as well as Server table
  */
 struct TableInfo {
+
+  /**
+   * @brief Constructor
+   */
+
   TableInfo()
       : table_staleness(0), row_type(-1), row_capacity(0),
         oplog_dense_serialized(false), row_oplog_type(1),
@@ -259,9 +308,13 @@ struct TableInfo {
 };
 
 /**
- * ClientTableConfig is used by client only.
+ * @brief ClientTableConfig is used by client only.
  */
 struct ClientTableConfig {
+
+  /**
+   * @brief Constructor
+   */
   ClientTableConfig()
       : process_cache_capacity(0), thread_cache_capacity(1), oplog_capacity(0),
         oplog_type(Dense), append_only_oplog_type(Inc),

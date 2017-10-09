@@ -11,12 +11,11 @@ namespace petuum {
 
 class BgOpLog : boost::noncopyable {
 public:
-  BgOpLog() {}
+  BgOpLog() = default;
 
   ~BgOpLog() {
-    for (auto iter = table_oplog_map_.begin(); iter != table_oplog_map_.end();
-         iter++) {
-      delete iter->second;
+    for (auto &iter : table_oplog_map_) {
+      delete iter.second;
     }
   }
 
@@ -30,17 +29,14 @@ public:
   }
 
   size_t num_rows() {
-    int num_rows = 0;
-    for (auto iter = table_oplog_map_.begin(); iter != table_oplog_map_.end();
-         iter++) {
-      num_rows += iter->second->num_rows();
+    size_t num_rows = 0;
+    for (auto &iter : table_oplog_map_) {
+      num_rows += iter.second->num_rows();
     }
     return num_rows;
   }
 
 private:
   std::map<int32_t, BgOpLogPartition *> table_oplog_map_;
-
-}; // end class - BpOpLog
-
-} // end namespace -- petuum
+};
+}

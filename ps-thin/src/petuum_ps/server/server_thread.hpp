@@ -38,7 +38,6 @@ protected:
   virtual void SetWaitMsg();
 
   virtual void InitServer();
-  virtual void RowSubscribe(ServerRow *server_row, int32_t client_id) {}
 
   void SetUpCommBus();
   void ConnectToNameNode();
@@ -55,8 +54,7 @@ protected:
                        int32_t row_id, int32_t server_clock, uint32_t version,
                        unsigned long global_model_version);
 
-  void HandleOpLogMsg(int32_t sender_id,
-                      ClientSendOpLogMsg &client_send_oplog_msg);
+  void HandleOpLogMsg(int32_t sender_id, ClientSendOpLogMsg &client_send_oplog_msg);
 
   virtual long ServerIdleWork();
   virtual long ResetServerIdleMilli();

@@ -23,6 +23,7 @@ void InitTableGroupConfig(TableGroupConfig *config, int32_t num_tables) {
     LOG(FATAL) << "Unsupported ssp mode " << FLAGS_consistency_model;
   }
   config->is_asynchronous_mode = FLAGS_is_asynchronous_mode;
+  config->use_mlfabric = FLAGS_use_mlfabric;
 
   config->aggressive_clock = false;
   config->aggressive_cpu = false;

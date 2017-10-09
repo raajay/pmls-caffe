@@ -308,14 +308,15 @@ struct BgThreadStats {
   // MLfabric stats storage
 
   // indexed server_id, version_id
-  boost::unordered::unordered_map<int32_t,
-                       boost::unordered::unordered_map<int32_t, HighResolutionTimer *>>
+  boost::unordered::unordered_map<
+      int32_t, boost::unordered::unordered_map<int32_t, HighResolutionTimer *>>
       mlfabric_client_push_timers;
-  boost::unordered::unordered_map<int32_t, boost::unordered::unordered_map<int32_t, double>>
+  boost::unordered::unordered_map<
+      int32_t, boost::unordered::unordered_map<int32_t, double>>
       mlfabric_client_push_elapsed_time;
 
-  boost::unordered::unordered_map<int32_t,
-                       boost::unordered::unordered_map<int32_t, HighResolutionTimer *>>
+  boost::unordered::unordered_map<
+      int32_t, boost::unordered::unordered_map<int32_t, HighResolutionTimer *>>
       mlfabric_client_pull_timers;
 
   BgThreadStats()
@@ -494,7 +495,8 @@ private:
   static std::string app_defined_accum_val_name_;
   static double app_defined_accum_val_;
 
-  static boost::unordered::unordered_map<int32_t, AppThreadPerTableStats> table_stats_;
+  static boost::unordered::unordered_map<int32_t, AppThreadPerTableStats>
+      table_stats_;
   static double app_accum_comp_sec_;
   static double app_accum_obj_comp_sec_;
   static double app_accum_tg_clock_sec_;

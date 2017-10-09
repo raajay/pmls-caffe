@@ -14,6 +14,7 @@
 #include <petuum_ps/server/server_table.hpp>
 #include <petuum_ps/thread/ps_msgs.hpp>
 #include <petuum_ps/util/high_resolution_timer.hpp>
+#include <petuum_ps/util/TwoDimCounter.hpp>
 
 namespace petuum {
 
@@ -31,41 +32,77 @@ public:
 
 class Server {
 private:
-  VectorClock bg_clock_;
+
+  boost::unordered::unordered_map<int32_t, VectorClock> table_vector_clock_;
+  typedef boost::unordered::unordered_map<int32_t, VectorClock>::iterator
+      TableClockIter;
+
   boost::unordered::unordered_map<int32_t, ServerTable> tables_;
+  typedef boost::unordered::unordered_map<int32_t, ServerTable>::iterator
+      TableIter;
+
+  std::vector<int32_t> bg_ids_;
+
   // mapping <clock, table id> to an array of row requests
   // Keeping track of all pending row requests. These are indexed first by the
   // clock requested by each row and secondly by the table id.
-  std::map<int32_t,
-           boost::unordered::unordered_map<int32_t, std::vector<ServerRowRequest>>>
+  std::map<int32_t, boost::unordered::unordered_map<
+                        int32_t, std::vector<ServerRowRequest>>>
       clock_bg_row_requests_;
+
   // Keep track of the latest oplog version received from each bg thread
-  std::map<int32_t, int32_t> bg_version_map_;
+  TwoDimCounter<int32_t, int32_t, int32_t> table_bg_version_;
+
   int32_t server_id_;
+
   size_t accum_oplog_count_;
+
   HighResolutionTimer from_start_timer_;
+
   bool is_replica_;
 
   ServerTable *GetServerTable(int32_t table_id);
+
   void TakeSnapShot(int32_t current_clock);
 
 public:
   Server();
+
   ~Server();
+
   void Init(int32_t server_id, const std::vector<int32_t> &bg_ids,
             bool is_replica = false);
+
   void CreateTable(int32_t table_id, TableInfo &table_info);
   ServerRow *FindCreateRow(int32_t table_id, int32_t row_id);
-  bool ClockUntil(int32_t bg_id, int32_t clock);
+
+
   void AddRowRequest(int32_t bg_id, int32_t table_id, int32_t row_id,
                      int32_t clock);
-  void GetFulfilledRowRequests(std::vector<ServerRowRequest> *requests);
-  void ApplyOpLogUpdateVersion(const void *oplog, size_t oplog_size,
+  void GetFulfilledRowRequests(int32_t clock, int32_t table_id,
+          std::vector<ServerRowRequest> *requests);
+
+
+  int32_t ApplyOpLogUpdateVersion(int32_t oplog_table_id, const void *oplog, size_t oplog_size,
                                int32_t bg_thread_id, uint32_t version,
                                int32_t *observed_delay);
-  // Accessors
-  int32_t GetMinClock();
-  int32_t GetBgVersion(int32_t bg_thread_id);
+
+  int32_t GetTableMinClock(int32_t table_id);
+  bool ClockTableUntil(int32_t table_id, int32_t bg_id, int32_t clock);
+  int32_t GetAllTablesMinClock();
+  bool ClockAllTablesUntil(int32_t bg_id, int32_t clock);
+
+
+  int32_t GetTableBgVersion(int32_t table_id, int32_t bg_id);
+  int32_t GetAllTableBgVersion(int32_t bg_thread_id);
+  void SetTableBgVersion(int32_t table_id, int32_t bg_id, uint32_t version);
+  void SetAllTableBgVersion(int32_t bg_id, uint32_t version);
+
   double GetElapsedTime();
+  std::string DisplayClock();
+
+private:
+  void CheckUpdateVersion(int32_t table_id, int32_t bg_id, uint32_t version);
+
 };
 }

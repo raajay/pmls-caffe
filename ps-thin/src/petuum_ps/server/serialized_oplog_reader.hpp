@@ -16,25 +16,46 @@ namespace petuum {
 // 4. serialized table, details in oplog_partition
 
 class SerializedOpLogReader : boost::noncopyable {
+
 public:
-  // does not take ownership
-  SerializedOpLogReader(
-      const void *oplog_ptr,
-      const boost::unordered::unordered_map<int32_t, ServerTable> &server_tables)
+
+  /**
+   * Constructor
+   */
+  SerializedOpLogReader(const void *oplog_ptr,
+                        const boost::unordered::unordered_map<int32_t, ServerTable> &server_tables)
       : serialized_oplog_ptr_(reinterpret_cast<const uint8_t *>(oplog_ptr)),
-        server_tables_(server_tables) {}
+        server_tables_(server_tables) { }
+
+
+  /**
+   * Destructor
+   */
   ~SerializedOpLogReader() {}
 
+
+  /**
+   * Restart
+   */
   bool Restart() {
     offset_ = 0;
-    num_tables_left_ =
-        *(reinterpret_cast<const int32_t *>(serialized_oplog_ptr_ + offset_));
+    num_tables_left_ = *(reinterpret_cast<const int32_t *>(serialized_oplog_ptr_ + offset_));
     offset_ += sizeof(int32_t);
-    if (num_tables_left_ == 0)
+    if (0 == num_tables_left_) {
       return false;
+    }
     StartNewTable();
     return true;
   }
+
+
+  /**
+   * Returns the number of bytes read from the oplog
+   */
+  size_t GetCurrentOffset() {
+      return offset_;
+  }
+
 
   /**
    * Read the next row update from the serialized op log. The next update can
@@ -92,9 +113,8 @@ public:
           return 0;
         }
       }
-    } // end while
-
-  } // end function --  next row update
+    }
+  }
 
 private:
   typedef const void *(*GetNextUpdateFunc)(
@@ -119,6 +139,9 @@ private:
                                                        serialized_size);
   }
 
+
+  /**
+   */
   void StartNewTable() {
 
     current_table_id_ =
@@ -141,21 +164,26 @@ private:
     } else {
       GetNextUpdate_ = GetNextUpdateSparse;
     }
-
-  } // end function -- parse new table (and store some state)
+  }
 
   const uint8_t *serialized_oplog_ptr_;
+
   size_t update_size_;
-  int32_t offset_;          // bytes to be read next
-  int32_t num_tables_left_; // number of tables that I have not finished
+
+  size_t offset_;
+
+  int32_t num_tables_left_;
+
   // reading (might have started)
   int32_t current_table_id_;
+
   int32_t num_rows_left_in_current_table_;
 
   const boost::unordered::unordered_map<int32_t, ServerTable> &server_tables_;
-  const AbstractRowOpLog *curr_sample_row_oplog_;
-  GetNextUpdateFunc GetNextUpdate_;
 
-}; // end class - serialized op log reader
+  const AbstractRowOpLog *curr_sample_row_oplog_;
+
+  GetNextUpdateFunc GetNextUpdate_;
+};
 
 } // namespace petuum

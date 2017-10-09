@@ -21,21 +21,12 @@ namespace petuum {
 
 ClientTable::ClientTable(int32_t table_id, const ClientTableConfig &config)
     : AbstractClientTable(), table_id_(table_id),
-      row_type_(config.table_info.row_type),
-      sample_row_(
-          ClassRegistry<AbstractRow>::GetRegistry().CreateObject(row_type_)),
+      sample_row_(ClassRegistry<AbstractRow>::GetRegistry().CreateObject(
+          config.table_info.row_type)),
       oplog_index_(
           std::ceil(static_cast<float>(config.oplog_capacity) /
                     GlobalContext::get_num_comm_channels_per_client())),
-      staleness_(config.table_info.table_staleness),
-      oplog_dense_serialized_(config.table_info.oplog_dense_serialized),
-      client_table_config_(config), oplog_type_(config.oplog_type),
-      bg_apply_append_oplog_freq_(config.bg_apply_append_oplog_freq),
-      row_oplog_type_(config.table_info.row_oplog_type),
-      dense_row_oplog_capacity_(config.table_info.dense_row_oplog_capacity),
-      append_only_oplog_type_(config.append_only_oplog_type),
-      row_capacity_(config.table_info.row_capacity),
-      no_oplog_replay_(config.no_oplog_replay) {
+      client_table_config_(config) {
 
   switch (config.process_storage_type) {
   case BoundedDense: {
@@ -68,31 +59,39 @@ ClientTable::ClientTable(int32_t table_id, const ClientTableConfig &config)
   } // end switch -- process storage type
 
   switch (config.oplog_type) {
+
   case Sparse:
+
     oplog_ = new SparseOpLog(config.oplog_capacity, sample_row_,
-                             dense_row_oplog_capacity_, row_oplog_type_);
+                             config.table_info.dense_row_oplog_capacity,
+                             config.table_info.row_oplog_type);
+
     VLOG(1) << "A Sparse OpLog for table: " << table_id << " is created.";
-    VLOG(1) << "Row OpLog types is: " << row_oplog_type_;
+    VLOG(1) << "Row OpLog types is: " << config.table_info.row_oplog_type;
+
     break;
 
   case AppendOnly:
     oplog_ = new AppendOnlyOpLog(config.append_only_buff_capacity, sample_row_,
                                  config.append_only_oplog_type,
-                                 dense_row_oplog_capacity_,
+                                 config.table_info.dense_row_oplog_capacity,
                                  config.per_thread_append_only_buff_pool_size);
+
     VLOG(1) << "An Append-only OpLog for table: " << table_id << " is created.";
     break;
 
   case Dense:
     oplog_ = new DenseOpLog(config.oplog_capacity, sample_row_,
-                            dense_row_oplog_capacity_, row_oplog_type_);
+                            config.table_info.dense_row_oplog_capacity,
+                            config.table_info.row_oplog_type);
+
     VLOG(1) << "A Dense OpLog for table: " << table_id << " is created.";
-    VLOG(1) << "Row OpLog types is: " << row_oplog_type_;
+    VLOG(1) << "Row OpLog types is: " << config.table_info.row_oplog_type;
     break;
 
   default:
     LOG(FATAL) << "Unknown oplog type = " << config.oplog_type;
-  } // end switch -- oplog type
+  }
 
   // TODO(raajay)  what is the difference between dense and sparse OpLog?
 
@@ -100,18 +99,20 @@ ClientTable::ClientTable(int32_t table_id, const ClientTableConfig &config)
   case SSP: {
     consistency_controller_ = new SSPConsistencyController(
         config.table_info, table_id, *process_storage_, *oplog_, sample_row_,
-        thread_cache_, oplog_index_, row_oplog_type_);
+        thread_cache_, oplog_index_, config.table_info.row_oplog_type);
+
     VLOG(1) << "A SSP consistency controller for table: " << table_id
             << " is created.";
   } break;
   default:
     LOG(FATAL) << "Not yet support consistency model "
                << GlobalContext::get_consistency_model();
+  }
+}
 
-  } // end switch -- Consistency controller type
-
-} // end function - Client Table constructor
-
+/**
+ * @brief Destructor
+ */
 ClientTable::~ClientTable() {
   delete consistency_controller_;
   delete sample_row_;
@@ -122,11 +123,12 @@ ClientTable::~ClientTable() {
 // each individual thread is responsible for invoking this function to get
 // access to the table.
 void ClientTable::RegisterThread() {
-  if (thread_cache_.get() == nullptr) {
+  CHECK_EQ(thread_cache_.get() == nullptr, true);
+  if (false == GlobalContext::use_table_clock()) {
     thread_cache_.reset(new ThreadTable(
         sample_row_, client_table_config_.table_info.row_oplog_type,
         client_table_config_.table_info.row_capacity));
-    VLOG(1) << "Create an new thread table cache for thread: "
+    VLOG(0) << "Create an new thread table cache for thread: "
             << ThreadContext::get_id();
   }
   oplog_->RegisterThread();
@@ -201,15 +203,17 @@ size_t ClientTable::GetNumRowOpLogs(int32_t partition_num) {
 
 ClientRow *ClientTable::CreateClientRow(int32_t clock) {
   AbstractRow *row_data =
-      ClassRegistry<AbstractRow>::GetRegistry().CreateObject(row_type_);
-  row_data->Init((int32_t)row_capacity_);
+      ClassRegistry<AbstractRow>::GetRegistry().CreateObject(
+          client_table_config_.table_info.row_type);
+  row_data->Init((int32_t)client_table_config_.table_info.row_capacity);
   return new ClientRow(clock, -1, row_data, false);
 }
 
 ClientRow *ClientTable::CreateSSPClientRow(int32_t clock) {
   AbstractRow *row_data =
-      ClassRegistry<AbstractRow>::GetRegistry().CreateObject(row_type_);
-  row_data->Init((int32_t)row_capacity_);
+      ClassRegistry<AbstractRow>::GetRegistry().CreateObject(
+          client_table_config_.table_info.row_type);
+  row_data->Init((int32_t)client_table_config_.table_info.row_capacity);
   return static_cast<ClientRow *>(new SSPClientRow(clock, -1, row_data, false));
 }
 

@@ -11,6 +11,7 @@ namespace petuum {
  * clocks. This class is single thread (ST) only.
  */
 class VectorClock {
+
 public:
   VectorClock();
   /**
