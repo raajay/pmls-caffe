@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include <petuum_ps/stats/OneDimCounter.hpp>
+#include <petuum_ps/util/OneDimCounter.hpp>
 
 namespace petuum {
 TEST(TestOneDimCounter, Test1) {

@@ -3,7 +3,7 @@
 //
 
 #include <gtest/gtest.h>
-#include <petuum_ps/stats/TwoDimCounter.hpp>
+#include <petuum_ps/util/TwoDimCounter.hpp>
 namespace petuum {
 TEST(TestTwoDimCounter, Test1) {
 

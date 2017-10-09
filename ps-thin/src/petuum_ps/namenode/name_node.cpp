@@ -1,4 +1,4 @@
-#include <petuum_ps/server/name_node.hpp>
+#include <petuum_ps/namenode/name_node.hpp>
 
 namespace petuum {
 NameNodeThread *NameNode::name_node_thread_;

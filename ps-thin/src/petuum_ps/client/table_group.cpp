@@ -1,7 +1,7 @@
 #include <petuum_ps/util/stats.hpp>
 #include <petuum_ps/client/table_group.hpp>
 #include <petuum_ps/server/server_threads.hpp>
-#include <petuum_ps/server/name_node.hpp>
+#include <petuum_ps/namenode/name_node.hpp>
 #include <petuum_ps/thread/bg_workers.hpp>
 
 namespace petuum {

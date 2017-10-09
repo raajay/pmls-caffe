@@ -1,7 +1,4 @@
 #include <petuum_ps/oplog/append_only_oplog_partition.hpp>
-#include <petuum_ps/oplog/batch_inc_append_only_buffer.hpp>
-#include <petuum_ps/oplog/inc_append_only_buffer.hpp>
-#include <petuum_ps/oplog/dense_append_only_buffer.hpp>
 #include <petuum_ps/util/stats.hpp>
 #include <petuum_ps/thread/context.hpp>
 namespace petuum {

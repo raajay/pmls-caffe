@@ -1,7 +1,7 @@
 // name_node_thread.cpp
 // author: jinliang
 
-#include <petuum_ps/server/name_node_thread.hpp>
+#include <petuum_ps/namenode/name_node_thread.hpp>
 #include <iostream>
 
 namespace petuum {

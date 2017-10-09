@@ -1,7 +1,7 @@
 #pragma once
 
 #include <boost/noncopyable.hpp>
-#include <petuum_ps/stats/TwoDimCounter.hpp>
+#include <petuum_ps/util/TwoDimCounter.hpp>
 #include <cstring>
 
 namespace petuum {

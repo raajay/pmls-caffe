@@ -14,7 +14,7 @@
 #include <petuum_ps/server/server_table.hpp>
 #include <petuum_ps/thread/ps_msgs.hpp>
 #include <petuum_ps/util/high_resolution_timer.hpp>
-#include <petuum_ps/stats/TwoDimCounter.hpp>
+#include <petuum_ps/util/TwoDimCounter.hpp>
 
 namespace petuum {
 

@@ -17,9 +17,9 @@
 #include <petuum_ps/client/client_table.hpp>
 #include <petuum_ps/thread/append_only_row_oplog_buffer.hpp>
 #include <petuum_ps/thread/row_oplog_serializer.hpp>
-#include <petuum_ps/stats/OneDimCounter.hpp>
-#include <petuum_ps/stats/TwoDimCounter.hpp>
-#include <petuum_ps/stats/OneDimStorage.hpp>
+#include <petuum_ps/util/OneDimCounter.hpp>
+#include <petuum_ps/util/TwoDimCounter.hpp>
+#include <petuum_ps/util/OneDimStorage.hpp>
 
 namespace petuum {
 class AbstractBgWorker : public Thread {
