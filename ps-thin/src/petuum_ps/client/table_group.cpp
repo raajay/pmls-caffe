@@ -251,8 +251,10 @@ void TableGroup::Clock() {
 void TableGroup::ClockTable(int32_t table_id) {
   CHECK_EQ(true, GlobalContext::am_i_worker_client())
       << "Only (application threads on) worker clients can create tables.";
+  VLOG(20) << "ClockTable table_id=" << table_id;
   // clock the table
   auto iter = tables_.find(table_id);
+  CHECK(iter != tables_.end());
   iter->second->Clock();
   table_clock_.Tick(table_id);
   BgWorkers::ClockTable(table_id);
