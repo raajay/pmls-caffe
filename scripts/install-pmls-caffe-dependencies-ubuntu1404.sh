@@ -71,9 +71,26 @@ function install_cppzmq() {
 }
 
 
-#install_zeromq
+function install_protobuf34() {
+	PB_DOWNLOAD_URL="https://github.com/google/protobuf/releases/download/v3.4.1/protobuf-cpp-3.4.1.tar.gz"
+	cd $TEMP_DIR
+	wget -O ${TEMP_DIR}/protobuf-cpp-3.4.1.tar.gz ${PB_DOWNLOAD_URL} -o ${TEMP_DIR}/protobuf.wget.log
+	tar -x -v -z -f protobuf-cpp-3.4.1.tar.gz > /dev/null
+	
+	cd ${TEMP_DIR}/protobuf-3.4.1
+	./configure
+	make -j8
+	sudo make install
+}
+# make sure to add /usr/local/lib to LD_LIBRARY_PATH
+
+
+install_zeromq
 install_cppzmq
 
 # install tools
 sudo apt-get install -y clang-format-3.5
+
+# based on instructions from https://www.eriksmistad.no/getting-started-with-google-test-on-ubuntu/
 sudo apt-get install -y libgtest-dev
+cd /usr/src/gtest && sudo cmake CMakeLists.txt && sudo make && sudo cp *.a /usr/lib
