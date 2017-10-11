@@ -921,4 +921,77 @@ protected:
     get_msg_type() = kServerPushRow;
   }
 };
+
+
+  /**
+   * @brief Msg to scheduler requesting oplog transfer
+   */
+  struct SchedulerRequestMsg : public NumberedMsg {
+  public:
+    SchedulerRequestMsg() { AllocateMemory(); InitMsg(); }
+
+    explicit SchedulerRequestMsg (void *msg): NumberedMsg(msg) { }
+
+    size_t get_size() {
+      return NumberedMsg::get_size() + 5 * sizeof(int32_t);
+    }
+
+    int32_t &get_dest_id() {
+      return *(reinterpret_cast<int32_t*>(mem_.get_mem() + NumberedMsg::get_size()));
+    }
+
+    int32_t &get_source_id() {
+      return *(reinterpret_cast<int32_t*>(mem_.get_mem() + NumberedMsg::get_size() + 1 * sizeof(int32_t)));
+    }
+
+    int32_t &get_oplog_size() {
+      return *(reinterpret_cast<int32_t*>(mem_.get_mem() + NumberedMsg::get_size() + 2 * sizeof(int32_t)));
+    }
+
+    int32_t &get_oplog_version() {
+      return *(reinterpret_cast<int32_t*>(mem_.get_mem() + NumberedMsg::get_size() + 3 * sizeof(int32_t)));
+    }
+
+    int32_t &get_oplog_id() {
+      return *(reinterpret_cast<int32_t*>(mem_.get_mem() + NumberedMsg::get_size() + 4 * sizeof(int32_t)));
+    }
+
+  protected:
+    void InitMsg() {
+      NumberedMsg::InitMsg();
+      get_msg_type() = kSchedulerRequest;
+    }
+  };
+
+
+  struct SchedulerResponseMsg : public NumberedMsg {
+  public:
+    SchedulerResponseMsg() {
+        AllocateMemory();
+      InitMsg();
+    }
+
+    explicit SchedulerResponseMsg (void *msg): NumberedMsg(msg) { }
+    // 1. new destination, -1 implies drop
+    // 2. new rate, in bits per second
+    // 3. Unique id
+
+    size_t get_size() {
+      return NumberedMsg::get_size() + 2 * sizeof(int32_t);
+    }
+
+    int32_t &get_dest_id() {
+      return *(reinterpret_cast<int32_t*>(mem_.get_mem() + NumberedMsg::get_size()));
+    }
+
+    int32_t &get_oplog_id() {
+      return *(reinterpret_cast<int32_t*>(mem_.get_mem() + NumberedMsg::get_size() + sizeof(int32_t)));
+    }
+
+  protected:
+    void InitMsg() {
+      NumberedMsg::InitMsg();
+      get_msg_type() = kSchedulerResponse;
+    }
+  };
 }
