@@ -115,11 +115,4 @@ BgOpLogPartition *SSPBgWorker::PrepareTableOpLogs(int32_t table_id, ClientTable 
   return bg_table_oplog;
 }
 
-
-
-void SSPBgWorker::TrackBgOpLog(int32_t table_id, BgOpLog *bg_oplog) {
-  IncrementUpdateVersion(table_id);
-  delete bg_oplog;
-}
-
 }

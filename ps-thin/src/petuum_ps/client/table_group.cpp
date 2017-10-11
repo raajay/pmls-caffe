@@ -3,6 +3,7 @@
 #include <petuum_ps/server/server_threads.hpp>
 #include <petuum_ps/namenode/name_node.hpp>
 #include <petuum_ps/thread/bg_workers.hpp>
+#include <petuum_ps/scheduler/mlfabric_scheduler.hpp>
 
 namespace petuum {
 
@@ -34,8 +35,7 @@ TableGroup::TableGroup(const TableGroupConfig &table_group_config,
   int32_t local_id_min = GlobalContext::get_local_id_min();
   int32_t local_id_max = GlobalContext::get_local_id_max();
 
-  CommBus *comm_bus =
-      new CommBus(local_id_min, local_id_max, num_total_clients, 6);
+  auto *comm_bus = new CommBus(local_id_min, local_id_max, num_total_clients, 6);
 
   GlobalContext::comm_bus = comm_bus;
 
@@ -51,12 +51,17 @@ TableGroup::TableGroup(const TableGroupConfig &table_group_config,
     NameNode::Init();
   }
 
+  if (GlobalContext::use_mlfabric() &&  GlobalContext::am_i_scheduler_client()) {
+    MLFabricScheduler::Init();
+  }
+
   if (GlobalContext::am_i_server_client()) {
     ServerThreads::Init();
   }
 
   if (GlobalContext::am_i_worker_client()) {
     BgWorkers::Start(&tables_);
+    // The main thread is registered with the bg worker threads
     BgWorkers::AppThreadRegister();
   }
 
@@ -86,6 +91,10 @@ TableGroup::~TableGroup() {
 
   if (GlobalContext::am_i_name_node_client()) {
     NameNode::ShutDown();
+  }
+
+  if (GlobalContext::use_mlfabric() && GlobalContext::am_i_scheduler_client()) {
+      MLFabricScheduler::ShutDown();
   }
 
   if (GlobalContext::am_i_worker_client()) {

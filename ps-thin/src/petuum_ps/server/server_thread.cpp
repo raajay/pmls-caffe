@@ -47,115 +47,32 @@ void ServerThread::SetWaitMsg() {
   }
 }
 
-void ServerThread::SetUpCommBus() {
-  CommBus::Config comm_config;
-  comm_config.entity_id_ = my_id_;
-
-  if (GlobalContext::get_num_clients() > 1) {
-    comm_config.ltype_ = CommBus::kInProc | CommBus::kInterProc;
-    HostInfo host_info = GlobalContext::get_server_info(my_id_);
-    comm_config.network_addr_ = "*:" + host_info.port;
-  } else {
-    comm_config.ltype_ = CommBus::kInProc;
-  }
-
-  comm_bus_->ThreadRegister(comm_config);
-}
-
-void ServerThread::ConnectToNameNode() {
-  int32_t name_node_id = GlobalContext::get_name_node_id();
-
-  ServerConnectMsg server_connect_msg;
-  void *msg = server_connect_msg.get_mem();
-  int32_t msg_size = server_connect_msg.get_size();
-
-  if (comm_bus_->IsLocalEntity(name_node_id)) {
-    comm_bus_->ConnectTo(name_node_id, msg, msg_size);
-  } else {
-    HostInfo name_node_info = GlobalContext::get_name_node_info();
-    std::string name_node_addr = name_node_info.ip + ":" + name_node_info.port;
-    comm_bus_->ConnectTo(name_node_id, name_node_addr, msg, msg_size);
-  }
-  VLOG(5) << "Send connection to Name Node";
-}
-
-int32_t ServerThread::GetConnection(bool *is_client, int32_t *client_id) {
-  int32_t sender_id;
-  zmq::message_t zmq_msg;
-  (comm_bus_->*(comm_bus_->RecvAny_))(&sender_id, &zmq_msg);
-  MsgType msg_type = MsgBase::get_msg_type(zmq_msg.data());
-  if (msg_type == kClientConnect) {
-    ClientConnectMsg msg(zmq_msg.data());
-    *is_client = true;
-    *client_id = msg.get_client_id();
-    VLOG(5) << "Receive connection from worker: " << msg.get_client_id();
-  } else if (msg_type == kAggregatorConnect) {
-    AggregatorConnectMsg msg(zmq_msg.data());
-    *is_client = false;
-    *client_id = msg.get_client_id();
-    VLOG(5) << "Receive connection from aggregator: " << msg.get_client_id();
-  } else {
-    LOG(FATAL) << "Server received request from non bgworker/aggregator";
-    *is_client = false;
-  }
-  return sender_id;
-}
-
-void ServerThread::SendToAllBgThreads(MsgBase *msg) {
-  for (const auto &bg_worker_id : bg_worker_ids_) {
-    size_t sent_size = (comm_bus_->*(comm_bus_->SendAny_))(
-        bg_worker_id, msg->get_mem(), msg->get_size());
-    CHECK_EQ(sent_size, msg->get_size());
-  }
-}
-
 void ServerThread::InitServer() {
 
-  // neither the name node nor scheduler respond.
-  ConnectToNameNode();
+    ConnectTo(GlobalContext::get_name_node_id(), my_id_);
 
   // wait for new connections
-  int32_t num_connections;
   int32_t num_bgs = 0;
   int32_t num_expected_connections = GlobalContext::get_num_worker_clients();
 
   VLOG(5) << "Number of expected connections at server thread: "
           << num_expected_connections;
 
-  for (num_connections = 0; num_connections < num_expected_connections;
-       ++num_connections) {
-    int32_t client_id;
-    bool is_client;
-    int32_t sender_id = GetConnection(&is_client, &client_id);
+  int32_t nc;
+  for (nc = 0; nc < num_expected_connections; ++nc) {
+    int32_t sender_id = WaitForConnect();
+    CHECK(GlobalContext::is_worker_thread(sender_id));
     bg_worker_ids_[num_bgs] = sender_id;
     num_bgs++;
-  } // end waiting for connections from bg worker
+  }
 
   VLOG(5) << "Total connections from bgthreads: " << num_bgs;
 
   server_obj_.Init(my_id_, bg_worker_ids_);
+
   ClientStartMsg client_start_msg;
-
+  SendToAll(&client_start_msg, bg_worker_ids_);
   VLOG(5) << "Server Thread - send client start to all bg threads";
-  SendToAllBgThreads(reinterpret_cast<MsgBase *>(&client_start_msg));
-} // end function -- init server
-
-bool ServerThread::HandleShutDownMsg() {
-  // When num_shutdown_bgs reaches the total number of clients, the server
-  // reply to each bg with a ShutDownReply message
-  ++num_shutdown_bgs_;
-  if (num_shutdown_bgs_ == GlobalContext::get_num_worker_clients()) {
-    ServerShutDownAckMsg shut_down_ack_msg;
-    size_t msg_size = shut_down_ack_msg.get_size();
-    for (int i = 0; i < GlobalContext::get_num_worker_clients(); ++i) {
-      int32_t bg_id = bg_worker_ids_[i];
-      size_t sent_size = (comm_bus_->*(comm_bus_->SendAny_))(
-          bg_id, shut_down_ack_msg.get_mem(), msg_size);
-      CHECK_EQ(msg_size, sent_size);
-    }
-    return true;
-  }
-  return false;
 }
 
 void ServerThread::HandleCreateTable(int32_t sender_id,
@@ -311,7 +228,7 @@ void *ServerThread::operator()() {
 
   STATS_REGISTER_THREAD(kServerThread);
 
-  SetUpCommBus();
+  SetupCommBus(my_id_);
 
   pthread_barrier_wait(init_barrier_);
 

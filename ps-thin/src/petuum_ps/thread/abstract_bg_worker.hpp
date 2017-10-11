@@ -58,12 +58,10 @@ protected:
 
   void BgServerHandshake();
   void RecvAppInitThreadConnection(int32_t *num_connected_app_threads);
-  void ConnectToNameNodeOrServer(int32_t server_id);
 
   virtual void CreateRowRequestOpLogMgr() = 0;
 
   virtual void InitWhenStart();
-  void InitCommBus();
   void PrepareBeforeInfiniteLoop();
 
   void HandleCreateTables();
@@ -75,7 +73,6 @@ protected:
   void FinalizeTableOplogSize(int32_t table_id);
   void CreateOpLogMsgs(int32_t table_id, const BgOpLog *bg_oplog);
   size_t SendOpLogMsgs(int32_t table_id, bool clock_advanced);
-  virtual void TrackBgOpLog(int32_t table_id, BgOpLog *bg_oplog) = 0;
 
   void HandleServerRowRequestReply(
       int32_t server_id,
@@ -106,7 +103,6 @@ protected:
   void SendRowRequestReplyToApp(int32_t app_id, int32_t table_id, int32_t row_id, int32_t clock);
 
 
-  int32_t my_id_;
   int32_t my_comm_channel_idx_;
 
   std::map<int32_t, ClientTable *> *tables_;
@@ -114,12 +110,12 @@ protected:
 
   OneDimCounter<int32_t, uint32_t> table_update_version_;
 
+  // TODO(raajay) make the clock per table
   int32_t worker_clock_;
   int32_t clock_has_pushed_;
-  RowRequestOpLogMgr *row_request_oplog_mgr_;
-  CommBus *const comm_bus_;
 
-  pthread_barrier_t *init_barrier_;
+  RowRequestOpLogMgr *row_request_oplog_mgr_;
+
   pthread_barrier_t *create_table_barrier_;
 
   OneDimCounter<int32_t, size_t> ephemeral_server_byte_counter_;

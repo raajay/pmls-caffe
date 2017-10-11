@@ -8,6 +8,36 @@
 
 namespace petuum {
 
+    struct ConnectMsg : public NumberedMsg {
+        public:
+            ConnectMsg() {
+                AllocateMemory();
+                InitMsg();
+            }
+
+            explicit ConnectMsg(void *msg) : NumberedMsg(msg) {}
+
+            size_t get_size() {
+                return NumberedMsg::get_size() + sizeof(int32_t) + sizeof(int32_t);
+            }
+
+            int32_t &get_client_id() {
+                return *(reinterpret_cast<int32_t *>(mem_.get_mem()
+                            + NumberedMsg::get_size()));
+            }
+
+            int32_t &get_thread_id() {
+                return *(reinterpret_cast<int32_t *>(mem_.get_mem()
+                            + NumberedMsg::get_size()
+                            + sizeof(int32_t)));
+            }
+        protected:
+            void InitMsg() {
+                NumberedMsg::InitMsg();
+                get_msg_type() = kGenericConnect;
+            }
+    };
+
 struct ClientConnectMsg : public NumberedMsg {
 public:
   ClientConnectMsg() {

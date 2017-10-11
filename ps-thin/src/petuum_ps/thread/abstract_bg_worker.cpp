@@ -15,9 +15,10 @@ AbstractBgWorker::AbstractBgWorker(int32_t id, int32_t comm_channel_idx,
                                    std::map<int32_t, ClientTable *> *tables,
                                    pthread_barrier_t *init_barrier,
                                    pthread_barrier_t *create_table_barrier)
-    : my_id_(id), my_comm_channel_idx_(comm_channel_idx), tables_(tables),
+    : Thread(id, init_barrier),
+      my_comm_channel_idx_(comm_channel_idx),
+      tables_(tables),
       worker_clock_(0), clock_has_pushed_(-1),
-      comm_bus_(GlobalContext::comm_bus), init_barrier_(init_barrier),
       create_table_barrier_(create_table_barrier) {
   GlobalContext::GetServerThreadIDs(my_comm_channel_idx_, &(server_ids_));
 }
@@ -224,58 +225,36 @@ void AbstractBgWorker::SetWaitMsg() {
   }
 }
 
-void AbstractBgWorker::InitCommBus() {
-  CommBus::Config comm_config;
-  comm_config.entity_id_ = my_id_;
-  comm_config.ltype_ = CommBus::kInProc;
-  comm_bus_->ThreadRegister(comm_config);
-}
 
+/**
+ */
 void AbstractBgWorker::BgServerHandshake() {
-  {
-    // connect to name node
-    int32_t name_node_id = GlobalContext::get_name_node_id();
-    ConnectToNameNodeOrServer(name_node_id);
+  // connect to name node
+  int32_t name_node_id = GlobalContext::get_name_node_id();
+  ConnectTo(name_node_id, my_id_);
+  WaitForReply(name_node_id, kConnectServer);
+  WaitForReply(name_node_id, kClientStart);
 
-    // wait for ConnectServerMsg from NameNode
-    zmq::message_t zmq_msg;
-    int32_t sender_id;
-    if (comm_bus_->IsLocalEntity(name_node_id)) {
-      comm_bus_->RecvInProc(&sender_id, &zmq_msg);
-    } else {
-      comm_bus_->RecvInterProc(&sender_id, &zmq_msg);
-    }
-    MsgType msg_type = MsgBase::get_msg_type(zmq_msg.data());
-    CHECK_EQ(sender_id, name_node_id);
-    CHECK_EQ(msg_type, kConnectServer) << "sender_id = " << sender_id;
+  if (GlobalContext::use_mlfabric()) {
+    // connect to scheduler (bot recv and transmit threads)
+    ConnectTo(GlobalContext::get_scheduler_recv_thread_id(), my_id_);
+    WaitForReply(GlobalContext::get_scheduler_recv_thread_id(), kClientStart);
+
+    // ConnectTo(GlobalContext::get_scheduler_send_thread_id(), my_id_);
+    // WaitForReply(GlobalContext::get_scheduler_send_thread_id(), kClientStart);
   }
 
   // connect to servers
-  {
-    for (const auto &server_id : server_ids_) {
-      ConnectToNameNodeOrServer(server_id);
-    }
+  for (const auto &server_id : server_ids_) {
+    ConnectTo(server_id, my_id_);
   }
 
-  // get messages from servers, namenode for permission to start
-  {
-    int32_t num_started_servers = 0;
-    for (num_started_servers = 0;
-         // receive from all servers and name node
-         num_started_servers < GlobalContext::get_num_server_clients() + 1;
-         ++num_started_servers) {
-      zmq::message_t zmq_msg;
-      int32_t sender_id;
-      (comm_bus_->*(comm_bus_->RecvAny_))(&sender_id, &zmq_msg);
-      MsgType msg_type = MsgBase::get_msg_type(zmq_msg.data());
-
-      CHECK_EQ(msg_type, kClientStart);
-      VLOG(5) << "THREAD-" << my_id_
-              << ": Received client start from server:" << sender_id;
-    }
+  // get start messages from servers
+  int32_t nss = 0;
+  for (nss = 0; nss < server_ids_.size(); ++nss) {
+    WaitForReply(GlobalContext::kAnyThreadId, kClientStart);
   }
-
-} // end function -- bg server handshake
+}
 
 void AbstractBgWorker::HandleCreateTables() {
   for (int32_t num_created_tables = 0;
@@ -406,6 +385,8 @@ long AbstractBgWorker::HandleClockMsg(int32_t table_id, bool clock_advanced) {
   // across tables.
 
   BgOpLog *bg_oplog = PrepareOpLogs(table_id);
+
+  // here the oplogs is actually created; serialization happens
   CreateOpLogMsgs(table_id, bg_oplog);
   STATS_BG_ACCUM_CLOCK_END_OPLOG_SERIALIZE_END();
 
@@ -413,11 +394,9 @@ long AbstractBgWorker::HandleClockMsg(int32_t table_id, bool clock_advanced) {
   // send the information to the server with info on whether the clock has
   // advanced (or) if the client is just pushing updates aggressively.
   SendOpLogMsgs(table_id, clock_advanced);
-  // increments the current version of the bgworker, and keeps track of the
-  // oplog in ssp_row_request_oplog_manager
-  // note that the version number is incremented even if the clock has not
-  // advanced.
-  TrackBgOpLog(table_id, bg_oplog);
+
+  IncrementUpdateVersion(table_id);
+  delete bg_oplog;
 
   VLOG(20) << "THREAD-" << my_id_
            << ": Handle clock message (prepare, create, send) took "
@@ -691,8 +670,7 @@ void AbstractBgWorker::HandleServerRowRequestReply(
  * Send message to bg worker thread.
  */
 size_t AbstractBgWorker::SendMsg(MsgBase *msg) {
-  size_t sent_size =
-      comm_bus_->SendInProc(my_id_, msg->get_mem(), msg->get_size());
+  size_t sent_size = comm_bus_->SendInProc(my_id_, msg->get_mem(), msg->get_size());
   return sent_size;
 }
 
@@ -703,31 +681,6 @@ void AbstractBgWorker::RecvMsg(zmq::message_t &zmq_msg) {
   int32_t sender_id;
   comm_bus_->RecvInProc(&sender_id, &zmq_msg);
 }
-
-/**
- * Connect to namenode server.
- */
-void AbstractBgWorker::ConnectToNameNodeOrServer(int32_t server_id) {
-
-  ClientConnectMsg client_connect_msg;
-  client_connect_msg.get_client_id() = GlobalContext::get_client_id();
-  void *msg = client_connect_msg.get_mem();
-  int32_t msg_size = client_connect_msg.get_size();
-
-  if (comm_bus_->IsLocalEntity(server_id)) {
-    comm_bus_->ConnectTo(server_id, msg, msg_size);
-  } else {
-    HostInfo server_info;
-    if (server_id == GlobalContext::get_name_node_id()) {
-      server_info = GlobalContext::get_name_node_info();
-    } else {
-      server_info = GlobalContext::get_server_info(server_id);
-    }
-    std::string server_addr = server_info.ip + ":" + server_info.port;
-    comm_bus_->ConnectTo(server_id, server_addr, msg, msg_size);
-  }
-}
-
 
 /**
  */
@@ -773,9 +726,7 @@ void AbstractBgWorker::SendRowRequestToServer(RowRequestMsg &msg) {
     VLOG(20) << "RR BgThread (" << my_id_
         << ") >>> ServerThread (" << server_id << ") "
         << petuum::GetTableRowStringId(msg.get_table_id(), msg.get_row_id());
-    size_t sent_size = (comm_bus_->*(comm_bus_->SendAny_))(server_id,
-            msg.get_mem(), msg.get_size());
-    CHECK_EQ(sent_size,  msg.get_size());
+    Send(&msg, server_id);
 }
 
 
@@ -809,7 +760,7 @@ void *AbstractBgWorker::operator()() {
 
   ThreadContext::RegisterThread(my_id_);
 
-  InitCommBus();
+  SetupCommBus(my_id_);
 
   BgServerHandshake();
 
@@ -882,17 +833,11 @@ void *AbstractBgWorker::operator()() {
       // when all the app thread have de-registered, send a shut down message to
       // namenode,
       // scheduler and all the servers.
-      if (num_deregistered_app_threads ==
-          GlobalContext::get_num_app_threads()) {
+      if (num_deregistered_app_threads == GlobalContext::get_num_app_threads()) {
         ClientShutDownMsg msg;
-        int32_t name_node_id = GlobalContext::get_name_node_id();
-        (comm_bus_->*(comm_bus_->SendAny_))(name_node_id, msg.get_mem(),
-                                            msg.get_size());
-
-        for (const auto &server_id : server_ids_) {
-          (comm_bus_->*(comm_bus_->SendAny_))(server_id, msg.get_mem(),
-                                              msg.get_size());
-        }
+        Send(&msg, GlobalContext::get_name_node_id());
+        Send(&msg, GlobalContext::get_scheduler_recv_thread_id());
+        SendToAll(&msg, server_ids_);
       }
     } break;
 
@@ -913,8 +858,7 @@ void *AbstractBgWorker::operator()() {
       ++num_shutdown_acked_servers;
       // if all them ack your shutdown, only then de-register and terminate out
       // of the infinite loop
-      if (num_shutdown_acked_servers ==
-          GlobalContext::get_num_server_clients() + 1) {
+      if (num_shutdown_acked_servers == GlobalContext::get_num_server_clients() + 2) {
         comm_bus_->ThreadDeregister();
         STATS_DEREGISTER_THREAD();
         return nullptr;

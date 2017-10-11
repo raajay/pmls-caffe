@@ -1,63 +1,12 @@
-// name_node_thread.cpp
-// author: jinliang
-
 #include <petuum_ps/namenode/name_node_thread.hpp>
 #include <iostream>
 
 namespace petuum {
 
 NameNodeThread::NameNodeThread(pthread_barrier_t *init_barrier)
-    : my_id_(0), init_barrier_(init_barrier),
-      comm_bus_(GlobalContext::comm_bus),
-      bg_worker_ids_(GlobalContext::get_num_total_bg_threads()),
-      num_shutdown_bgs_(0) {}
+    : NonWorkerThread(GlobalContext::get_name_node_id(), init_barrier,
+            GlobalContext::get_num_total_bg_threads()) {}
 
-/* Private Functions */
-int32_t NameNodeThread::GetConnection(bool *is_client, int32_t *client_id) {
-  int32_t sender_id;
-  zmq::message_t zmq_msg;
-  (comm_bus_->*(comm_bus_->RecvAny_))(&sender_id, &zmq_msg);
-  MsgType msg_type = MsgBase::get_msg_type(zmq_msg.data());
-
-  if (msg_type == kClientConnect) {
-
-    ClientConnectMsg msg(zmq_msg.data());
-    *is_client = true;
-    *client_id = msg.get_client_id();
-    VLOG(5) << "Receive connection from worker: " << msg.get_client_id();
-
-  } else if (msg_type == kAggregatorConnect) {
-
-    AggregatorConnectMsg msg(zmq_msg.data());
-    *is_client = false;
-    CHECK_EQ(msg_type, kAggregatorConnect);
-    VLOG(5) << "Receive connection from aggregator: " << msg.get_client_id();
-
-  } else {
-
-    CHECK_EQ(msg_type, kServerConnect);
-    *is_client = false;
-    VLOG(5) << "Receive connection from server.";
-  }
-  return sender_id;
-}
-
-void NameNodeThread::SendToAllBgThreads(MsgBase *msg) {
-  for (const auto &bg_id : bg_worker_ids_) {
-    size_t sent_size = (comm_bus_->*(comm_bus_->SendAny_))(
-        bg_id, msg->get_mem(), msg->get_size());
-    CHECK_EQ(sent_size, msg->get_size());
-  }
-}
-
-void NameNodeThread::SendToAllServers(MsgBase *msg) {
-  std::vector<int32_t> server_ids = GlobalContext::get_all_server_ids();
-  for (const auto &server_id : server_ids) {
-    size_t sent_size = (comm_bus_->*(comm_bus_->SendAny_))(
-        server_id, msg->get_mem(), msg->get_size());
-    CHECK_EQ(sent_size, msg->get_size());
-  }
-}
 
 void NameNodeThread::InitNameNode() {
   int32_t num_bgs = 0;
@@ -68,34 +17,34 @@ void NameNodeThread::InitNameNode() {
   VLOG(5) << "Number of expected connections at name node="
           << num_expected_conns;
 
-  int32_t num_connections;
-  for (num_connections = 0; num_connections < num_expected_conns;
-       ++num_connections) {
-    int32_t client_id;
-    bool is_client;
-    int32_t sender_id = GetConnection(&is_client, &client_id);
-    if (is_client) {
-      bg_worker_ids_[num_bgs] = sender_id;
-      ++num_bgs;
+  int32_t nc;
+  for (nc = 0; nc < num_expected_conns; ++nc) {
+    int32_t sender_id = WaitForConnect();
+    if(GlobalContext::is_worker_thread(sender_id)) {
+        bg_worker_ids_[num_bgs] = sender_id;
+        ++num_bgs;
+    } else if (GlobalContext::is_server_thread(sender_id)) {
+        ++num_servers;
     } else {
-      ++num_servers;
+        LOG(FATAL) << "Got a connection from a entity other then server/worker";
     }
   }
-  VLOG(5) << "Total connections received: " << num_connections;
+
+  VLOG(5) << "Total connections received: " << nc;
   CHECK_EQ(num_bgs, GlobalContext::get_num_total_bg_threads());
+  CHECK_EQ(num_servers, GlobalContext::get_num_total_server_threads());
 
   server_obj_.Init(0, bg_worker_ids_);
 
   // Note that we send two types of messages to the bg worker threads
   ConnectServerMsg connect_server_msg;
   VLOG(5) << "Name node - send connect server to all bg threads";
-  SendToAllBgThreads(reinterpret_cast<MsgBase *>(&connect_server_msg));
+  SendToAll(reinterpret_cast<MsgBase *>(&connect_server_msg), bg_worker_ids_);
 
   ClientStartMsg client_start_msg;
   VLOG(5) << "Name node - send client start to all bg threads";
-  SendToAllBgThreads(reinterpret_cast<MsgBase *>(&client_start_msg));
-
-} // end function -- init name node
+  SendToAll(reinterpret_cast<MsgBase *>(&client_start_msg), bg_worker_ids_);
+}
 
 bool NameNodeThread::HaveCreatedAllTables() {
   if ((int32_t)create_table_map_.size() < GlobalContext::get_num_tables())
@@ -124,25 +73,6 @@ void NameNodeThread::SendCreatedAllTablesMsg() {
   }
 }
 
-bool NameNodeThread::HandleShutDownMsg() {
-  // When num_shutdown_bgs reaches the total number of bg threads, the server
-  // reply to each bg with a ShutDownReply message
-  ++num_shutdown_bgs_;
-  if (num_shutdown_bgs_ == GlobalContext::get_num_total_bg_threads()) {
-    ServerShutDownAckMsg shut_down_ack_msg;
-    size_t msg_size = shut_down_ack_msg.get_size();
-
-    for (int i = 0; i < GlobalContext::get_num_total_bg_threads(); ++i) {
-      int32_t bg_id = bg_worker_ids_[i];
-      size_t sent_size = (comm_bus_->*(comm_bus_->SendAny_))(
-          bg_id, shut_down_ack_msg.get_mem(), msg_size);
-      CHECK_EQ(msg_size, sent_size);
-    }
-
-    return true;
-  }
-  return false;
-}
 
 void NameNodeThread::HandleCreateTable(int32_t sender_id,
                                        CreateTableMsg &create_table_msg) {
@@ -167,7 +97,8 @@ void NameNodeThread::HandleCreateTable(int32_t sender_id,
 
     create_table_map_.insert(std::make_pair(
         table_id, CreateTableInfo())); // access it to call default constructor
-    SendToAllServers(reinterpret_cast<MsgBase *>(&create_table_msg));
+    SendToAll(reinterpret_cast<MsgBase *>(&create_table_msg),
+            GlobalContext::get_all_server_ids());
   }
 
   if (create_table_map_[table_id].ReceivedFromAllServers()) {
@@ -190,8 +121,7 @@ void NameNodeThread::HandleCreateTable(int32_t sender_id,
     // to be sent later
     create_table_map_[table_id].bgs_to_reply_.push(sender_id);
   }
-
-} // end function -- HandleCreateTable
+}
 
 void NameNodeThread::HandleCreateTableReply(
     CreateTableReplyMsg &create_table_reply_msg) {
@@ -219,29 +149,17 @@ void NameNodeThread::HandleCreateTableReply(
   }
 }
 
-void NameNodeThread::SetUpCommBus() {
-  CommBus::Config comm_config;
-  comm_config.entity_id_ = my_id_;
 
-  if (GlobalContext::get_num_clients() > 1) {
-    comm_config.ltype_ = CommBus::kInProc | CommBus::kInterProc;
-    HostInfo host_info = GlobalContext::get_name_node_info();
-    comm_config.network_addr_ = "*:" + host_info.port;
-  } else {
-    comm_config.ltype_ = CommBus::kInProc;
-  }
-
-  comm_bus_->ThreadRegister(comm_config);
-  std::cout << "NameNode is ready to accept connections!" << std::endl;
-}
-
+/**
+ */
 void *NameNodeThread::operator()() {
   ThreadContext::RegisterThread(my_id_);
 
   // set up thread-specific server context
-  SetUpCommBus();
+  SetupCommBus(my_id_);
 
   pthread_barrier_wait(init_barrier_);
+  VLOG(0) << "NameNode accepting connections";
 
   // wait for connections from client, server
   InitNameNode();
@@ -276,8 +194,7 @@ void *NameNodeThread::operator()() {
       LOG(FATAL) << "Unrecognized message type " << msg_type
                  << " sender = " << sender_id;
     }
-
-  } // end while -- infinite loop
-} // end function -- operator ()
+  }
+}
 
 } // end namespace -- petuum

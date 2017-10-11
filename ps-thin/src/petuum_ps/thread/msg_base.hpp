@@ -41,7 +41,8 @@ enum MsgType {
   kServerSendOpLog = 64,
   kSyncThreadConnect = 65,
   kSyncThreadDereg = 66,
-  kBgTableClock = 67
+  kBgTableClock = 67,
+  kGenericConnect = 68
 };
 
 // Represent a message over wire that is very easy to serialize.

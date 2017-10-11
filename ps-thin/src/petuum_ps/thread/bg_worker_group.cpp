@@ -7,21 +7,21 @@ namespace petuum {
 
 BgWorkerGroup::BgWorkerGroup(std::map<int32_t, ClientTable *> *tables)
     : tables_(tables),
-      bg_worker_vec_(GlobalContext::get_num_comm_channels_per_client()),
+      bg_worker_vec_((uint32_t) GlobalContext::get_num_comm_channels_per_client()),
       bg_worker_id_st_(
           GlobalContext::get_head_bg_id(GlobalContext::get_client_id())) {
 
-  pthread_barrier_init(&init_barrier_, NULL,
+  pthread_barrier_init(&init_barrier_, nullptr, (uint32_t)
                        GlobalContext::get_num_comm_channels_per_client() + 1);
-  pthread_barrier_init(&create_table_barrier_, NULL,
+  pthread_barrier_init(&create_table_barrier_, nullptr, (uint32_t)
                        GlobalContext::get_num_comm_channels_per_client() + 1);
 }
 
 BgWorkerGroup::~BgWorkerGroup() {
   for (auto &worker : bg_worker_vec_) {
-    if (worker != 0) {
+    if (worker != nullptr) {
       delete worker;
-      worker = 0;
+      worker = nullptr;
     }
   }
 }

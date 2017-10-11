@@ -41,7 +41,6 @@ protected:
 
   /* Handles Sending OpLogs -- BEGIN */
   BgOpLog *PrepareOpLogs(int32_t table_id) override;
-  void TrackBgOpLog(int32_t table_id, BgOpLog *bg_oplog) override;
   virtual BgOpLogPartition *PrepareTableOpLogs(int32_t table_id,
                                                ClientTable *table);
   /* Handles Sending OpLogs -- END */

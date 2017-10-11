@@ -92,12 +92,29 @@ public:
   /**
    * @brief The thread id of the name node.
    */
-  static int32_t get_name_node_id() { return 0; }
+  static int32_t get_name_node_id() { return kNameNodeThreadId; }
 
   /**
    * @brief The client id of the name node.
    */
   static int32_t get_name_node_client_id() { return kNameNodeClientId; }
+
+  /**
+   * @brief The client id of the scheduler node
+   */
+  static int32_t get_scheduler_client_id() { return kSchedulerClientId; }
+
+  /**
+   */
+  static int32_t get_scheduler_recv_thread_id() {
+      return kMLFabricSchedulerRecvThreadId;
+  }
+
+  /**
+   */
+  static int32_t get_scheduler_send_thread_id() {
+      return kMLFabricSchedulerSendThreadId;
+  }
 
   /**
    * @brief The comm_channel_idx ^th background worker thread for a client.
@@ -209,6 +226,13 @@ public:
    */
   static bool am_i_name_node_client() {
     return (get_client_id() == get_name_node_client_id());
+  }
+
+  /**
+   * @brief Is the current client a scheduler
+   */
+  static bool am_i_scheduler_client() {
+    return get_client_id() == get_scheduler_client_id();
   }
 
   /**
@@ -337,6 +361,20 @@ public:
    * @brief Get the address of the name node
    */
   static HostInfo get_name_node_info() { return name_node_host_info_; }
+
+  /**
+   * @brief get the host information for a destination thread
+   */
+  static HostInfo get_host_info(int32_t dest_id) {
+      int32_t client_id = GlobalContext::thread_id_to_client_id(dest_id);
+      if (GlobalContext::is_server_client(client_id)) {
+          return GlobalContext::get_server_info(dest_id);
+      } else if (client_id == get_name_node_client_id()) {
+          return GlobalContext::get_name_node_info();
+      } else {
+          LOG(FATAL) << "Request host info for unknown type of client";
+      }
+  }
 
   /**
    * @brief Get ids of all servers across all the clients.
@@ -520,6 +558,31 @@ public:
    */
   static bool use_table_clock() { return table_group_config_.use_table_clock; }
 
+  /**
+   * @brief Return the thread offset from the thread id
+   */
+  static int32_t get_thread_offset(int32_t thread_id) {
+      return thread_id % kMaxNumThreadsPerClient;
+  }
+
+  /**
+   * @brief Check if the thread is a server thread
+   */
+  static int32_t is_server_thread(int32_t thread_id) {
+      int32_t offset = get_thread_offset(thread_id);
+      return offset >= kServerThreadIDStartOffset
+          && offset <= kServerThreadIDEndOffset;
+  }
+
+  /**
+   * @brief Check if the thread is a client worker thread
+   */
+  static int32_t is_worker_thread(int32_t thread_id) {
+      int32_t offset = get_thread_offset(thread_id);
+      return offset >= kBgThreadIDStartOffset
+          && offset <= kBgThreadIDEndOffset;
+  }
+
   static CommBus *comm_bus;
 
   // name node thread id - 0
@@ -531,15 +594,33 @@ public:
 
   static const int32_t kMaxClientsOfAType = 100;
   static const int32_t kMaxNumThreadsPerClient = 1000;
+
+  static const int32_t kNameNodeThreadId = 0;
+
+  static const int32_t kMLFabricSchedulerRecvThreadId = 901;
+  static const int32_t kMLFabricSchedulerSendThreadId = 902;
+
   // num of server + name node threads per node <= 100
   static const int32_t kServerThreadIDStartOffset = 1;
+  static const int32_t kServerThreadIDEndOffset = 100;
+
   static const int32_t kBgThreadIDStartOffset = 101;
+  static const int32_t kBgThreadIDEndOffset = 199;
+
   static const int32_t kInitThreadIDOffset = 200;
-  static const int32_t kAggregatorThreadIDStartOffset = 301; // 301 - 400
-  static const int32_t kReplicaThreadIDStartOffset = 401;    // 401 - 500
+  static const int32_t kInitThreadIDEndOffset = 300;
+
+  static const int32_t kAggregatorThreadIDStartOffset = 301;
+  static const int32_t kAggregatorThreadIDEndOffset = 400;
+
+  static const int32_t kReplicaThreadIDStartOffset = 401;
+  static const int32_t kReplicaThreadIDEndOffset = 500;
+
   static const int32_t kEphemeralThreadIIDStartOffset = 501;
+  static const int32_t kEphemeralThreadIIDEndOffset = 600;
 
   static const int32_t kNameNodeClientId = 0;
+  static const int32_t kSchedulerClientId = 0;
   static const int32_t kServerClientMinId = 0;
   static const int32_t kServerClientMaxId = 1000;
   static const int32_t kWorkerClientMinId = 0;
@@ -548,6 +629,9 @@ public:
   static const int32_t kAggregatorClientMaxId = 300;
   static const int32_t kReplicaClientMinId = 301;
   static const int32_t kReplicaClientMaxId = 400;
+
+
+  static const int32_t kAnyThreadId = -1;
 
 private:
   static int32_t num_table_threads_;
