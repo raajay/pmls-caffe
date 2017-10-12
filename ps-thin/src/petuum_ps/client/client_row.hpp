@@ -48,8 +48,7 @@ public:
                                 __attribute__((unused))) {}
 
   virtual int32_t GetGlobalVersion() const {
-    return -1; // default is -1 version, be careful to ignore it when
-               // calculating version of table
+    return -1;
   }
 
   AbstractRow *GetRowDataPtr() {
