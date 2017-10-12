@@ -49,4 +49,20 @@ namespace petuum {
     int32_t OplogStorage::GetNumOplogs() {
         return oplogs_.size();
     }
+
+    bool OplogStorage::ContainsOpLog(int32_t server_id) {
+        auto iter = server_oplog_ids_.find(server_id);
+        if (iter == server_oplog_ids_.end()) {
+            return false;
+        }
+        return !iter->second.empty();
+    }
+
+    int32_t OplogStorage::GetNextOplogIdAndErase(int32_t server_id) {
+        auto iter = server_oplog_ids_.find(server_id);
+        CHECK(iter != server_oplog_ids_.end());
+        int32_t next_id = iter->second.front();
+        iter->second.pop_front();
+        return next_id;
+    }
 }

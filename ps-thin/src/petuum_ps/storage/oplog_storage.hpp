@@ -31,6 +31,10 @@ namespace petuum {
 
             int32_t GetNumOplogs();
 
+            bool ContainsOpLog(int32_t server_id);
+
+            int32_t GetNextOplogIdAndErase(int32_t server_id);
+
         private:
             int32_t oplog_counter_;
             std::map<int32_t, ClientSendOpLogMsg*> oplogs_;
