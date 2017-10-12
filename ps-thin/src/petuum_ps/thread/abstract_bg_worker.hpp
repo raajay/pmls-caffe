@@ -20,6 +20,7 @@
 #include <petuum_ps/util/OneDimCounter.hpp>
 #include <petuum_ps/util/TwoDimCounter.hpp>
 #include <petuum_ps/util/OneDimStorage.hpp>
+#include <petuum_ps/storage/oplog_storage.hpp>
 
 namespace petuum {
 class AbstractBgWorker : public Thread {
@@ -114,13 +115,14 @@ protected:
   int32_t worker_clock_;
   int32_t clock_has_pushed_;
 
+  // stores un-sent row requests
   RowRequestOpLogMgr *row_request_oplog_mgr_;
+  OplogStorage *oplog_storage_;
 
   pthread_barrier_t *create_table_barrier_;
 
   OneDimCounter<int32_t, size_t> ephemeral_server_byte_counter_;
   TwoDimCounter<int32_t, int32_t, size_t> ephemeral_server_table_size_counter_;
-  OneDimStorage<int32_t, ClientSendOpLogMsg*> ephemeral_server_oplog_msg_;
 
   HighResolutionTimer from_start_timer_;
 };

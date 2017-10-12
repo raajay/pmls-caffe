@@ -40,7 +40,7 @@ BgOpLog *SSPBgWorker::PrepareOpLogs(int32_t table_id) {
 
   auto *bg_oplog = new BgOpLog;
   ephemeral_server_table_size_counter_.Reset();
-  ephemeral_server_oplog_msg_.Reset();
+  CHECK_EQ(0, oplog_storage_->GetNumOplogs());
 
   // Prepare oplog for each table and add it to BgOpLog
   for (const auto &table_pair : (*tables_)) {
