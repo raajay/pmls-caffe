@@ -53,4 +53,8 @@ std::string GetTableRowStringId(int32_t table_id, int32_t row_id) {
   return retstream.str();
 }
 
+std::string GetRandomString(int32_t string_length = 16) {
+    return "";
+}
+
 } // namespace petuum

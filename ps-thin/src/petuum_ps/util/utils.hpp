@@ -23,4 +23,6 @@ void GetServerIDsFromHostMap(std::vector<int32_t> *server_ids,
 
 std::string GetTableRowStringId(int32_t table_id, int32_t row_id);
 
+std::string GetRandomString(int32_t string_length);
+
 } // namespace petuum
