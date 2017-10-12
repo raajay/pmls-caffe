@@ -385,10 +385,6 @@ long AbstractBgWorker::HandleClockMsg(int32_t table_id, bool clock_advanced) {
   // across tables.
   BgOpLog *bg_oplog = PrepareOpLogs(table_id);
 
-  if (GlobalContext::use_mlfabric()) {
-      // 1. send requests to scheduler
-  }
-
   // here the oplogs is actually created; serialization happens
   STATS_BG_ACCUM_CLOCK_END_OPLOG_SERIALIZE_BEGIN();
   CreateOpLogMsgs(table_id, bg_oplog);
@@ -397,11 +393,11 @@ long AbstractBgWorker::HandleClockMsg(int32_t table_id, bool clock_advanced) {
   clock_has_pushed_ = worker_clock_;
 
   if (GlobalContext::use_mlfabric()) {
-      // 1. store the oplogs
+      // 1. Send requests to the scheduler
   } else {
     SendOpLogMsgs(table_id, clock_advanced);
-    delete bg_oplog;
   }
+  delete bg_oplog;
   IncrementUpdateVersion(table_id);
   return 0;
   // the clock (worker_clock_) is immediately incremented after this function
@@ -503,6 +499,23 @@ void AbstractBgWorker::CreateOpLogMsgs(int32_t table_id, const BgOpLog *bg_oplog
   VLOG(20) << "Total bytes allocated=" << bytes_allocated;
   VLOG(20) << "Total bytes_written=" << bytes_written;
   CHECK_EQ(bytes_written, bytes_allocated);
+}
+
+
+void AbstractBgWorker::SendOpLogTransferRequests() {
+    for(const auto &server_id : server_ids_) {
+        if (!oplog_storage_->ContainsOpLog(server_id)) { continue; }
+        int32_t unique_oplog_id = oplog_storage_->GetNextOplogIdAndErase(server_id);
+
+        //TODO(raajay) fix actual value
+        SchedulerRequestMsg request_msg;
+        request_msg.get_dest_id() = server_id;
+        request_msg.get_source_id() = my_id_;
+        request_msg.get_oplog_id() = unique_oplog_id;
+        request_msg.get_oplog_size() = 100;
+        request_msg.get_oplog_version() = -1;
+        Send(&request_msg, GlobalContext::get_scheduler_recv_thread_id());
+    }
 }
 
 size_t AbstractBgWorker::SendOpLogMsgs(int32_t table_id, bool clock_advanced) {

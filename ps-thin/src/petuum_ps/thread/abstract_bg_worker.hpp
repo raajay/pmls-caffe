@@ -73,6 +73,7 @@ protected:
   virtual BgOpLog *PrepareOpLogs(int32_t table_id) = 0;
   void FinalizeTableOplogSize(int32_t table_id);
   void CreateOpLogMsgs(int32_t table_id, const BgOpLog *bg_oplog);
+  void SendOpLogTransferRequests();
   size_t SendOpLogMsgs(int32_t table_id, bool clock_advanced);
 
   void HandleServerRowRequestReply(
