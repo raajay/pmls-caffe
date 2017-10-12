@@ -25,6 +25,7 @@ AbstractBgWorker::AbstractBgWorker(int32_t id, int32_t comm_channel_idx,
 
 
 AbstractBgWorker::~AbstractBgWorker() {
+    delete oplog_storage_;
 }
 
 void AbstractBgWorker::ShutDown() { Join(); }
@@ -375,7 +376,6 @@ void AbstractBgWorker::HandleCreateTables() {
 
 long AbstractBgWorker::HandleClockMsg(int32_t table_id, bool clock_advanced) {
 
-  STATS_BG_ACCUM_CLOCK_END_OPLOG_SERIALIZE_BEGIN();
   petuum::HighResolutionTimer begin_clock;
 
   // preparation, partitions the oplog based on destination. The current
@@ -383,24 +383,26 @@ long AbstractBgWorker::HandleClockMsg(int32_t table_id, bool clock_advanced) {
   // preparation, we will know exactly how many bytes are being sent to each
   // server. We will also know how the data being sent to the server is split
   // across tables.
-
   BgOpLog *bg_oplog = PrepareOpLogs(table_id);
 
+  if (GlobalContext::use_mlfabric()) {
+      // 1. send requests to scheduler
+  }
+
   // here the oplogs is actually created; serialization happens
+  STATS_BG_ACCUM_CLOCK_END_OPLOG_SERIALIZE_BEGIN();
   CreateOpLogMsgs(table_id, bg_oplog);
   STATS_BG_ACCUM_CLOCK_END_OPLOG_SERIALIZE_END();
 
   clock_has_pushed_ = worker_clock_;
-  // send the information to the server with info on whether the clock has
-  // advanced (or) if the client is just pushing updates aggressively.
-  SendOpLogMsgs(table_id, clock_advanced);
 
+  if (GlobalContext::use_mlfabric()) {
+      // 1. store the oplogs
+  } else {
+    SendOpLogMsgs(table_id, clock_advanced);
+    delete bg_oplog;
+  }
   IncrementUpdateVersion(table_id);
-  delete bg_oplog;
-
-  VLOG(20) << "THREAD-" << my_id_
-           << ": Handle clock message (prepare, create, send) took "
-           << begin_clock.elapsed() << " s at clock=" << worker_clock_;
   return 0;
   // the clock (worker_clock_) is immediately incremented after this function
   // completes
@@ -440,15 +442,19 @@ void AbstractBgWorker::CreateOpLogMsgs(int32_t table_id, const BgOpLog *bg_oplog
 
     if (msg_size == 0) { continue; }
 
-    ephemeral_server_oplog_msg_.Put(server_id, new ClientSendOpLogMsg(msg_size));
+    ClientSendOpLogMsg *msg = new ClientSendOpLogMsg(msg_size);
+
+    oplog_storage_->Add(server_id, msg);
+
     bytes_allocated += msg_size;
 
-    oplog_serializer.AssignMem(ephemeral_server_oplog_msg_.Get(server_id)->get_data(), bytes_written);
+    oplog_serializer.AssignMem(msg->get_data(), bytes_written);
 
     for (const auto &table_pair : (*tables_)) {
       int32_t curr_table_id = table_pair.first;
 
-      uint8_t *table_ptr = reinterpret_cast<uint8_t *> (oplog_serializer.GetTablePtr(curr_table_id));
+      uint8_t *table_ptr = reinterpret_cast<uint8_t *>
+          (oplog_serializer.GetTablePtr(curr_table_id));
 
       if (table_ptr == nullptr) {
         table_server_mem_map[curr_table_id].erase(server_id);
@@ -506,7 +512,8 @@ size_t AbstractBgWorker::SendOpLogMsgs(int32_t table_id, bool clock_advanced) {
 
   for (const auto &server_id : server_ids_) {
     // server_oplog_msg_msp will be populated in Create Op Log Msgs
-    ClientSendOpLogMsg *msg = ephemeral_server_oplog_msg_.Get(server_id);
+    ClientSendOpLogMsg *msg = oplog_storage_->GetNextOplogAndErase(server_id);
+
     STATS_MLFABRIC_CLIENT_PUSH_BEGIN(server_id, per_worker_update_version_);
 
     if (msg != nullptr) {
