@@ -28,8 +28,8 @@ namespace petuum {
     void *SchedulerRecvThread::operator()() {
         SetupCommBus(my_id_);
         pthread_barrier_wait(init_barrier_);
-        VLOG(0) << "MLFabricScheduler accepting connections!";
         InitSchedulerThread();
+        VLOG(0) << "MLFabricScheduler accepting transfer requests!";
 
         zmq::message_t zmq_msg;
         MsgType msg_type;

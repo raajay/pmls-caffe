@@ -274,8 +274,8 @@ void AbstractBgWorker::BgServerHandshake() {/*{{{*/
     ConnectTo(GlobalContext::get_scheduler_recv_thread_id(), my_id_);
     WaitForReply(GlobalContext::get_scheduler_recv_thread_id(), kClientStart);
 
-    // ConnectTo(GlobalContext::get_scheduler_send_thread_id(), my_id_);
-    // WaitForReply(GlobalContext::get_scheduler_send_thread_id(), kClientStart);
+    ConnectTo(GlobalContext::get_scheduler_send_thread_id(), my_id_);
+    WaitForReply(GlobalContext::get_scheduler_send_thread_id(), kClientStart);
   }
 
   // connect to servers
@@ -427,7 +427,7 @@ long AbstractBgWorker::HandleClockMsg(int32_t table_id, bool clock_advanced) {/*
   STATS_BG_ACCUM_CLOCK_END_OPLOG_SERIALIZE_END();
   CHECK_EQ(oplog_ids.size(), server_ids_.size());
 
-  if (GlobalContext::use_mlfabric()) {
+  if (false && GlobalContext::use_mlfabric()) {
     SendOpLogTransferRequests(oplog_ids);
   } else {
     CHECK_EQ(oplog_storage_->GetNumOplogs(), server_ids_.size());
@@ -873,6 +873,9 @@ void *AbstractBgWorker::operator()() {/*{{{*/
           ClientShutDownMsg msg;
           Send(&msg, GlobalContext::get_name_node_id());
           Send(&msg, GlobalContext::get_scheduler_recv_thread_id());
+          // XXX(raajay): We do not send a shutdown to scheduler send thread.
+          // The receiver thread is responsible for killing the scheduler send
+          // thread.
           SendToAll(&msg, server_ids_);
         }
         break;
