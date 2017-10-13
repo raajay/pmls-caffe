@@ -427,7 +427,7 @@ long AbstractBgWorker::HandleClockMsg(int32_t table_id, bool clock_advanced) {/*
   STATS_BG_ACCUM_CLOCK_END_OPLOG_SERIALIZE_END();
   CHECK_EQ(oplog_ids.size(), server_ids_.size());
 
-  if (false && GlobalContext::use_mlfabric()) {
+  if (GlobalContext::use_mlfabric()) {
     SendOpLogTransferRequests(oplog_ids);
   } else {
     CHECK_EQ(oplog_storage_->GetNumOplogs(), server_ids_.size());
@@ -787,6 +787,21 @@ void AbstractBgWorker::HandleSchedulerResponseMsg(SchedulerResponseMsg *msg) {/*
 }/*}}}*/
 
 /**
+ */
+void AbstractBgWorker::CheckTermination(int32_t num_deregistered_app_threads) {/*{{{*/
+    if (oplog_storage_->GetNumOplogs() == 0
+            && num_deregistered_app_threads == GlobalContext::get_num_app_threads()) {
+      ClientShutDownMsg msg;
+      Send(&msg, GlobalContext::get_name_node_id());
+      Send(&msg, GlobalContext::get_scheduler_recv_thread_id());
+      // XXX(raajay): We do not send a shutdown to scheduler send thread.
+      // The receiver thread is responsible for killing the scheduler send
+      // thread.
+      SendToAll(&msg, server_ids_);
+    }
+}/*}}}*/
+
+/**
  * The infinite loop
  */
 void *AbstractBgWorker::operator()() {/*{{{*/
@@ -866,18 +881,9 @@ void *AbstractBgWorker::operator()() {/*{{{*/
 
     case kAppThreadDereg:
         ++num_deregistered_app_threads;
-        // when all the app thread have de-registered, send a shut down message to
-        // namenode,
-        // scheduler and all the servers.
-        if (num_deregistered_app_threads == GlobalContext::get_num_app_threads()) {
-          ClientShutDownMsg msg;
-          Send(&msg, GlobalContext::get_name_node_id());
-          Send(&msg, GlobalContext::get_scheduler_recv_thread_id());
-          // XXX(raajay): We do not send a shutdown to scheduler send thread.
-          // The receiver thread is responsible for killing the scheduler send
-          // thread.
-          SendToAll(&msg, server_ids_);
-        }
+        // when all the app thread have de-registered, send a shut down message
+        // to namenode, scheduler and all the servers.
+        CheckTermination(num_deregistered_app_threads);
         break;
 
     case kSyncThreadConnect:
@@ -894,13 +900,18 @@ void *AbstractBgWorker::operator()() {/*{{{*/
         break;
 
     case kServerShutDownAck:
+        {
         ++num_shutdown_acked_servers;
         // if all them ack your shutdown, only then de-register and terminate out
         // of the infinite loop
-        if (num_shutdown_acked_servers == GlobalContext::get_num_server_clients() + 2) {
+        int32_t num_expected_acks = GlobalContext::get_num_server_clients() + 1
+            + (GlobalContext::use_mlfabric() ? 2 : 0);
+        if (num_shutdown_acked_servers == num_expected_acks) {
           comm_bus_->ThreadDeregister();
           STATS_DEREGISTER_THREAD();
+          VLOG(0) << "Shutting down bg worker " << my_id_;
           return nullptr;
+        }
         }
         break;
 
@@ -952,6 +963,7 @@ void *AbstractBgWorker::operator()() {/*{{{*/
         {
         SchedulerResponseMsg msg(msg_mem);
         HandleSchedulerResponseMsg(&msg);
+        CheckTermination(num_deregistered_app_threads);
         }
         break;
 

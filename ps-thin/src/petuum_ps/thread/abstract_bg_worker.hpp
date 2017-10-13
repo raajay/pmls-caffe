@@ -106,6 +106,8 @@ protected:
 
   void HandleSchedulerResponseMsg(SchedulerResponseMsg *msg);
 
+  void CheckTermination(int32_t num_deregistered_app_threads);
+
   int32_t my_comm_channel_idx_;
 
   std::map<int32_t, ClientTable *> *tables_;

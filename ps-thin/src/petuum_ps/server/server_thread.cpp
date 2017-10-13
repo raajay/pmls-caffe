@@ -277,6 +277,7 @@ void *ServerThread::operator()() {
       if (shutdown) {
         comm_bus_->ThreadDeregister();
         STATS_DEREGISTER_THREAD();
+        VLOG(0) << "Shutting down the server thread " << my_id_;
         return 0; // only point for terminating the thread.
       }
       break;

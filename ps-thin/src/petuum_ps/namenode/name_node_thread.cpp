@@ -176,6 +176,7 @@ void *NameNodeThread::operator()() {
       bool shutdown = HandleShutDownMsg();
       if (shutdown) {
         comm_bus_->ThreadDeregister();
+        VLOG(0) << "Shutting down the name node thread";
         return 0;
       }
       break;

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <chrono>
+#include <thread>
 #include <petuum_ps/scheduler/scheduler.hpp>
 #include <petuum_ps/util/mpmc_queue.hpp>
 
@@ -7,19 +9,12 @@ namespace petuum {
 
     class PassThroughScheduler : public Scheduler {
         public:
-            PassThroughScheduler() = default;
-
-            ~PassThroughScheduler() = default;
-
-            void AddRequest() override {
-
-            }
-
-            void TakeRequest() override {
-
-            }
+            PassThroughScheduler();
+            ~PassThroughScheduler();
+            void AddRequest(MLFabricRequest *request) override;
+            MLFabricRequest* TakeRequest() override;
 
         protected:
-            MPMCQueue<int32_t> internal_queue_;
+            MPMCQueue<MLFabricRequest*> *internal_queue_;
     };
 }
