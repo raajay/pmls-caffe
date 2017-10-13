@@ -40,9 +40,21 @@ namespace petuum {
             switch (msg_type) {
 
                 case kClientShutDown:
+
                     if (HandleShutDownMsg()) {
                         comm_bus_->ThreadDeregister();
+                        MLFabricRequest *null_req  = nullptr;
+                        scheduler_->AddRequest(null_req);
+                        VLOG(0) << "Shutting down the Scheduler recv thread";
                         return nullptr;
+                    }
+                    break;
+
+                case kSchedulerRequest:
+                    // create an ml fabric request and push into the scheduler
+                    {
+                        SchedulerRequestMsg msg(zmq_msg.data());
+                        scheduler_->AddRequest(new MLFabricRequest(&msg));
                     }
                     break;
 

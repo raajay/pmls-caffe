@@ -22,19 +22,34 @@ namespace petuum {
     }
 
 
+
+
     void *SchedulerSendThread::operator()() {
         SetupCommBus(my_id_);
         pthread_barrier_wait(init_barrier_);
         InitSchedulerThread();
         VLOG(0) << "MLFabricScheduler sending thread started!";
 
+        MLFabricRequest *request;
         while(true) {
-            // pull from a queue
+            // pull from a queue, TakeRequest block until we get the next
+            // request
+            request = scheduler_->TakeRequest();
 
-            // terminate on getting message that asks to break
-            break;
+            if (nullptr == request) {
+                ServerShutDownAckMsg msg;
+                SendToAll(&msg, bg_worker_ids_);
+                comm_bus_->ThreadDeregister();
+                VLOG(0) << "Terminating the scheduler send thread.";
+                return nullptr;
+            }
+
+            SchedulerResponseMsg msg;
+            msg.get_dest_id() = request->OutputDestinationId;
+            msg.get_oplog_id() = request->OplogId;
+
+            Send(&msg, request->SourceId);
         }
-
         return nullptr;
     }
 
