@@ -104,6 +104,8 @@ protected:
 
   void SendRowRequestReplyToApp(int32_t app_id, int32_t table_id, int32_t row_id, int32_t clock);
 
+  void HandleSchedulerResponseMsg(SchedulerResponseMsg *msg);
+
 
   int32_t my_comm_channel_idx_;
 
