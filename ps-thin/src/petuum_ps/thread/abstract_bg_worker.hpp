@@ -106,7 +106,6 @@ protected:
 
   void HandleSchedulerResponseMsg(SchedulerResponseMsg *msg);
 
-
   int32_t my_comm_channel_idx_;
 
   std::map<int32_t, ClientTable *> *tables_;
