@@ -72,9 +72,9 @@ protected:
 
   virtual BgOpLog *PrepareOpLogs(int32_t table_id) = 0;
   void FinalizeTableOplogSize(int32_t table_id);
-  void CreateOpLogMsgs(int32_t table_id, const BgOpLog *bg_oplog);
-  void SendOpLogTransferRequests();
-  size_t SendOpLogMsgs(int32_t table_id, bool clock_advanced);
+  std::vector<int32_t> CreateAndStoreOpLogMsgs(int32_t table_id, bool clock_advanced, const BgOpLog *bg_oplog);
+  void SendOpLogTransferRequests(std::vector<int32_t> oplog_ids);
+  size_t SendOpLogMsgs(std::vector<int32_t> oplog_ids);
 
   void HandleServerRowRequestReply(
       int32_t server_id,
