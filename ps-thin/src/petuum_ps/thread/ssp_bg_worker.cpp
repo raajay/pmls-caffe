@@ -12,16 +12,16 @@ SSPBgWorker::SSPBgWorker(int32_t id, int32_t comm_channel_idx,
 
 SSPBgWorker::~SSPBgWorker() { delete row_request_oplog_mgr_; }
 
-void SSPBgWorker::CreateRowRequestOpLogMgr() {
+void SSPBgWorker::CreateRowRequestOpLogMgr() {/*{{{*/
   row_request_oplog_mgr_ = new SSPRowRequestOpLogMgr;
   VLOG(5) << "Create an OpLogMgr in BgWorker with (id=" << my_id_
           << ", comm_channel_idx=" << my_comm_channel_idx_ << ")";
-}
+}/*}}}*/
 
-bool SSPBgWorker::GetRowOpLog(AbstractOpLog &table_oplog, int32_t row_id,
+bool SSPBgWorker::GetRowOpLog(AbstractOpLog &table_oplog, int32_t row_id,/*{{{*/
                               AbstractRowOpLog **row_oplog_ptr) {
   return table_oplog.GetEraseOpLog(row_id, row_oplog_ptr);
-}
+}/*}}}*/
 
 long SSPBgWorker::ResetBgIdleMilli() { return 0; }
 
@@ -36,7 +36,7 @@ ClientRow *SSPBgWorker::CreateClientRow(int32_t clock, int32_t global_version,
 
 /**
  */
-BgOpLog *SSPBgWorker::PrepareOpLogs(int32_t table_id) {
+BgOpLog *SSPBgWorker::PrepareOpLogs(int32_t table_id) {/*{{{*/
 
   auto *bg_oplog = new BgOpLog;
   ephemeral_server_table_size_counter_.Reset();
@@ -65,12 +65,12 @@ BgOpLog *SSPBgWorker::PrepareOpLogs(int32_t table_id) {
     FinalizeTableOplogSize(curr_table_id);
   }
   return bg_oplog;
-}
+}/*}}}*/
 
 
 /**
  */
-BgOpLogPartition *SSPBgWorker::PrepareTableOpLogs(int32_t table_id, ClientTable *table) {
+BgOpLogPartition *SSPBgWorker::PrepareTableOpLogs(int32_t table_id, ClientTable *table) {/*{{{*/
 
   // Get OpLog index. The index will tell which rows have been modified. So the
   // function below, will query an oplog index -- maintained per table at the
@@ -113,6 +113,6 @@ BgOpLogPartition *SSPBgWorker::PrepareTableOpLogs(int32_t table_id, ClientTable 
   // no one else points to this struct, see GetAndResetOpLogIndex function
   delete new_table_oplog_index_ptr;
   return bg_table_oplog;
-}
+}/*}}}*/
 
 }
