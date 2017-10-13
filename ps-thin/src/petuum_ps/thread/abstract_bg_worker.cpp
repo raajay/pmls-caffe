@@ -24,41 +24,52 @@ AbstractBgWorker::AbstractBgWorker(int32_t id, int32_t comm_channel_idx,
   GlobalContext::GetServerThreadIDs(my_comm_channel_idx_, &(server_ids_));
 }
 
-
-AbstractBgWorker::~AbstractBgWorker() {
+/**
+ */
+AbstractBgWorker::~AbstractBgWorker() {/*{{{*/
     delete oplog_storage_;
-}
+}/*}}}*/
 
 void AbstractBgWorker::ShutDown() { Join(); }
 
-void AbstractBgWorker::AppThreadRegister() {
+/**
+ */
+void AbstractBgWorker::AppThreadRegister() {/*{{{*/
   AppConnectMsg app_connect_msg;
   void *msg = app_connect_msg.get_mem();
   size_t msg_size = app_connect_msg.get_size();
 
   comm_bus_->ConnectTo(my_id_, msg, msg_size);
-}
+}/*}}}*/
 
-void AbstractBgWorker::AppThreadDeregister() {
+/**
+ */
+void AbstractBgWorker::AppThreadDeregister() {/*{{{*/
   AppThreadDeregMsg msg;
   size_t sent_size = SendMsg(reinterpret_cast<MsgBase *>(&msg));
   CHECK_EQ(sent_size, msg.get_size());
-}
+}/*}}}*/
 
-void AbstractBgWorker::SyncThreadRegister() {
+/**
+ */
+void AbstractBgWorker::SyncThreadRegister() {/*{{{*/
   SyncThreadConnectMsg connect_msg;
   void *msg = connect_msg.get_mem();
   size_t msg_size = connect_msg.get_size();
   comm_bus_->ConnectTo(my_id_, msg, msg_size);
-}
+}/*}}}*/
 
-void AbstractBgWorker::SyncThreadDeregister() {
+/**
+ */
+void AbstractBgWorker::SyncThreadDeregister() {/*{{{*/
   SyncThreadDeregMsg msg;
   size_t sent_size = SendMsg(reinterpret_cast<MsgBase *>(&msg));
   CHECK_EQ(sent_size, msg.get_size());
-}
+}/*}}}*/
 
-bool AbstractBgWorker::CreateTable(int32_t table_id,
+/**
+ */
+bool AbstractBgWorker::CreateTable(int32_t table_id,/*{{{*/
                                    const ClientTableConfig &table_config) {
   {
     const TableInfo &table_info = table_config.table_info;
@@ -110,9 +121,11 @@ bool AbstractBgWorker::CreateTable(int32_t table_id,
             << ": Received reply for CREATE_TABLE from sender=" << sender_id;
   }
   return true;
-}
+}/*}}}*/
 
-bool AbstractBgWorker::RequestRow(int32_t table_id, int32_t row_id,
+/**
+ */
+bool AbstractBgWorker::RequestRow(int32_t table_id, int32_t row_id,/*{{{*/
                                   int32_t req_clock) {
   petuum::HighResolutionTimer rr_send;
   {
@@ -139,9 +152,11 @@ bool AbstractBgWorker::RequestRow(int32_t table_id, int32_t row_id,
     CHECK_EQ(msg_type, kRowRequestReply);
   }
   return true;
-}
+}/*}}}*/
 
-void AbstractBgWorker::RequestRowAsync(int32_t table_id, int32_t row_id,
+/**
+ */
+void AbstractBgWorker::RequestRowAsync(int32_t table_id, int32_t row_id,/*{{{*/
                                        int32_t clock, bool forced) {
   RowRequestMsg request_row_msg;
   request_row_msg.get_table_id() = table_id;
@@ -155,42 +170,54 @@ void AbstractBgWorker::RequestRowAsync(int32_t table_id, int32_t row_id,
 
   size_t sent_size = SendMsg(reinterpret_cast<MsgBase *>(&request_row_msg));
   CHECK_EQ(sent_size, request_row_msg.get_size());
-}
+}/*}}}*/
 
-void AbstractBgWorker::GetAsyncRowRequestReply() {
+/**
+ */
+void AbstractBgWorker::GetAsyncRowRequestReply() {/*{{{*/
   zmq::message_t zmq_msg;
   int32_t sender_id;
   comm_bus_->RecvInProc(&sender_id, &zmq_msg);
   MsgType msg_type = MsgBase::get_msg_type(zmq_msg.data());
   CHECK_EQ(msg_type, kRowRequestReply);
-}
+}/*}}}*/
 
-void AbstractBgWorker::ClockAllTables() {
+/**
+ */
+void AbstractBgWorker::ClockAllTables() {/*{{{*/
   BgClockMsg bg_clock_msg;
   size_t sent_size = SendMsg(reinterpret_cast<MsgBase *>(&bg_clock_msg));
   CHECK_EQ(sent_size, bg_clock_msg.get_size());
-}
+}/*}}}*/
 
-void AbstractBgWorker::ClockTable(int32_t table_id) {
+/**
+ */
+void AbstractBgWorker::ClockTable(int32_t table_id) {/*{{{*/
   BgClockMsg msg;
   msg.get_table_id() = table_id;
   VLOG(20) << "Sync Thread >>> Bg Worker: Clock table_id=" << table_id;
   size_t sent_size = SendMsg(reinterpret_cast<MsgBase *>(&msg));
   CHECK_EQ(sent_size, msg.get_size());
-}
+}/*}}}*/
 
-void AbstractBgWorker::SendOpLogsAllTables() {
+/**
+ */
+void AbstractBgWorker::SendOpLogsAllTables() {/*{{{*/
   BgSendOpLogMsg bg_send_oplog_msg;
   size_t sent_size = SendMsg(reinterpret_cast<MsgBase *>(&bg_send_oplog_msg));
   CHECK_EQ(sent_size, bg_send_oplog_msg.get_size());
-}
+}/*}}}*/
 
-void AbstractBgWorker::InitWhenStart() {
+/**
+ */
+void AbstractBgWorker::InitWhenStart() {/*{{{*/
   SetWaitMsg();
   CreateRowRequestOpLogMgr();
-}
+}/*}}}*/
 
-bool AbstractBgWorker::WaitMsgBusy(int32_t *sender_id, zmq::message_t *zmq_msg,
+/**
+ */
+bool AbstractBgWorker::WaitMsgBusy(int32_t *sender_id, zmq::message_t *zmq_msg,/*{{{*/
                                    long timeout_milli __attribute__((unused))) {
   bool received =
       (GlobalContext::comm_bus->*(GlobalContext::comm_bus->RecvAsyncAny_))(
@@ -200,37 +227,42 @@ bool AbstractBgWorker::WaitMsgBusy(int32_t *sender_id, zmq::message_t *zmq_msg,
         (GlobalContext::comm_bus->*(GlobalContext::comm_bus->RecvAsyncAny_))(
             sender_id, zmq_msg);
   return true;
-}
+}/*}}}*/
 
-bool AbstractBgWorker::WaitMsgSleep(int32_t *sender_id, zmq::message_t *zmq_msg,
+/**
+ */
+bool AbstractBgWorker::WaitMsgSleep(int32_t *sender_id, zmq::message_t *zmq_msg,/*{{{*/
                                     long timeout_milli
                                     __attribute__((unused))) {
   (GlobalContext::comm_bus->*(GlobalContext::comm_bus->RecvAny_))(sender_id,
                                                                   zmq_msg);
   return true;
-}
+}/*}}}*/
 
-bool AbstractBgWorker::WaitMsgTimeOut(int32_t *sender_id,
+/**
+ */
+bool AbstractBgWorker::WaitMsgTimeOut(int32_t *sender_id,/*{{{*/
                                       zmq::message_t *zmq_msg,
                                       long timeout_milli) {
   bool received =
       (GlobalContext::comm_bus->*(GlobalContext::comm_bus->RecvTimeOutAny_))(
           sender_id, zmq_msg, timeout_milli);
   return received;
-}
+}/*}}}*/
 
-void AbstractBgWorker::SetWaitMsg() {
+/**
+ */
+void AbstractBgWorker::SetWaitMsg() {/*{{{*/
   if (GlobalContext::get_aggressive_cpu()) {
     WaitMsg_ = WaitMsgBusy;
   } else {
     WaitMsg_ = WaitMsgSleep;
   }
-}
-
+}/*}}}*/
 
 /**
  */
-void AbstractBgWorker::BgServerHandshake() {
+void AbstractBgWorker::BgServerHandshake() {/*{{{*/
   // connect to name node
   int32_t name_node_id = GlobalContext::get_name_node_id();
   ConnectTo(name_node_id, my_id_);
@@ -256,9 +288,11 @@ void AbstractBgWorker::BgServerHandshake() {
   for (nss = 0; nss < server_ids_.size(); ++nss) {
     WaitForReply(GlobalContext::kAnyThreadId, kClientStart);
   }
-}
+}/*}}}*/
 
-void AbstractBgWorker::HandleCreateTables() {
+/**
+ */
+void AbstractBgWorker::HandleCreateTables() {/*{{{*/
   for (int32_t num_created_tables = 0;
        num_created_tables < GlobalContext::get_num_tables();
        ++num_created_tables) {
@@ -373,7 +407,7 @@ void AbstractBgWorker::HandleCreateTables() {
             << ": Received a kCreatedAllTables message from sender="
             << sender_id;
   }
-}
+}/*}}}*/
 
 /**
  */
@@ -410,7 +444,6 @@ long AbstractBgWorker::HandleClockMsg(int32_t table_id, bool clock_advanced) {/*
 long AbstractBgWorker::ResetBgIdleMilli() { return 0; }
 
 long AbstractBgWorker::BgIdleWork() { return 0; }
-
 
 /**
  */
@@ -745,6 +778,15 @@ void AbstractBgWorker::PrepareBeforeInfiniteLoop() {/*{{{*/
 }/*}}}*/
 
 /**
+ */
+void AbstractBgWorker::HandleSchedulerResponseMsg(SchedulerResponseMsg *msg) {/*{{{*/
+    int32_t oplog_id = msg->get_oplog_id();
+    ClientSendOpLogMsg *oplog_msg = oplog_storage_->GetOplogMsg(oplog_id);
+    MemTransfer::TransferMem(comm_bus_, msg->get_dest_id(), oplog_msg);
+    oplog_storage_->EraseOplog(oplog_id);
+}/*}}}*/
+
+/**
  * The infinite loop
  */
 void *AbstractBgWorker::operator()() {/*{{{*/
@@ -812,81 +854,107 @@ void *AbstractBgWorker::operator()() {/*{{{*/
     }
 
     switch (msg_type) {
-    case kAppConnect: {
-      ++num_connected_app_threads;
 
-      CHECK(num_connected_app_threads <= GlobalContext::get_num_app_threads())
-          << "num_connected_app_threads = " << num_connected_app_threads
-          << " get_num_app_threads() = "
-          << GlobalContext::get_num_app_threads();
-    } break;
-    case kAppThreadDereg: {
-      ++num_deregistered_app_threads;
-      // when all the app thread have de-registered, send a shut down message to
-      // namenode,
-      // scheduler and all the servers.
-      if (num_deregistered_app_threads == GlobalContext::get_num_app_threads()) {
-        ClientShutDownMsg msg;
-        Send(&msg, GlobalContext::get_name_node_id());
-        Send(&msg, GlobalContext::get_scheduler_recv_thread_id());
-        SendToAll(&msg, server_ids_);
-      }
-    } break;
+    case kAppConnect:
+        ++num_connected_app_threads;
+
+        CHECK(num_connected_app_threads <= GlobalContext::get_num_app_threads())
+            << "num_connected_app_threads = " << num_connected_app_threads
+            << " get_num_app_threads() = "
+            << GlobalContext::get_num_app_threads();
+        break;
+
+    case kAppThreadDereg:
+        ++num_deregistered_app_threads;
+        // when all the app thread have de-registered, send a shut down message to
+        // namenode,
+        // scheduler and all the servers.
+        if (num_deregistered_app_threads == GlobalContext::get_num_app_threads()) {
+          ClientShutDownMsg msg;
+          Send(&msg, GlobalContext::get_name_node_id());
+          Send(&msg, GlobalContext::get_scheduler_recv_thread_id());
+          SendToAll(&msg, server_ids_);
+        }
+        break;
 
     case kSyncThreadConnect:
-      ++num_ephemeral_app_threads;
-      // (raajay) since ephemeral threads have an exclusive lock
-      // on the tables, the number of such threads at any given
-      // point should not exceed the number of tables.
-      CHECK_LE(num_ephemeral_app_threads, GlobalContext::get_num_tables());
-      break;
+        ++num_ephemeral_app_threads;
+        // (raajay) since ephemeral threads have an exclusive lock
+        // on the tables, the number of such threads at any given
+        // point should not exceed the number of tables.
+        CHECK_LE(num_ephemeral_app_threads, GlobalContext::get_num_tables());
+        break;
 
     case kSyncThreadDereg:
-      --num_ephemeral_app_threads;
-      CHECK_GE(num_ephemeral_app_threads, 0);
-      break;
+        --num_ephemeral_app_threads;
+        CHECK_GE(num_ephemeral_app_threads, 0);
+        break;
 
-    case kServerShutDownAck: {
-      ++num_shutdown_acked_servers;
-      // if all them ack your shutdown, only then de-register and terminate out
-      // of the infinite loop
-      if (num_shutdown_acked_servers == GlobalContext::get_num_server_clients() + 2) {
-        comm_bus_->ThreadDeregister();
-        STATS_DEREGISTER_THREAD();
-        return nullptr;
-      }
-    } break;
-    case kApplicationThreadRowRequest: {
-      // app thread typically sends a row request, your job is to forward it to
-      // the server.
-      RowRequestMsg row_request_msg(msg_mem);
-      CheckForwardRowRequestToServer(sender_id, row_request_msg);
-    } break;
-    case kServerRowRequestReply: {
-      // server responds with the information of rows requested
-      ServerRowRequestReplyMsg server_row_request_reply_msg(msg_mem);
-      HandleServerRowRequestReply(sender_id, server_row_request_reply_msg);
-    } break;
-    case kBgClock: {
+    case kServerShutDownAck:
+        ++num_shutdown_acked_servers;
+        // if all them ack your shutdown, only then de-register and terminate out
+        // of the infinite loop
+        if (num_shutdown_acked_servers == GlobalContext::get_num_server_clients() + 2) {
+          comm_bus_->ThreadDeregister();
+          STATS_DEREGISTER_THREAD();
+          return nullptr;
+        }
+        break;
+
+    case kApplicationThreadRowRequest:
+        // app thread typically sends a row request, your job is to forward it to
+        // the server.
+        {
+        RowRequestMsg row_request_msg(zmq_msg.data());
+        CheckForwardRowRequestToServer(sender_id, row_request_msg);
+        }
+        break;
+
+    case kServerRowRequestReply:
+        // server responds with the information of rows requested
+        {
+        ServerRowRequestReplyMsg server_row_request_reply_msg(msg_mem);
+        HandleServerRowRequestReply(sender_id, server_row_request_reply_msg);
+        }
+        break;
+
+    case kBgClock:
       // clock message is sent from the app thread using the static function
       // defined in bgworkers.
-      BgClockMsg clock_msg(msg_mem);
-      timeout_milli = HandleClockMsg(clock_msg.get_table_id(), true);
-      ++worker_clock_;
-      VLOG(5) << "THREAD-" << my_id_ << ": "
-              << "Increment client clock in bgworker:" << my_id_ << " to "
-              << worker_clock_;
-      STATS_BG_CLOCK();
-    } break;
-    case kBgSendOpLog: {
-      BgSendOpLogMsg oplog_msg(msg_mem);
-      timeout_milli = HandleClockMsg(oplog_msg.get_table_id(), false);
-    } break;
-    case kServerOpLogAck: {
-      STATS_MLFABRIC_CLIENT_PUSH_END(sender_id, acked_version);
-    } break;
+        {
+        BgClockMsg clock_msg(msg_mem);
+        timeout_milli = HandleClockMsg(clock_msg.get_table_id(), true);
+        ++worker_clock_;
+        VLOG(5) << "THREAD-" << my_id_ << ": "
+                << "Increment client clock in bgworker:" << my_id_ << " to "
+                << worker_clock_;
+        STATS_BG_CLOCK();
+        }
+        break;
+
+    case kBgSendOpLog:
+        {
+        BgSendOpLogMsg oplog_msg(msg_mem);
+        timeout_milli = HandleClockMsg(oplog_msg.get_table_id(), false);
+        }
+        break;
+
+    case kServerOpLogAck:
+        {
+        STATS_MLFABRIC_CLIENT_PUSH_END(sender_id, acked_version);
+        }
+        break;
+
+    case  kSchedulerResponse:
+        {
+        SchedulerResponseMsg msg(msg_mem);
+        HandleSchedulerResponseMsg(&msg);
+        }
+        break;
+
     default:
       LOG(FATAL) << "Unrecognized type " << msg_type;
+
     }
 
     if (destroy_mem) {
