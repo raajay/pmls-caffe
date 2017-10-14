@@ -60,6 +60,14 @@ public:
 
 protected:
 
+  /**
+   * @brief Not that this function will only be called from the application
+   * threads (i.e., those that invoke the Get and BatchInc functions). In its
+   * use with Caffe, we are guaranteed that each table at given point in time
+   * is accessed by only one thread. Hence, updating the
+   * latest_row_version_ state without explicit locking is okay.
+   * XXX (raajay)
+   */
   void UpdateLatestReadRowVersion(ClientRow *row) {
       latest_row_version_ = std::max(latest_row_version_,
               row->GetGlobalVersion());
