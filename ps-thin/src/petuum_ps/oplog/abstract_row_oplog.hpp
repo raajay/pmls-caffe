@@ -52,9 +52,7 @@ public:
   virtual size_t SerializeDense(void *mem) = 0;
 
   /**
-   * Set the version of the model used to compute the oplog. If there are
-   * multiple versions of the model used, then set the version as the least
-   * one.
+   * @brief Set the version of the model used to compute the oplog.
    */
   virtual void SetGlobalVersion(int32_t global_version) {
     global_version_ = global_version;
