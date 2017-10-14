@@ -169,8 +169,7 @@ void SSPConsistencyController::BatchInc(int32_t row_id,
   const auto *deltas_uint8 = reinterpret_cast<const uint8_t *>(updates);
   for (int i = 0; i < num_updates; ++i) {
     void *oplog_delta = oplog_accessor.get_row_oplog()->FindCreate(column_ids[i]);
-    sample_row_->AddUpdates(column_ids[i], oplog_delta,
-                            deltas_uint8 + sample_row_->get_update_size() * i);
+    sample_row_->AddUpdates(column_ids[i], oplog_delta, deltas_uint8 + sample_row_->get_update_size() * i);
   }
   STATS_APP_SAMPLE_BATCH_INC_OPLOG_END();
 
