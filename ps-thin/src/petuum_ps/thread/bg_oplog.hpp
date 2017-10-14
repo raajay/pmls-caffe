@@ -29,21 +29,29 @@ public:
     return table_oplog_map_.at(table_id);
   }
 
-  size_t num_rows() {
+  /**
+   * @brief The number of row changes is defined as sum of the rows changed for
+   * each table.
+   */
+  size_t num_rows() {/*{{{*/
     size_t num_rows = 0;
     for (auto &iter : table_oplog_map_) {
       num_rows += iter.second->num_rows();
     }
     return num_rows;
-  }
+  }/*}}}*/
 
-  int32_t GetModelVersion() const {
+  /**
+   * @brief The model version of the bg oplog is defined as the max over the
+   * model version of the individual partitions.
+   */
+  int32_t GetModelVersion() const {/*{{{*/
       int32_t version = DEFAULT_GLOBAL_VERSION;
       for(auto &it : table_oplog_map_) {
           version = std::max(version, it.second->GetModelVersion());
       }
       return version;
-  }
+  }/*}}}*/
 
 private:
   std::map<int32_t, BgOpLogPartition *> table_oplog_map_;

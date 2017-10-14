@@ -9,11 +9,13 @@ namespace petuum {
     class MLFabricRequest {
         public:
             MLFabricRequest() = default;
+
             MLFabricRequest(SchedulerRequestMsg* msg)
                 : InputDestinationId(msg->get_dest_id()),
                   SourceId(msg->get_source_id()),
                   OplogSize(msg->get_oplog_size()),
-                  OplogId(msg->get_oplog_id()) {
+                  OplogId(msg->get_oplog_id()),
+                  OplogVersion(msg->get_oplog_version()) {
 
                 OutputDestinationId = msg->get_dest_id();
 
@@ -33,6 +35,7 @@ namespace petuum {
             const int32_t SourceId;
             const int32_t OplogSize;
             const int32_t OplogId;
+            const int32_t OplogVersion;
 
             // Output Fields
             int32_t OutputDestinationId;
