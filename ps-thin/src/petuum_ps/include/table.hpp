@@ -8,6 +8,7 @@
 
 #include <petuum_ps/include/row_access.hpp>
 #include <petuum_ps/client/abstract_client_table.hpp>
+#include <petuum_ps/util/macros.hpp>
 
 namespace petuum {
 
@@ -131,7 +132,7 @@ public:
   }
 
   void BatchInc(int32_t row_id, const UpdateBatch<UPDATE> &update_batch,
-                int32_t global_version = -1) {
+                int32_t global_version = DEFAULT_GLOBAL_VERSION) {
     system_table_->BatchInc(row_id, update_batch.GetColIDs().data(),
                             update_batch.GetUpdates(),
                             update_batch.GetBatchSize(), global_version);
