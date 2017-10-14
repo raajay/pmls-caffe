@@ -5,10 +5,10 @@ namespace petuum {
 
 BgOpLogPartition::BgOpLogPartition(int32_t table_id, size_t update_size,
                                    int32_t my_comm_channel_idx)
-    :
-
-      table_id_(table_id),
-      update_size_(update_size), comm_channel_idx_(my_comm_channel_idx) {}
+    : table_id_(table_id),
+      update_size_(update_size),
+      comm_channel_idx_(my_comm_channel_idx),
+      version_(DEFAULT_GLOBAL_VERSION) {}
 
 BgOpLogPartition::~BgOpLogPartition() {
   for (auto iter = oplog_map_.begin(); iter != oplog_map_.end(); iter++) {
@@ -25,6 +25,8 @@ AbstractRowOpLog *BgOpLogPartition::FindOpLog(int row_id) {
 
 void BgOpLogPartition::InsertOpLog(int row_id, AbstractRowOpLog *row_oplog) {
   oplog_map_[row_id] = row_oplog;
+  // update the version of the model use to generate the oplog
+  version_ = std::max(version_, row_oplog->GetGlobalVersion());
 }
 
 size_t

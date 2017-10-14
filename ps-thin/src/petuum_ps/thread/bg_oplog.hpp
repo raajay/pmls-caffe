@@ -6,6 +6,7 @@
 
 #include <petuum_ps/thread/bg_oplog_partition.hpp>
 #include <petuum_ps/thread/row_oplog_recycle.hpp>
+#include <petuum_ps/util/macros.hpp>
 
 namespace petuum {
 
@@ -34,6 +35,14 @@ public:
       num_rows += iter.second->num_rows();
     }
     return num_rows;
+  }
+
+  int32_t GetModelVersion() const {
+      int32_t version = DEFAULT_GLOBAL_VERSION;
+      for(auto &it : table_oplog_map_) {
+          version = std::max(version, it.second->GetModelVersion());
+      }
+      return version;
   }
 
 private:

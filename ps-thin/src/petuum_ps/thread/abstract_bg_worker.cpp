@@ -478,9 +478,7 @@ std::vector<int32_t> AbstractBgWorker::CreateAndStoreOpLogMsgs(int32_t table_id,
     oplog_storage_->SetClockAdvanced(oplog_id, clock_advanced);
     oplog_storage_->SetBgVersion(oplog_id, GetUpdateVersion(table_id));
     oplog_storage_->SetClock(oplog_id, clock_has_pushed_ + 1);
-
-    // TODO(raajay)  add proper value for model version
-    oplog_storage_->SetModelVersion(oplog_id, 0);
+    oplog_storage_->SetModelVersion(oplog_id, bg_oplog->GetModelVersion());
 
     oplog_ids.push_back(oplog_id);
 
