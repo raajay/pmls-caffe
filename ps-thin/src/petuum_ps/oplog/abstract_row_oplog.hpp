@@ -8,6 +8,8 @@
 #include <functional>
 #include <boost/noncopyable.hpp>
 
+#include <petuum_ps/util/macros.hpp>
+
 namespace petuum {
 
 typedef std::function<void(int32_t, void *)> InitUpdateFunc;
@@ -16,8 +18,8 @@ typedef std::function<bool(const void *)> CheckZeroUpdateFunc;
 class AbstractRowOpLog : boost::noncopyable {
 public:
   AbstractRowOpLog(size_t update_size)
-      : update_size_(update_size), global_version_(-1) {
-  } // set default version as -1
+      : update_size_(update_size),
+        global_version_(DEFAULT_GLOBAL_VERSION) {}
 
   virtual ~AbstractRowOpLog() {}
 
@@ -55,13 +57,7 @@ public:
    * one.
    */
   virtual void SetGlobalVersion(int32_t global_version) {
-    if (global_version_ == -1) {
-      // if version is default (not been previously set) use the value
-      global_version_ = global_version;
-    } else {
-      // if already set, use the minimum value
-      global_version_ = std::min(global_version, global_version_);
-    }
+    global_version_ = global_version;
   }
 
   virtual int32_t GetGlobalVersion() { return global_version_; }
