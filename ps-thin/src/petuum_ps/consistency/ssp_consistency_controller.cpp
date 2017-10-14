@@ -78,6 +78,7 @@ ClientRow *SSPConsistencyController::Get(int32_t row_id,
     int32_t current_row_clock = client_row->GetClock();
     if (current_row_clock >= stalest_clock) {
       STATS_APP_SAMPLE_SSP_GET_END(table_id_, true);
+      UpdateLatestReadRowVersion(client_row);
       return client_row;
     }
   }
@@ -107,6 +108,7 @@ ClientRow *SSPConsistencyController::Get(int32_t row_id,
 
   STATS_APP_SAMPLE_SSP_GET_END(table_id_, false);
 
+  UpdateLatestReadRowVersion(client_row);
   return client_row;
 }
 

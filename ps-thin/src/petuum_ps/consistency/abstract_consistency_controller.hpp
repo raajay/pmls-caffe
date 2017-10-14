@@ -22,8 +22,10 @@ public:
   AbstractConsistencyController(int32_t table_id,
                                 AbstractProcessStorage &process_storage,
                                 const AbstractRow *sample_row)
-      : process_storage_(process_storage), table_id_(table_id),
-        sample_row_(sample_row) {}
+      : process_storage_(process_storage),
+        table_id_(table_id),
+        sample_row_(sample_row),
+        latest_row_version_(0) {}
 
   virtual ~AbstractConsistencyController() {}
 
@@ -50,20 +52,25 @@ public:
 
   // Increment a row with dense updates, i.e., all column ids
   virtual void DenseBatchInc(int32_t row_id, const void *updates,
-                             int32_t index_st, int32_t num_updates) = 0;
+          int32_t index_st, int32_t num_updates) = 0;
 
   virtual void FlushThreadCache() = 0;
 
   virtual void Clock() = 0;
 
-protected: // common class members for all controller modules.
+protected:
+
+  void UpdateLatestReadRowVersion(ClientRow *row) {
+      latest_row_version_ = std::max(latest_row_version_,
+              row->GetGlobalVersion());
+  }
+
   // Process cache, highly concurrent.
   AbstractProcessStorage &process_storage_;
-
   int32_t table_id_;
-
   // We use sample_row_.AddUpdates(), SubstractUpdates() as static method.
   const AbstractRow *sample_row_;
+  int32_t latest_row_version_;
 };
 
 } // namespace petuum

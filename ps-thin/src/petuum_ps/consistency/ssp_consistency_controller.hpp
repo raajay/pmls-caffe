@@ -87,6 +87,6 @@ public:
 
   void incrementPendingAsyncCounter();
 
-}; // end class - SSPConsistencyController
+};
 
 } // namespace petuum
