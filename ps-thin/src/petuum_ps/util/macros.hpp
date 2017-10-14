@@ -1,0 +1,1 @@
+#define DEFAULT_GLOBAL_VERSION -10
