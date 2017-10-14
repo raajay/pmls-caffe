@@ -8,6 +8,7 @@
 
 #include <petuum_ps/thread/context.hpp>
 #include <petuum_ps/oplog/abstract_row_oplog.hpp>
+#include <petuum_ps/util/macros.hpp>
 
 namespace petuum {
 
@@ -27,11 +28,14 @@ public:
 
   size_t num_rows() { return oplog_map_.size(); }
 
+  int32_t GetModelVersion() { return version_; }
+
 private:
   std::unordered_map<int32_t, AbstractRowOpLog *> oplog_map_;
   const int32_t table_id_;
   const size_t update_size_;
   const int32_t comm_channel_idx_;
+  int32_t version_;
 };
 
 } // end namespace -- petuum
