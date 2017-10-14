@@ -3,6 +3,7 @@
 #include <petuum_ps/thread/bg_workers.hpp>
 #include <petuum_ps/util/utils.hpp>
 #include <petuum_ps/util/stats.hpp>
+#include <petuum_ps/util/macros.hpp>
 #include <glog/logging.h>
 #include <algorithm>
 
@@ -130,6 +131,9 @@ void SSPConsistencyController::Inc(int32_t row_id, int32_t column_id,
   }
 }
 
+/**
+ * @brief Increment the updates to a bunch of columns.
+ */
 void SSPConsistencyController::BatchInc(int32_t row_id,
                                         const int32_t *column_ids,
                                         const void *updates,
@@ -142,30 +146,29 @@ void SSPConsistencyController::BatchInc(int32_t row_id,
   // update the thread index saying that row id is updated
   // thread_cache_->IndexUpdate(row_id);
 
-  // (raajay) In Caffe, only a single thread is responsible for updating and
-  // reading from a single table. This,
-  // provides an opportunity to directly write to process level data structures
-  // rather than having a
-  // thread level cache.
+  // XXX (raajay) In Caffe, only a single thread is responsible for updating and
+  // reading from a single table. This, provides an opportunity to directly
+  // write to process level data structures rather than having a thread level
+  // cache.
   oplog_index_.AddRowIndex(row_id);
 
-  // (raajay) create and insert an oplog. The oplog now holds the values that
-  // are sent in updates. If an oplog for the same row is already present,
+  // XXX (raajay) create and insert an oplog. The oplog now holds the values
+  // that are sent in updates. If an oplog for the same row is already present,
   // then the values in the OpLog are updated. By using an oplog_accessor, the
   // current execution gains a lock on the row oplog the lock is released at
   // the end of this function when the oplog_accessor variable is destroyed.
-
   OpLogAccessor oplog_accessor;
   oplog_.FindInsertOpLog(row_id, &oplog_accessor);
-
   // set the version from which the oplog is calculated
+  if (global_version == DEFAULT_GLOBAL_VERSION) {
+      global_version = latest_row_version_;
+  }
   oplog_accessor.get_row_oplog()->SetGlobalVersion(global_version);
 
   // update the data entries in the oplog
   const auto *deltas_uint8 = reinterpret_cast<const uint8_t *>(updates);
   for (int i = 0; i < num_updates; ++i) {
-    void *oplog_delta =
-        oplog_accessor.get_row_oplog()->FindCreate(column_ids[i]);
+    void *oplog_delta = oplog_accessor.get_row_oplog()->FindCreate(column_ids[i]);
     sample_row_->AddUpdates(column_ids[i], oplog_delta,
                             deltas_uint8 + sample_row_->get_update_size() * i);
   }
