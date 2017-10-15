@@ -2,6 +2,7 @@
 
 #include <petuum_ps/thread/msg_base.hpp>
 #include <petuum_ps/thread/ps_msgs.hpp>
+#include <petuum_ps/util/OneDimCounter.hpp>
 
 namespace petuum {
 
@@ -44,9 +45,22 @@ namespace petuum {
 
     class Scheduler {
         public:
-            virtual ~Scheduler() {};
+            Scheduler() {
+                observed_delay_histogram_ = new OneDimCounter<int32_t, int32_t>();
+            }
+
+            virtual ~Scheduler() {
+                delete observed_delay_histogram_;
+            };
+
             virtual void AddRequest(MLFabricRequest *request) = 0;
             virtual MLFabricRequest* TakeRequest() = 0;
+            OneDimCounter<int32_t, int32_t> *GetDelayHistogram() {
+                return observed_delay_histogram_;
+            }
+
+        protected:
+            OneDimCounter<int32_t, int32_t> *observed_delay_histogram_;
     };
 
 }
