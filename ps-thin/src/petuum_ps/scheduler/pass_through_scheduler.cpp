@@ -23,7 +23,7 @@ namespace petuum {
 
     /**
      */
-    MLFabricRequest* PassThroughScheduler::TakeRequest() {
+    MLFabricRequest* PassThroughScheduler::TakeRequest() {/*{{{*/
         MLFabricRequest* value = nullptr;
         bool success = false;
         while (!success) {
@@ -41,7 +41,7 @@ namespace petuum {
             UpdateOplogCounter(value);
         }
         return value;
-    }
+    }/*}}}*/
 
     /**
      */
@@ -51,7 +51,9 @@ namespace petuum {
             return;
         }
         int32_t delay = oplog_counter_.Get(dest_id) - request->OplogVersion;
-        VLOG(0) << "Delay : " << delay;
+        // record the observed delay
+        observed_delay_histogram_->Increment(delay, 1);
+        // increment the number of oplogs sent to the server thread.
         oplog_counter_.Increment(dest_id, 1);
     }
 }

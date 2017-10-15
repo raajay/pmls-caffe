@@ -39,6 +39,7 @@ namespace petuum {
             if (nullptr == request) {
                 ServerShutDownAckMsg msg;
                 SendToAll(&msg, bg_worker_ids_);
+                VLOG(0) << "Delay histogram: " << scheduler_->GetDelayHistogram()->ToString();
                 comm_bus_->ThreadDeregister();
                 VLOG(0) << "Terminating the scheduler send thread.";
                 return nullptr;
