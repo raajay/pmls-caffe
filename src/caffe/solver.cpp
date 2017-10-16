@@ -446,7 +446,7 @@ Dtype Solver<Dtype>::ForwardBackward(const vector<Blob<Dtype> *> &bottom) {
   net_->Forward(bottom, &loss);
 
   /// XXX(raajay) introduce a random wait to simulate stragglers
-  int32_t delay = GetUniformDelayInt(1000, 2000);
+  int32_t delay = GetUniformDelayInt(0, 500);
   std::this_thread::sleep_for(std::chrono::milliseconds(delay));
 
   /// Backward
