@@ -20,6 +20,7 @@
 #include "caffe/util/math_functions.hpp"
 #include "caffe/util/upgrade_proto.hpp"
 #include "caffe/sufficient_vector.hpp"
+#include "caffe/util/rand_utils.hpp"
 
 namespace caffe {
 
@@ -443,6 +444,10 @@ Dtype Solver<Dtype>::ForwardBackward(const vector<Blob<Dtype> *> &bottom) {
 
   /// Forward
   net_->Forward(bottom, &loss);
+
+  /// XXX(raajay) introduce a random wait to simulate stragglers
+  int32_t delay = GetUniformDelayInt(1000, 2000);
+  std::this_thread::sleep_for(std::chrono::milliseconds(delay));
 
   /// Backward
   const vector<shared_ptr<Layer<Dtype>>> &layers = net_->layers();
