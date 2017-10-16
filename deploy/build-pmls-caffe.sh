@@ -46,7 +46,7 @@ function manage_dirs() {
 
 function build_pmls_caffe() {
   rm -rf $BASE_BUILD_DIR
-  git clone -b ${BRANCH} git@github.com:raajay/pmls-caffe.git $BASE_BUILD_DIR
+  git clone -b ${BRANCH} git@github.com:raajay/mlfabric.git $BASE_BUILD_DIR
   cd $BASE_BUILD_DIR
   mkdir -p $BASE_BUILD_DIR/build && cd $BASE_BUILD_DIR/build
   build_info=$BASE_BUILD_DIR/build/build.info
