@@ -1,0 +1,356 @@
+<rspec xmlns="http://www.geni.net/resources/rspec/3" xmlns:emulab="http://www.protogeni.net/resources/rspec/ext/emulab/1" xmlns:tour="http://www.protogeni.net/resources/rspec/ext/apt-tour/1" xmlns:jacks="http://www.protogeni.net/resources/rspec/ext/jacks/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.geni.net/resources/rspec/3    http://www.geni.net/resources/rspec/3/request.xsd" type="request">
+  <node xmlns:emulab="http://www.protogeni.net/resources/rspec/ext/emulab/1" client_id="node-0" component_manager_id="urn:publicid:IDN+clemson.cloudlab.us+authority+cm" exclusive="true" component_id="urn:publicid:IDN+clemson.cloudlab.us+node+clnode002" sliver_id="urn:publicid:IDN+clemson.cloudlab.us+sliver+96968">
+    <icon xmlns="http://www.protogeni.net/resources/rspec/ext/jacks/1" url="https://www.emulab.net/protogeni/jacks-stable/images/server.svg"/>
+    <sliver_type name="raw-pc"/>
+    <services>
+      <login authentication="ssh-keys" hostname="clnode002.clemson.cloudlab.us" port="22" username="raajay86"/>
+      <login authentication="ssh-keys" hostname="clnode002.clemson.cloudlab.us" port="22" username="rgrandl"/>
+      <login authentication="ssh-keys" hostname="clnode002.clemson.cloudlab.us" port="22" username="agember"/>
+      <login authentication="ssh-keys" hostname="clnode002.clemson.cloudlab.us" port="22" username="archie"/>
+      <login authentication="ssh-keys" hostname="clnode002.clemson.cloudlab.us" port="22" username="asinghvi"/>
+      <login authentication="ssh-keys" hostname="clnode002.clemson.cloudlab.us" port="22" username="yyao39"/>
+      <login authentication="ssh-keys" hostname="clnode002.clemson.cloudlab.us" port="22" username="shyne"/>
+      <login authentication="ssh-keys" hostname="clnode002.clemson.cloudlab.us" port="22" username="sharath"/>
+      <login authentication="ssh-keys" hostname="clnode002.clemson.cloudlab.us" port="22" username="hpirzada"/>
+      <login authentication="ssh-keys" hostname="clnode002.clemson.cloudlab.us" port="22" username="teja5832"/>
+      <emulab:console server="boss.clemson.cloudlab.us"/>
+    </services>
+    <interface client_id="interface-2" component_id="urn:publicid:IDN+clemson.cloudlab.us+interface+clnode002:eth2" sliver_id="urn:publicid:IDN+clemson.cloudlab.us+sliver+96986" mac_address="008cfa5b0902">
+      <ip address="10.10.1.3" type="ipv4"/>
+    </interface>
+    <emulab:vnode name="clnode002" hardware_type="c8220"/>
+    <host name="node-0.cifar-test.cs-838-big-data-PG0.clemson.cloudlab.us" ipv4="130.127.133.11"/>
+  </node>
+  <node xmlns:emulab="http://www.protogeni.net/resources/rspec/ext/emulab/1" client_id="node-1" component_manager_id="urn:publicid:IDN+clemson.cloudlab.us+authority+cm" exclusive="true" component_id="urn:publicid:IDN+clemson.cloudlab.us+node+clnode018" sliver_id="urn:publicid:IDN+clemson.cloudlab.us+sliver+96977">
+    <icon xmlns="http://www.protogeni.net/resources/rspec/ext/jacks/1" url="https://www.emulab.net/protogeni/jacks-stable/images/server.svg"/>
+    <sliver_type name="raw-pc"/>
+    <services>
+      <login authentication="ssh-keys" hostname="clnode018.clemson.cloudlab.us" port="22" username="raajay86"/>
+      <login authentication="ssh-keys" hostname="clnode018.clemson.cloudlab.us" port="22" username="rgrandl"/>
+      <login authentication="ssh-keys" hostname="clnode018.clemson.cloudlab.us" port="22" username="agember"/>
+      <login authentication="ssh-keys" hostname="clnode018.clemson.cloudlab.us" port="22" username="archie"/>
+      <login authentication="ssh-keys" hostname="clnode018.clemson.cloudlab.us" port="22" username="asinghvi"/>
+      <login authentication="ssh-keys" hostname="clnode018.clemson.cloudlab.us" port="22" username="yyao39"/>
+      <login authentication="ssh-keys" hostname="clnode018.clemson.cloudlab.us" port="22" username="shyne"/>
+      <login authentication="ssh-keys" hostname="clnode018.clemson.cloudlab.us" port="22" username="sharath"/>
+      <login authentication="ssh-keys" hostname="clnode018.clemson.cloudlab.us" port="22" username="hpirzada"/>
+      <login authentication="ssh-keys" hostname="clnode018.clemson.cloudlab.us" port="22" username="teja5832"/>
+      <emulab:console server="boss.clemson.cloudlab.us"/>
+    </services>
+    <interface client_id="interface-0" component_id="urn:publicid:IDN+clemson.cloudlab.us+interface+clnode018:eth2" sliver_id="urn:publicid:IDN+clemson.cloudlab.us+sliver+96984" mac_address="008cfa5b0be0">
+      <ip address="10.10.1.1" type="ipv4"/>
+    </interface>
+    <emulab:vnode name="clnode018" hardware_type="c8220"/>
+    <host name="node-1.cifar-test.cs-838-big-data-PG0.clemson.cloudlab.us" ipv4="130.127.133.27"/>
+  </node>
+  <node xmlns:emulab="http://www.protogeni.net/resources/rspec/ext/emulab/1" client_id="node-2" component_manager_id="urn:publicid:IDN+clemson.cloudlab.us+authority+cm" exclusive="true" component_id="urn:publicid:IDN+clemson.cloudlab.us+node+clnode011" sliver_id="urn:publicid:IDN+clemson.cloudlab.us+sliver+96973">
+    <icon xmlns="http://www.protogeni.net/resources/rspec/ext/jacks/1" url="https://www.emulab.net/protogeni/jacks-stable/images/server.svg"/>
+    <sliver_type name="raw-pc"/>
+    <services>
+      <login authentication="ssh-keys" hostname="clnode011.clemson.cloudlab.us" port="22" username="raajay86"/>
+      <login authentication="ssh-keys" hostname="clnode011.clemson.cloudlab.us" port="22" username="rgrandl"/>
+      <login authentication="ssh-keys" hostname="clnode011.clemson.cloudlab.us" port="22" username="agember"/>
+      <login authentication="ssh-keys" hostname="clnode011.clemson.cloudlab.us" port="22" username="archie"/>
+      <login authentication="ssh-keys" hostname="clnode011.clemson.cloudlab.us" port="22" username="asinghvi"/>
+      <login authentication="ssh-keys" hostname="clnode011.clemson.cloudlab.us" port="22" username="yyao39"/>
+      <login authentication="ssh-keys" hostname="clnode011.clemson.cloudlab.us" port="22" username="shyne"/>
+      <login authentication="ssh-keys" hostname="clnode011.clemson.cloudlab.us" port="22" username="sharath"/>
+      <login authentication="ssh-keys" hostname="clnode011.clemson.cloudlab.us" port="22" username="hpirzada"/>
+      <login authentication="ssh-keys" hostname="clnode011.clemson.cloudlab.us" port="22" username="teja5832"/>
+      <emulab:console server="boss.clemson.cloudlab.us"/>
+    </services>
+    <interface client_id="interface-1" component_id="urn:publicid:IDN+clemson.cloudlab.us+interface+clnode011:eth2" sliver_id="urn:publicid:IDN+clemson.cloudlab.us+sliver+96985" mac_address="008cfa5b0b6e">
+      <ip address="10.10.1.2" type="ipv4"/>
+    </interface>
+    <emulab:vnode name="clnode011" hardware_type="c8220"/>
+    <host name="node-2.cifar-test.cs-838-big-data-PG0.clemson.cloudlab.us" ipv4="130.127.133.20"/>
+  </node>
+  <node xmlns:emulab="http://www.protogeni.net/resources/rspec/ext/emulab/1" client_id="node-3" component_manager_id="urn:publicid:IDN+clemson.cloudlab.us+authority+cm" exclusive="true" component_id="urn:publicid:IDN+clemson.cloudlab.us+node+clnode003" sliver_id="urn:publicid:IDN+clemson.cloudlab.us+sliver+96980">
+    <icon xmlns="http://www.protogeni.net/resources/rspec/ext/jacks/1" url="https://www.emulab.net/protogeni/jacks-stable/images/server.svg"/>
+    <sliver_type name="raw-pc"/>
+    <services>
+      <login authentication="ssh-keys" hostname="clnode003.clemson.cloudlab.us" port="22" username="raajay86"/>
+      <login authentication="ssh-keys" hostname="clnode003.clemson.cloudlab.us" port="22" username="rgrandl"/>
+      <login authentication="ssh-keys" hostname="clnode003.clemson.cloudlab.us" port="22" username="agember"/>
+      <login authentication="ssh-keys" hostname="clnode003.clemson.cloudlab.us" port="22" username="archie"/>
+      <login authentication="ssh-keys" hostname="clnode003.clemson.cloudlab.us" port="22" username="asinghvi"/>
+      <login authentication="ssh-keys" hostname="clnode003.clemson.cloudlab.us" port="22" username="yyao39"/>
+      <login authentication="ssh-keys" hostname="clnode003.clemson.cloudlab.us" port="22" username="shyne"/>
+      <login authentication="ssh-keys" hostname="clnode003.clemson.cloudlab.us" port="22" username="sharath"/>
+      <login authentication="ssh-keys" hostname="clnode003.clemson.cloudlab.us" port="22" username="hpirzada"/>
+      <login authentication="ssh-keys" hostname="clnode003.clemson.cloudlab.us" port="22" username="teja5832"/>
+      <emulab:console server="boss.clemson.cloudlab.us"/>
+    </services>
+    <interface client_id="interface-3" component_id="urn:publicid:IDN+clemson.cloudlab.us+interface+clnode003:eth2" sliver_id="urn:publicid:IDN+clemson.cloudlab.us+sliver+96987" mac_address="008cfa5b0830">
+      <ip address="10.10.1.4" type="ipv4"/>
+    </interface>
+    <emulab:vnode name="clnode003" hardware_type="c8220"/>
+    <host name="node-3.cifar-test.cs-838-big-data-PG0.clemson.cloudlab.us" ipv4="130.127.133.12"/>
+  </node>
+  <node xmlns:emulab="http://www.protogeni.net/resources/rspec/ext/emulab/1" client_id="node-4" component_manager_id="urn:publicid:IDN+clemson.cloudlab.us+authority+cm" exclusive="true" component_id="urn:publicid:IDN+clemson.cloudlab.us+node+clnode033" sliver_id="urn:publicid:IDN+clemson.cloudlab.us+sliver+96969">
+    <icon xmlns="http://www.protogeni.net/resources/rspec/ext/jacks/1" url="https://www.emulab.net/protogeni/jacks-stable/images/server.svg"/>
+    <sliver_type name="raw-pc"/>
+    <services>
+      <login authentication="ssh-keys" hostname="clnode033.clemson.cloudlab.us" port="22" username="raajay86"/>
+      <login authentication="ssh-keys" hostname="clnode033.clemson.cloudlab.us" port="22" username="rgrandl"/>
+      <login authentication="ssh-keys" hostname="clnode033.clemson.cloudlab.us" port="22" username="agember"/>
+      <login authentication="ssh-keys" hostname="clnode033.clemson.cloudlab.us" port="22" username="archie"/>
+      <login authentication="ssh-keys" hostname="clnode033.clemson.cloudlab.us" port="22" username="asinghvi"/>
+      <login authentication="ssh-keys" hostname="clnode033.clemson.cloudlab.us" port="22" username="yyao39"/>
+      <login authentication="ssh-keys" hostname="clnode033.clemson.cloudlab.us" port="22" username="shyne"/>
+      <login authentication="ssh-keys" hostname="clnode033.clemson.cloudlab.us" port="22" username="sharath"/>
+      <login authentication="ssh-keys" hostname="clnode033.clemson.cloudlab.us" port="22" username="hpirzada"/>
+      <login authentication="ssh-keys" hostname="clnode033.clemson.cloudlab.us" port="22" username="teja5832"/>
+      <emulab:console server="boss.clemson.cloudlab.us"/>
+    </services>
+    <interface client_id="interface-4" component_id="urn:publicid:IDN+clemson.cloudlab.us+interface+clnode033:eth2" sliver_id="urn:publicid:IDN+clemson.cloudlab.us+sliver+96988" mac_address="008cfa5afba4">
+      <ip address="10.10.1.5" type="ipv4"/>
+    </interface>
+    <emulab:vnode name="clnode033" hardware_type="c8220"/>
+    <host name="node-4.cifar-test.cs-838-big-data-PG0.clemson.cloudlab.us" ipv4="130.127.133.42"/>
+  </node>
+  <node xmlns:emulab="http://www.protogeni.net/resources/rspec/ext/emulab/1" client_id="node-5" component_manager_id="urn:publicid:IDN+clemson.cloudlab.us+authority+cm" exclusive="true" component_id="urn:publicid:IDN+clemson.cloudlab.us+node+clnode034" sliver_id="urn:publicid:IDN+clemson.cloudlab.us+sliver+96970">
+    <icon xmlns="http://www.protogeni.net/resources/rspec/ext/jacks/1" url="https://www.emulab.net/protogeni/jacks-stable/images/server.svg"/>
+    <sliver_type name="raw-pc"/>
+    <services>
+      <login authentication="ssh-keys" hostname="clnode034.clemson.cloudlab.us" port="22" username="raajay86"/>
+      <login authentication="ssh-keys" hostname="clnode034.clemson.cloudlab.us" port="22" username="rgrandl"/>
+      <login authentication="ssh-keys" hostname="clnode034.clemson.cloudlab.us" port="22" username="agember"/>
+      <login authentication="ssh-keys" hostname="clnode034.clemson.cloudlab.us" port="22" username="archie"/>
+      <login authentication="ssh-keys" hostname="clnode034.clemson.cloudlab.us" port="22" username="asinghvi"/>
+      <login authentication="ssh-keys" hostname="clnode034.clemson.cloudlab.us" port="22" username="yyao39"/>
+      <login authentication="ssh-keys" hostname="clnode034.clemson.cloudlab.us" port="22" username="shyne"/>
+      <login authentication="ssh-keys" hostname="clnode034.clemson.cloudlab.us" port="22" username="sharath"/>
+      <login authentication="ssh-keys" hostname="clnode034.clemson.cloudlab.us" port="22" username="hpirzada"/>
+      <login authentication="ssh-keys" hostname="clnode034.clemson.cloudlab.us" port="22" username="teja5832"/>
+      <emulab:console server="boss.clemson.cloudlab.us"/>
+    </services>
+    <interface client_id="interface-5" component_id="urn:publicid:IDN+clemson.cloudlab.us+interface+clnode034:eth2" sliver_id="urn:publicid:IDN+clemson.cloudlab.us+sliver+96989" mac_address="008cfa5b0b82">
+      <ip address="10.10.1.6" type="ipv4"/>
+    </interface>
+    <emulab:vnode name="clnode034" hardware_type="c8220"/>
+    <host name="node-5.cifar-test.cs-838-big-data-PG0.clemson.cloudlab.us" ipv4="130.127.133.43"/>
+  </node>
+  <node xmlns:emulab="http://www.protogeni.net/resources/rspec/ext/emulab/1" client_id="node-6" component_manager_id="urn:publicid:IDN+clemson.cloudlab.us+authority+cm" exclusive="true" component_id="urn:publicid:IDN+clemson.cloudlab.us+node+clnode009" sliver_id="urn:publicid:IDN+clemson.cloudlab.us+sliver+96978">
+    <icon xmlns="http://www.protogeni.net/resources/rspec/ext/jacks/1" url="https://www.emulab.net/protogeni/jacks-stable/images/server.svg"/>
+    <sliver_type name="raw-pc"/>
+    <services>
+      <login authentication="ssh-keys" hostname="clnode009.clemson.cloudlab.us" port="22" username="raajay86"/>
+      <login authentication="ssh-keys" hostname="clnode009.clemson.cloudlab.us" port="22" username="rgrandl"/>
+      <login authentication="ssh-keys" hostname="clnode009.clemson.cloudlab.us" port="22" username="agember"/>
+      <login authentication="ssh-keys" hostname="clnode009.clemson.cloudlab.us" port="22" username="archie"/>
+      <login authentication="ssh-keys" hostname="clnode009.clemson.cloudlab.us" port="22" username="asinghvi"/>
+      <login authentication="ssh-keys" hostname="clnode009.clemson.cloudlab.us" port="22" username="yyao39"/>
+      <login authentication="ssh-keys" hostname="clnode009.clemson.cloudlab.us" port="22" username="shyne"/>
+      <login authentication="ssh-keys" hostname="clnode009.clemson.cloudlab.us" port="22" username="sharath"/>
+      <login authentication="ssh-keys" hostname="clnode009.clemson.cloudlab.us" port="22" username="hpirzada"/>
+      <login authentication="ssh-keys" hostname="clnode009.clemson.cloudlab.us" port="22" username="teja5832"/>
+      <emulab:console server="boss.clemson.cloudlab.us"/>
+    </services>
+    <interface client_id="interface-6" component_id="urn:publicid:IDN+clemson.cloudlab.us+interface+clnode009:eth2" sliver_id="urn:publicid:IDN+clemson.cloudlab.us+sliver+96990" mac_address="008cfa5b099a">
+      <ip address="10.10.1.7" type="ipv4"/>
+    </interface>
+    <emulab:vnode name="clnode009" hardware_type="c8220"/>
+    <host name="node-6.cifar-test.cs-838-big-data-PG0.clemson.cloudlab.us" ipv4="130.127.133.18"/>
+  </node>
+  <node xmlns:emulab="http://www.protogeni.net/resources/rspec/ext/emulab/1" client_id="node-7" component_manager_id="urn:publicid:IDN+clemson.cloudlab.us+authority+cm" exclusive="true" component_id="urn:publicid:IDN+clemson.cloudlab.us+node+clnode020" sliver_id="urn:publicid:IDN+clemson.cloudlab.us+sliver+96971">
+    <icon xmlns="http://www.protogeni.net/resources/rspec/ext/jacks/1" url="https://www.emulab.net/protogeni/jacks-stable/images/server.svg"/>
+    <sliver_type name="raw-pc"/>
+    <services>
+      <login authentication="ssh-keys" hostname="clnode020.clemson.cloudlab.us" port="22" username="raajay86"/>
+      <login authentication="ssh-keys" hostname="clnode020.clemson.cloudlab.us" port="22" username="rgrandl"/>
+      <login authentication="ssh-keys" hostname="clnode020.clemson.cloudlab.us" port="22" username="agember"/>
+      <login authentication="ssh-keys" hostname="clnode020.clemson.cloudlab.us" port="22" username="archie"/>
+      <login authentication="ssh-keys" hostname="clnode020.clemson.cloudlab.us" port="22" username="asinghvi"/>
+      <login authentication="ssh-keys" hostname="clnode020.clemson.cloudlab.us" port="22" username="yyao39"/>
+      <login authentication="ssh-keys" hostname="clnode020.clemson.cloudlab.us" port="22" username="shyne"/>
+      <login authentication="ssh-keys" hostname="clnode020.clemson.cloudlab.us" port="22" username="sharath"/>
+      <login authentication="ssh-keys" hostname="clnode020.clemson.cloudlab.us" port="22" username="hpirzada"/>
+      <login authentication="ssh-keys" hostname="clnode020.clemson.cloudlab.us" port="22" username="teja5832"/>
+      <emulab:console server="boss.clemson.cloudlab.us"/>
+    </services>
+    <interface client_id="interface-7" component_id="urn:publicid:IDN+clemson.cloudlab.us+interface+clnode020:eth2" sliver_id="urn:publicid:IDN+clemson.cloudlab.us+sliver+96991" mac_address="008cfa5b0ada">
+      <ip address="10.10.1.8" type="ipv4"/>
+    </interface>
+    <emulab:vnode name="clnode020" hardware_type="c8220"/>
+    <host name="node-7.cifar-test.cs-838-big-data-PG0.clemson.cloudlab.us" ipv4="130.127.133.29"/>
+  </node>
+  <node xmlns:emulab="http://www.protogeni.net/resources/rspec/ext/emulab/1" client_id="node-8" component_manager_id="urn:publicid:IDN+clemson.cloudlab.us+authority+cm" exclusive="true" component_id="urn:publicid:IDN+clemson.cloudlab.us+node+clnode004" sliver_id="urn:publicid:IDN+clemson.cloudlab.us+sliver+96972">
+    <icon xmlns="http://www.protogeni.net/resources/rspec/ext/jacks/1" url="https://www.emulab.net/protogeni/jacks-stable/images/server.svg"/>
+    <sliver_type name="raw-pc"/>
+    <services>
+      <login authentication="ssh-keys" hostname="clnode004.clemson.cloudlab.us" port="22" username="raajay86"/>
+      <login authentication="ssh-keys" hostname="clnode004.clemson.cloudlab.us" port="22" username="rgrandl"/>
+      <login authentication="ssh-keys" hostname="clnode004.clemson.cloudlab.us" port="22" username="agember"/>
+      <login authentication="ssh-keys" hostname="clnode004.clemson.cloudlab.us" port="22" username="archie"/>
+      <login authentication="ssh-keys" hostname="clnode004.clemson.cloudlab.us" port="22" username="asinghvi"/>
+      <login authentication="ssh-keys" hostname="clnode004.clemson.cloudlab.us" port="22" username="yyao39"/>
+      <login authentication="ssh-keys" hostname="clnode004.clemson.cloudlab.us" port="22" username="shyne"/>
+      <login authentication="ssh-keys" hostname="clnode004.clemson.cloudlab.us" port="22" username="sharath"/>
+      <login authentication="ssh-keys" hostname="clnode004.clemson.cloudlab.us" port="22" username="hpirzada"/>
+      <login authentication="ssh-keys" hostname="clnode004.clemson.cloudlab.us" port="22" username="teja5832"/>
+      <emulab:console server="boss.clemson.cloudlab.us"/>
+    </services>
+    <interface client_id="interface-8" component_id="urn:publicid:IDN+clemson.cloudlab.us+interface+clnode004:eth2" sliver_id="urn:publicid:IDN+clemson.cloudlab.us+sliver+96992" mac_address="008cfa5b0ace">
+      <ip address="10.10.1.9" type="ipv4"/>
+    </interface>
+    <emulab:vnode name="clnode004" hardware_type="c8220"/>
+    <host name="node-8.cifar-test.cs-838-big-data-PG0.clemson.cloudlab.us" ipv4="130.127.133.13"/>
+  </node>
+  <node xmlns:emulab="http://www.protogeni.net/resources/rspec/ext/emulab/1" client_id="node-9" component_manager_id="urn:publicid:IDN+clemson.cloudlab.us+authority+cm" exclusive="true" component_id="urn:publicid:IDN+clemson.cloudlab.us+node+clnode010" sliver_id="urn:publicid:IDN+clemson.cloudlab.us+sliver+96967">
+    <icon xmlns="http://www.protogeni.net/resources/rspec/ext/jacks/1" url="https://www.emulab.net/protogeni/jacks-stable/images/server.svg"/>
+    <sliver_type name="raw-pc"/>
+    <services>
+      <login authentication="ssh-keys" hostname="clnode010.clemson.cloudlab.us" port="22" username="raajay86"/>
+      <login authentication="ssh-keys" hostname="clnode010.clemson.cloudlab.us" port="22" username="rgrandl"/>
+      <login authentication="ssh-keys" hostname="clnode010.clemson.cloudlab.us" port="22" username="agember"/>
+      <login authentication="ssh-keys" hostname="clnode010.clemson.cloudlab.us" port="22" username="archie"/>
+      <login authentication="ssh-keys" hostname="clnode010.clemson.cloudlab.us" port="22" username="asinghvi"/>
+      <login authentication="ssh-keys" hostname="clnode010.clemson.cloudlab.us" port="22" username="yyao39"/>
+      <login authentication="ssh-keys" hostname="clnode010.clemson.cloudlab.us" port="22" username="shyne"/>
+      <login authentication="ssh-keys" hostname="clnode010.clemson.cloudlab.us" port="22" username="sharath"/>
+      <login authentication="ssh-keys" hostname="clnode010.clemson.cloudlab.us" port="22" username="hpirzada"/>
+      <login authentication="ssh-keys" hostname="clnode010.clemson.cloudlab.us" port="22" username="teja5832"/>
+      <emulab:console server="boss.clemson.cloudlab.us"/>
+    </services>
+    <interface client_id="interface-9" component_id="urn:publicid:IDN+clemson.cloudlab.us+interface+clnode010:eth2" sliver_id="urn:publicid:IDN+clemson.cloudlab.us+sliver+96993" mac_address="008cfa5b0990">
+      <ip address="10.10.1.10" type="ipv4"/>
+    </interface>
+    <emulab:vnode name="clnode010" hardware_type="c8220"/>
+    <host name="node-9.cifar-test.cs-838-big-data-PG0.clemson.cloudlab.us" ipv4="130.127.133.19"/>
+  </node>
+  <node xmlns:emulab="http://www.protogeni.net/resources/rspec/ext/emulab/1" client_id="node-10" component_manager_id="urn:publicid:IDN+clemson.cloudlab.us+authority+cm" exclusive="true" component_id="urn:publicid:IDN+clemson.cloudlab.us+node+clnode021" sliver_id="urn:publicid:IDN+clemson.cloudlab.us+sliver+96974">
+    <icon xmlns="http://www.protogeni.net/resources/rspec/ext/jacks/1" url="https://www.emulab.net/protogeni/jacks-stable/images/server.svg"/>
+    <sliver_type name="raw-pc"/>
+    <services>
+      <login authentication="ssh-keys" hostname="clnode021.clemson.cloudlab.us" port="22" username="raajay86"/>
+      <login authentication="ssh-keys" hostname="clnode021.clemson.cloudlab.us" port="22" username="rgrandl"/>
+      <login authentication="ssh-keys" hostname="clnode021.clemson.cloudlab.us" port="22" username="agember"/>
+      <login authentication="ssh-keys" hostname="clnode021.clemson.cloudlab.us" port="22" username="archie"/>
+      <login authentication="ssh-keys" hostname="clnode021.clemson.cloudlab.us" port="22" username="asinghvi"/>
+      <login authentication="ssh-keys" hostname="clnode021.clemson.cloudlab.us" port="22" username="yyao39"/>
+      <login authentication="ssh-keys" hostname="clnode021.clemson.cloudlab.us" port="22" username="shyne"/>
+      <login authentication="ssh-keys" hostname="clnode021.clemson.cloudlab.us" port="22" username="sharath"/>
+      <login authentication="ssh-keys" hostname="clnode021.clemson.cloudlab.us" port="22" username="hpirzada"/>
+      <login authentication="ssh-keys" hostname="clnode021.clemson.cloudlab.us" port="22" username="teja5832"/>
+      <emulab:console server="boss.clemson.cloudlab.us"/>
+    </services>
+    <interface client_id="interface-11" component_id="urn:publicid:IDN+clemson.cloudlab.us+interface+clnode021:eth2" sliver_id="urn:publicid:IDN+clemson.cloudlab.us+sliver+96995" mac_address="008cfa5b0878">
+      <ip address="10.10.1.12" type="ipv4"/>
+    </interface>
+    <emulab:vnode name="clnode021" hardware_type="c8220"/>
+    <host name="node-10.cifar-test.cs-838-big-data-PG0.clemson.cloudlab.us" ipv4="130.127.133.30"/>
+  </node>
+  <node xmlns:emulab="http://www.protogeni.net/resources/rspec/ext/emulab/1" client_id="node-11" component_manager_id="urn:publicid:IDN+clemson.cloudlab.us+authority+cm" exclusive="true" component_id="urn:publicid:IDN+clemson.cloudlab.us+node+clnode035" sliver_id="urn:publicid:IDN+clemson.cloudlab.us+sliver+96979">
+    <icon xmlns="http://www.protogeni.net/resources/rspec/ext/jacks/1" url="https://www.emulab.net/protogeni/jacks-stable/images/server.svg"/>
+    <sliver_type name="raw-pc"/>
+    <services>
+      <login authentication="ssh-keys" hostname="clnode035.clemson.cloudlab.us" port="22" username="raajay86"/>
+      <login authentication="ssh-keys" hostname="clnode035.clemson.cloudlab.us" port="22" username="rgrandl"/>
+      <login authentication="ssh-keys" hostname="clnode035.clemson.cloudlab.us" port="22" username="agember"/>
+      <login authentication="ssh-keys" hostname="clnode035.clemson.cloudlab.us" port="22" username="archie"/>
+      <login authentication="ssh-keys" hostname="clnode035.clemson.cloudlab.us" port="22" username="asinghvi"/>
+      <login authentication="ssh-keys" hostname="clnode035.clemson.cloudlab.us" port="22" username="yyao39"/>
+      <login authentication="ssh-keys" hostname="clnode035.clemson.cloudlab.us" port="22" username="shyne"/>
+      <login authentication="ssh-keys" hostname="clnode035.clemson.cloudlab.us" port="22" username="sharath"/>
+      <login authentication="ssh-keys" hostname="clnode035.clemson.cloudlab.us" port="22" username="hpirzada"/>
+      <login authentication="ssh-keys" hostname="clnode035.clemson.cloudlab.us" port="22" username="teja5832"/>
+      <emulab:console server="boss.clemson.cloudlab.us"/>
+    </services>
+    <interface client_id="interface-12" component_id="urn:publicid:IDN+clemson.cloudlab.us+interface+clnode035:eth2" sliver_id="urn:publicid:IDN+clemson.cloudlab.us+sliver+96996" mac_address="008cfa5b09d4">
+      <ip address="10.10.1.13" type="ipv4"/>
+    </interface>
+    <emulab:vnode name="clnode035" hardware_type="c8220"/>
+    <host name="node-11.cifar-test.cs-838-big-data-PG0.clemson.cloudlab.us" ipv4="130.127.133.44"/>
+  </node>
+  <node xmlns:emulab="http://www.protogeni.net/resources/rspec/ext/emulab/1" client_id="node-12" component_manager_id="urn:publicid:IDN+clemson.cloudlab.us+authority+cm" exclusive="true" component_id="urn:publicid:IDN+clemson.cloudlab.us+node+clnode037" sliver_id="urn:publicid:IDN+clemson.cloudlab.us+sliver+96975">
+    <icon xmlns="http://www.protogeni.net/resources/rspec/ext/jacks/1" url="https://www.emulab.net/protogeni/jacks-stable/images/server.svg"/>
+    <sliver_type name="raw-pc"/>
+    <services>
+      <login authentication="ssh-keys" hostname="clnode037.clemson.cloudlab.us" port="22" username="raajay86"/>
+      <login authentication="ssh-keys" hostname="clnode037.clemson.cloudlab.us" port="22" username="rgrandl"/>
+      <login authentication="ssh-keys" hostname="clnode037.clemson.cloudlab.us" port="22" username="agember"/>
+      <login authentication="ssh-keys" hostname="clnode037.clemson.cloudlab.us" port="22" username="archie"/>
+      <login authentication="ssh-keys" hostname="clnode037.clemson.cloudlab.us" port="22" username="asinghvi"/>
+      <login authentication="ssh-keys" hostname="clnode037.clemson.cloudlab.us" port="22" username="yyao39"/>
+      <login authentication="ssh-keys" hostname="clnode037.clemson.cloudlab.us" port="22" username="shyne"/>
+      <login authentication="ssh-keys" hostname="clnode037.clemson.cloudlab.us" port="22" username="sharath"/>
+      <login authentication="ssh-keys" hostname="clnode037.clemson.cloudlab.us" port="22" username="hpirzada"/>
+      <login authentication="ssh-keys" hostname="clnode037.clemson.cloudlab.us" port="22" username="teja5832"/>
+      <emulab:console server="boss.clemson.cloudlab.us"/>
+    </services>
+    <interface client_id="interface-10" component_id="urn:publicid:IDN+clemson.cloudlab.us+interface+clnode037:eth2" sliver_id="urn:publicid:IDN+clemson.cloudlab.us+sliver+96994" mac_address="008cfa5b088a">
+      <ip address="10.10.1.11" type="ipv4"/>
+    </interface>
+    <emulab:vnode name="clnode037" hardware_type="c8220"/>
+    <host name="node-12.cifar-test.cs-838-big-data-PG0.clemson.cloudlab.us" ipv4="130.127.133.46"/>
+  </node>
+  <node xmlns:emulab="http://www.protogeni.net/resources/rspec/ext/emulab/1" client_id="node-13" component_manager_id="urn:publicid:IDN+clemson.cloudlab.us+authority+cm" exclusive="true" component_id="urn:publicid:IDN+clemson.cloudlab.us+node+clnode005" sliver_id="urn:publicid:IDN+clemson.cloudlab.us+sliver+96981">
+    <icon xmlns="http://www.protogeni.net/resources/rspec/ext/jacks/1" url="https://www.emulab.net/protogeni/jacks-stable/images/server.svg"/>
+    <sliver_type name="raw-pc"/>
+    <services>
+      <login authentication="ssh-keys" hostname="clnode005.clemson.cloudlab.us" port="22" username="raajay86"/>
+      <login authentication="ssh-keys" hostname="clnode005.clemson.cloudlab.us" port="22" username="rgrandl"/>
+      <login authentication="ssh-keys" hostname="clnode005.clemson.cloudlab.us" port="22" username="agember"/>
+      <login authentication="ssh-keys" hostname="clnode005.clemson.cloudlab.us" port="22" username="archie"/>
+      <login authentication="ssh-keys" hostname="clnode005.clemson.cloudlab.us" port="22" username="asinghvi"/>
+      <login authentication="ssh-keys" hostname="clnode005.clemson.cloudlab.us" port="22" username="yyao39"/>
+      <login authentication="ssh-keys" hostname="clnode005.clemson.cloudlab.us" port="22" username="shyne"/>
+      <login authentication="ssh-keys" hostname="clnode005.clemson.cloudlab.us" port="22" username="sharath"/>
+      <login authentication="ssh-keys" hostname="clnode005.clemson.cloudlab.us" port="22" username="hpirzada"/>
+      <login authentication="ssh-keys" hostname="clnode005.clemson.cloudlab.us" port="22" username="teja5832"/>
+      <emulab:console server="boss.clemson.cloudlab.us"/>
+    </services>
+    <interface client_id="interface-13" component_id="urn:publicid:IDN+clemson.cloudlab.us+interface+clnode005:eth2" sliver_id="urn:publicid:IDN+clemson.cloudlab.us+sliver+96997" mac_address="008cfa5ac8d4">
+      <ip address="10.10.1.14" type="ipv4"/>
+    </interface>
+    <emulab:vnode name="clnode005" hardware_type="c8220"/>
+    <host name="node-13.cifar-test.cs-838-big-data-PG0.clemson.cloudlab.us" ipv4="130.127.133.14"/>
+  </node>
+  <node xmlns:emulab="http://www.protogeni.net/resources/rspec/ext/emulab/1" client_id="node-14" component_manager_id="urn:publicid:IDN+clemson.cloudlab.us+authority+cm" exclusive="true" component_id="urn:publicid:IDN+clemson.cloudlab.us+node+clnode038" sliver_id="urn:publicid:IDN+clemson.cloudlab.us+sliver+96976">
+    <icon xmlns="http://www.protogeni.net/resources/rspec/ext/jacks/1" url="https://www.emulab.net/protogeni/jacks-stable/images/server.svg"/>
+    <sliver_type name="raw-pc"/>
+    <services>
+      <login authentication="ssh-keys" hostname="clnode038.clemson.cloudlab.us" port="22" username="raajay86"/>
+      <login authentication="ssh-keys" hostname="clnode038.clemson.cloudlab.us" port="22" username="rgrandl"/>
+      <login authentication="ssh-keys" hostname="clnode038.clemson.cloudlab.us" port="22" username="agember"/>
+      <login authentication="ssh-keys" hostname="clnode038.clemson.cloudlab.us" port="22" username="archie"/>
+      <login authentication="ssh-keys" hostname="clnode038.clemson.cloudlab.us" port="22" username="asinghvi"/>
+      <login authentication="ssh-keys" hostname="clnode038.clemson.cloudlab.us" port="22" username="yyao39"/>
+      <login authentication="ssh-keys" hostname="clnode038.clemson.cloudlab.us" port="22" username="shyne"/>
+      <login authentication="ssh-keys" hostname="clnode038.clemson.cloudlab.us" port="22" username="sharath"/>
+      <login authentication="ssh-keys" hostname="clnode038.clemson.cloudlab.us" port="22" username="hpirzada"/>
+      <login authentication="ssh-keys" hostname="clnode038.clemson.cloudlab.us" port="22" username="teja5832"/>
+      <emulab:console server="boss.clemson.cloudlab.us"/>
+    </services>
+    <interface client_id="interface-14" component_id="urn:publicid:IDN+clemson.cloudlab.us+interface+clnode038:eth2" sliver_id="urn:publicid:IDN+clemson.cloudlab.us+sliver+96998" mac_address="008cfa5b0b62">
+      <ip address="10.10.1.15" type="ipv4"/>
+    </interface>
+    <emulab:vnode name="clnode038" hardware_type="c8220"/>
+    <host name="node-14.cifar-test.cs-838-big-data-PG0.clemson.cloudlab.us" ipv4="130.127.133.47"/>
+  </node>
+  <link client_id="link-0" sliver_id="urn:publicid:IDN+clemson.cloudlab.us+sliver+96983" vlantag="267">
+    <interface_ref client_id="interface-0" component_id="urn:publicid:IDN+clemson.cloudlab.us+interface+clnode018:eth2" sliver_id="urn:publicid:IDN+clemson.cloudlab.us+sliver+96984"/>
+    <interface_ref client_id="interface-1" component_id="urn:publicid:IDN+clemson.cloudlab.us+interface+clnode011:eth2" sliver_id="urn:publicid:IDN+clemson.cloudlab.us+sliver+96985"/>
+    <interface_ref client_id="interface-2" component_id="urn:publicid:IDN+clemson.cloudlab.us+interface+clnode002:eth2" sliver_id="urn:publicid:IDN+clemson.cloudlab.us+sliver+96986"/>
+    <interface_ref client_id="interface-3" component_id="urn:publicid:IDN+clemson.cloudlab.us+interface+clnode003:eth2" sliver_id="urn:publicid:IDN+clemson.cloudlab.us+sliver+96987"/>
+    <interface_ref client_id="interface-4" component_id="urn:publicid:IDN+clemson.cloudlab.us+interface+clnode033:eth2" sliver_id="urn:publicid:IDN+clemson.cloudlab.us+sliver+96988"/>
+    <interface_ref client_id="interface-5" component_id="urn:publicid:IDN+clemson.cloudlab.us+interface+clnode034:eth2" sliver_id="urn:publicid:IDN+clemson.cloudlab.us+sliver+96989"/>
+    <interface_ref client_id="interface-6" component_id="urn:publicid:IDN+clemson.cloudlab.us+interface+clnode009:eth2" sliver_id="urn:publicid:IDN+clemson.cloudlab.us+sliver+96990"/>
+    <interface_ref client_id="interface-7" component_id="urn:publicid:IDN+clemson.cloudlab.us+interface+clnode020:eth2" sliver_id="urn:publicid:IDN+clemson.cloudlab.us+sliver+96991"/>
+    <interface_ref client_id="interface-8" component_id="urn:publicid:IDN+clemson.cloudlab.us+interface+clnode004:eth2" sliver_id="urn:publicid:IDN+clemson.cloudlab.us+sliver+96992"/>
+    <interface_ref client_id="interface-9" component_id="urn:publicid:IDN+clemson.cloudlab.us+interface+clnode010:eth2" sliver_id="urn:publicid:IDN+clemson.cloudlab.us+sliver+96993"/>
+    <interface_ref client_id="interface-10" component_id="urn:publicid:IDN+clemson.cloudlab.us+interface+clnode037:eth2" sliver_id="urn:publicid:IDN+clemson.cloudlab.us+sliver+96994"/>
+    <interface_ref client_id="interface-11" component_id="urn:publicid:IDN+clemson.cloudlab.us+interface+clnode021:eth2" sliver_id="urn:publicid:IDN+clemson.cloudlab.us+sliver+96995"/>
+    <interface_ref client_id="interface-12" component_id="urn:publicid:IDN+clemson.cloudlab.us+interface+clnode035:eth2" sliver_id="urn:publicid:IDN+clemson.cloudlab.us+sliver+96996"/>
+    <interface_ref client_id="interface-13" component_id="urn:publicid:IDN+clemson.cloudlab.us+interface+clnode005:eth2" sliver_id="urn:publicid:IDN+clemson.cloudlab.us+sliver+96997"/>
+    <interface_ref client_id="interface-14" component_id="urn:publicid:IDN+clemson.cloudlab.us+interface+clnode038:eth2" sliver_id="urn:publicid:IDN+clemson.cloudlab.us+sliver+96998"/>
+    <component_manager name="urn:publicid:IDN+clemson.cloudlab.us+authority+cm"/>
+  </link>
+  <rspec_tour xmlns="http://www.protogeni.net/resources/rspec/ext/apt-tour/1">
+    <description xmlns="" type="markdown">A topology to train deep neural nets on CIFAR10</description>
+  </rspec_tour>
+  <rs:site_info xmlns:rs="http://www.protogeni.net/resources/rspec/ext/site-info/1">
+    <rs:location country="US" latitude="34.586496" longitude="-82.821457"/>
+  </rs:site_info>
+</rspec>
