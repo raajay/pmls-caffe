@@ -779,8 +779,12 @@ void AbstractBgWorker::PrepareBeforeInfiniteLoop() {/*{{{*/
  */
 void AbstractBgWorker::HandleSchedulerResponseMsg(SchedulerResponseMsg *msg) {/*{{{*/
     int32_t oplog_id = msg->get_oplog_id();
-    ClientSendOpLogMsg *oplog_msg = oplog_storage_->GetOplogMsg(oplog_id);
-    MemTransfer::TransferMem(comm_bus_, msg->get_dest_id(), oplog_msg);
+    if (-1 != msg->get_dest_id()) {
+      ClientSendOpLogMsg *oplog_msg = oplog_storage_->GetOplogMsg(oplog_id);
+      MemTransfer::TransferMem(comm_bus_, msg->get_dest_id(), oplog_msg);
+    }
+    // XXX(raajay) We will just erase the oplog if the scheduler does not want
+    // it to be forwarded.
     oplog_storage_->EraseOplog(oplog_id);
 }/*}}}*/
 
