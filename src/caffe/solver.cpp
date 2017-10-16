@@ -323,6 +323,8 @@ template <typename Dtype> void Solver<Dtype>::Solve(const char *resume_file) {
   for (; iter_ < param_.max_iter(); ++iter_) {
     JoinSyncThreads();
 
+    int32_t model_version = petuum::PSTableGroup::GetLatestRowVersion();
+
     // Save a snapshot if needed.
     if (param_.snapshot() && iter_ > start_iter &&
         iter_ % param_.snapshot() == 0) {
@@ -337,7 +339,6 @@ template <typename Dtype> void Solver<Dtype>::Solve(const char *resume_file) {
     const bool display = param_.display() && iter_ % param_.display() == 0;
     net_->set_debug_info(display && param_.debug_info());
 
-    VLOG(20) << "### Start ForwardBackward = " << iter_;
     Dtype loss;
     try {
         loss = ForwardBackward(bottom_vec);
@@ -345,14 +346,13 @@ template <typename Dtype> void Solver<Dtype>::Solve(const char *resume_file) {
         VLOG(20) << "Exception caught";
         throw e;
     }
-    VLOG(20) << "### End ForwardBackward = " << iter_;
 
     if (display) {
       if (client_id_ == 0 && thread_id_ == 0) {
         auto time_elapsed = static_cast<float>(total_timer_.elapsed());
         /// Print the results of client 0 thread 0
-        LOG(INFO) << "Iteration " << iter_ << ", loss: " << loss
-                  << ", time: " << time_elapsed;
+        LOG(INFO) << "Iteration " << iter_ << ", model version: "
+            << model_version << ", loss: " << loss << ", time: " << time_elapsed;
         net_->table()->Inc(display_counter_, caffe::kColIdxOutputTableIter,
                            iter_);
         net_->table()->Inc(display_counter_, caffe::kColIdxOutputTableTime,
