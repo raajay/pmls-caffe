@@ -50,10 +50,6 @@ DEFINE_string(net_outputs, "",
     "The prefix of the net output file.");
 DEFINE_int32(iterations, 50,
     "The number of iterations to run.");
-DEFINE_int32(delay_lower_limit, 100,
-        "Lower limit of additional delay added to compute stage");
-DEFINE_int32(delay_upper_limit, 500,
-        "Lower limit of additional delay added to compute stage");
 
 // A simple registry for caffe commands.
 typedef int (*BrewFunction)();
