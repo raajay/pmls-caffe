@@ -87,6 +87,7 @@ function install_protobuf34() {
 
 install_zeromq
 install_cppzmq
+install_protobuf34
 
 # install tools
 sudo apt-get install -y clang-format-3.5
