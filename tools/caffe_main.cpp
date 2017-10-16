@@ -27,11 +27,11 @@ using caffe::Timer;
 using caffe::vector;
 
 // Petuum Parameters
-DEFINE_int32(num_rows_per_table, 1, 
+DEFINE_int32(num_rows_per_table, 1,
     "Number of rows per parameter table.");
-DEFINE_bool(svb, true, 
+DEFINE_bool(svb, true,
     "True to use SVB for inner_product layers");
-DEFINE_int32(svb_timeout_ms, 10, 
+DEFINE_int32(svb_timeout_ms, 10,
     "Milliseconds the svb receiver waits for");
 
 // Caffe Parameters
@@ -50,6 +50,10 @@ DEFINE_string(net_outputs, "",
     "The prefix of the net output file.");
 DEFINE_int32(iterations, 50,
     "The number of iterations to run.");
+DEFINE_int32(delay_lower_limit, 100,
+        "Lower limit of additional delay added to compute stage");
+DEFINE_int32(delay_upper_limit, 500,
+        "Lower limit of additional delay added to compute stage");
 
 // A simple registry for caffe commands.
 typedef int (*BrewFunction)();
@@ -154,13 +158,13 @@ int train() {
   LOG(INFO) << "PS initialization done.";
   if (FLAGS_num_clients > 1 && FLAGS_svb && util::Context::num_ip_layers() > 0) {
     util::Context::set_use_svb(true);
-  } 
+  }
 
-  
+
   // Train
   LOG(INFO) << "Starting NN with " << num_app_threads << " worker threads "
-      << "on client " << FLAGS_client_id;  
-  std::vector<std::thread> threads(num_app_threads); 
+      << "on client " << FLAGS_client_id;
+  std::vector<std::thread> threads(num_app_threads);
   for (auto& thr : threads) {
     thr = std::thread(
         &caffe::CaffeEngine<float>::Start, std::ref(*caffe_engine));
