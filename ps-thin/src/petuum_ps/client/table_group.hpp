@@ -46,6 +46,8 @@ public:
 
   void GlobalBarrier();
 
+  int32_t GetLatestRowVersion();
+
 private:
   typedef void (TableGroup::*ClockFunc)();
   ClockFunc ClockInternal;

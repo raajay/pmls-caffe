@@ -50,6 +50,8 @@ public:
 
   void Clock() override;
 
+  int32_t GetLatestRowVersion() override;
+
   cuckoohash_map<int32_t, bool> *GetAndResetOpLogIndex(int32_t partition_num);
 
   size_t GetNumRowOpLogs(int32_t partition_num);

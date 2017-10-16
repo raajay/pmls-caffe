@@ -38,6 +38,8 @@ public:
 
   virtual void Clock() = 0;
 
+  virtual int32_t GetLatestRowVersion() = 0;
+
   virtual int32_t get_row_type() const = 0;
 };
 

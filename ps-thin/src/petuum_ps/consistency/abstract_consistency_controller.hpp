@@ -58,6 +58,10 @@ public:
 
   virtual void Clock() = 0;
 
+  virtual int32_t GetLatestRowVersion() {
+      return latest_row_version_;
+  }
+
 protected:
 
   /**

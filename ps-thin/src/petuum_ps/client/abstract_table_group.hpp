@@ -47,6 +47,8 @@ public:
   virtual void ClockTable(int32_t table_id) = 0;
 
   virtual void GlobalBarrier() = 0;
+
+  virtual int32_t GetLatestRowVersion() = 0;
 };
 
 } // namespace petuum

@@ -327,4 +327,14 @@ void TableGroup::ClockConservative() {
     BgWorkers::ClockAllTables();
   }
 }
+
+/**
+ */
+int32_t TableGroup::GetLatestRowVersion() {/*{{{*/
+    int32_t retval = DEFAULT_GLOBAL_VERSION;
+    for(const auto &table : tables_) {
+        retval = std::max(retval, table.second->GetLatestRowVersion());
+    }
+    return retval;
+}/*}}}*/
 }

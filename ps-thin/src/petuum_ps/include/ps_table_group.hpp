@@ -165,6 +165,12 @@ public:
    */
   static void GlobalBarrier() { return abstract_table_group_->GlobalBarrier(); }
 
+  /**
+   */
+  static int32_t GetLatestRowVersion() {
+      return abstract_table_group_->GetLatestRowVersion();
+  }
+
 private:
   static AbstractTableGroup *abstract_table_group_;
 };

@@ -192,6 +192,10 @@ void ClientTable::Clock() {
   STATS_APP_SAMPLE_CLOCK_END(table_id_);
 }
 
+int32_t ClientTable::GetLatestRowVersion() {
+    return consistency_controller_->GetLatestRowVersion();
+}
+
 cuckoohash_map<int32_t, bool> *
 ClientTable::GetAndResetOpLogIndex(int32_t partition_num) {
   return oplog_index_.ResetPartition(partition_num);
